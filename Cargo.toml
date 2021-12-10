@@ -1,0 +1,12 @@
+[package]
+name = "dina_lang"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[dependencies]
+nums_vm = {path = "../numsVM"}
+quicli = "0.4.0"
+logos = "0.12.0"
