@@ -36,19 +36,21 @@ pub enum Token {
     LeftArr,
     #[token(">")]
     RightArr,
-    ///default values, written directly in bytecode (smolstr is heap allocated if 23 bytes + ofc)
+
     /// double must have a number before the '.' faulty: .12123, correct: 0.12123
+    /// can also come in form of a percent!
     #[regex(r"\d+(?:\.\d+)+", parse_dub)]
     #[regex(r"\d+(?:\.\d+)?%", percent_float)] 
     Double(f32),
-
+    /// standard 4 byte numbers 
     #[regex(r"\d+", parse_num)]
     Integer(i32),
-    //only ascii!
-    #[regex("\"[[:ascii:]]+\"", make_str)]
+    ///only ascii!
+    ///smolstr is heap allocated if 23 bytes + ofc
+    #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, make_str)]
     String(SmolStr),
 
-    #[regex("[[:word:]]", priority = 2)]
+    #[regex(r"[a-zA-Z_]+\d?", priority = 2)]
     Identifier,
 
     /// token types and expr to denote the conversion of one type to another.
@@ -118,8 +120,9 @@ fn parse_dub(lex: &mut Lexer<Token>) -> Option<f32> {
 }
 
 fn make_str(lex: &mut Lexer<Token>) -> Option<SmolStr> {
-    let slice = lex.slice().trim_matches('"');
-    Some(SmolStr::new(slice))
+    let slice = lex.slice();
+
+    Some(SmolStr::new(&slice[1..slice.len()-1]))
 }
 
 fn percent_float(lex: &mut Lexer<Token>) -> Option<f32> {
