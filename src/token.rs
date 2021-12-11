@@ -1,4 +1,4 @@
-use logos::{Logos, Source, Lexer};
+use logos::{Logos, Lexer};
 use smol_str::SmolStr;
 
 
@@ -37,10 +37,12 @@ pub enum Token {
     #[token(">")]
     RightArr,
     ///default values, written directly in bytecode (smolstr is heap allocated if 23 bytes + ofc)
-    /// double must have a number before the '.' faulty: .12123, correct: 0.12123 
-    #[regex(r"\d+\.\d+", parse_dub)]
+    /// double must have a number before the '.' faulty: .12123, correct: 0.12123
+    #[regex(r"\d+(?:\.\d+)+", parse_dub)]
+    #[regex(r"\d+(?:\.\d+)?%", percent_float)] 
     Double(f32),
-    #[regex(r"[0-9]+", parse_num)]
+
+    #[regex(r"\d+", parse_num)]
     Integer(i32),
     //only ascii!
     #[regex("\"[[:ascii:]]+\"", make_str)]
@@ -118,4 +120,10 @@ fn parse_dub(lex: &mut Lexer<Token>) -> Option<f32> {
 fn make_str(lex: &mut Lexer<Token>) -> Option<SmolStr> {
     let slice = lex.slice().trim_matches('"');
     Some(SmolStr::new(slice))
+}
+
+fn percent_float(lex: &mut Lexer<Token>) -> Option<f32> {
+    let slice = lex.slice();
+    let n: f32 = slice[..slice.len() - 1].parse().ok()?;
+    Some( n / 100.0 )
 }

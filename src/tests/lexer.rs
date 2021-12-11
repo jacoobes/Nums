@@ -29,5 +29,11 @@ mod lexer {
         let mut tokens = Token::lexer(f1);
         assert_eq!(Some(Integer(12341221)), tokens.next())
     }
+    #[test]
+    fn percent_float() {
+        let f1 = "8%";
+        let mut tokens = Token::lexer(f1);
+        assert_eq!(Some(Double(0.08)), tokens.next() )
+    }
 
 }
