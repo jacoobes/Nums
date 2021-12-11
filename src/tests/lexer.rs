@@ -50,6 +50,7 @@ mod lexer {
         let mut tokens = Token::lexer(text);
         assert_eq!(Some(String(SmolStr::new("a string"))), tokens.next());
         assert_eq!(Some(String(SmolStr::new(""))), tokens.next());
+        assert_eq!(Some(String(SmolStr::new("i ate noodles noodles\nwere\nsexy\nmy\ngirlfriend\nis\na\nnoob"))), tokens.next());
     }
 
 }
