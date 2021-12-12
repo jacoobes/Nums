@@ -99,10 +99,10 @@ mod lexer {
     fn pseudo_code() {
         let text = " 
         contain;
-
-            expose fn hello_world | foo, bar | (\" asdf \") : str;
             
-            expose anon_fn = | c, e ,f  | (  str(c + e + f) )
+            expose fn hello_world | foo, bar | (\" asdf \") : str;
+
+            expose anon_fn = | c, e ,f  | (  c  ) : f64
 
         ";
 

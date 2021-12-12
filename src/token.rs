@@ -1,7 +1,9 @@
 use logos::{Logos, Lexer, Skip};
 use smol_str::SmolStr;
 
-
+///
+/// Regular grammar for Nums
+/// 
 #[derive(Logos, Debug, PartialEq)]
 pub enum Token {
 
