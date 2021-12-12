@@ -1,4 +1,4 @@
-use logos::{Logos, Lexer};
+use logos::{Logos, Lexer, Skip};
 use smol_str::SmolStr;
 
 
@@ -20,7 +20,7 @@ pub enum Token {
     #[token("by")]
     By,
     #[token("none")]
-    None,
+    NoneOf,
     #[token("of")]
     Of,
     #[token("get")]
@@ -31,7 +31,6 @@ pub enum Token {
     Container,
     #[token("pub")]
     Public,
-    
     #[token("<")]
     LeftArr,
     #[token(">")]
@@ -96,12 +95,11 @@ pub enum Token {
     Star,
     #[token("^")]
     Caret,
-
     #[error]
     //multiline comments :>(anything) <:
-    #[regex(r":>[^*]*\*+(?:[^/*][^*]*\*+)<:")]
+    #[regex(r":>[^<]*(?:[^<:]*)<:", logos::skip)]
     //single line comments
-    #[regex(r"~[.^\t^\f]*(\n|~)", logos::skip)]
+    #[regex(r"~[^\n\r]*\n", logos::skip)]
     //skip
     #[regex(r"[ \t\n\f]+", logos::skip)]
     Error
@@ -121,7 +119,6 @@ fn parse_dub(lex: &mut Lexer<Token>) -> Option<f32> {
 
 fn make_str(lex: &mut Lexer<Token>) -> Option<SmolStr> {
     let slice = lex.slice();
-
     Some(SmolStr::new(&slice[1..slice.len()-1]))
 }
 
