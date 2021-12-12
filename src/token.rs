@@ -1,4 +1,4 @@
-use logos::{Logos, Lexer, Skip};
+use logos::{Logos, Lexer};
 use smol_str::SmolStr;
 
 ///
@@ -97,13 +97,14 @@ pub enum Token {
     Star,
     #[token("^")]
     Caret,
-    #[error]
     //multiline comments :> (anything) <:
-    #[regex(r":>[^<]*(?:[^<:]*)<:", logos::skip)]
+    #[regex(r":>[^<]*(?:[^<:]*)<:", |_| logos::Skip)]
     //single line comments
-    #[regex(r"~[^\n\r]*\n", logos::skip)]
+    #[regex(r"~[^\n]*\n+", |_| logos::Skip)]
+    Omit,
     //skip
-    #[regex(r"[ \t\n\f]+", logos::skip)]
+    #[regex(r"[ \t\n\f\r]", |_| logos::Skip)]
+    #[error]
     Error
 }
 

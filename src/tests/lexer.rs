@@ -80,9 +80,9 @@ mod lexer {
 
     #[test]
     fn single_ln_comments() {
-        let text = "~ a single line comment";
-        let token = Token::lexer(text);
-        assert_eq!(token.slice(), "")
+        let text = "~ a single line comment\n";
+        let mut token = Token::lexer(text);
+        assert_eq!(token.next(), None)
     }
     #[test]
     fn multiln_comments() {
@@ -92,7 +92,8 @@ mod lexer {
         I ate a LOT of it.
         the end
         <:";
-        let token = Token::lexer(text);
+        let mut token = Token::lexer(text);
+        println!("{:?}", token.next());
         assert_eq!("", token.slice())
     }
     #[test]

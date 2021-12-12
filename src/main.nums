@@ -1,0 +1,5 @@
+contain;
+
+    expose fn tes | a: i32, c:str | (
+        a + c
+    )
