@@ -55,9 +55,9 @@ mod lexer {
     }
     #[test]
     fn keywords() {
-        let text = "pub fn when by by try none and or while cont contain f64 f32 i32 i64 boolean str to";
+        let text = "expose fn when by by try none and or while cont contain f64 f32 i32 i64 boolean str to";
         let mut tokens = Token::lexer(text);
-        assert_eq!(Some(Public), tokens.next());
+        assert_eq!(Some(Expose), tokens.next());
         assert_eq!(Some(Function), tokens.next());
         assert_eq!(Some(When), tokens.next());
         assert_eq!(Some(By), tokens.next());
@@ -94,6 +94,22 @@ mod lexer {
         <:";
         let token = Token::lexer(text);
         assert_eq!("", token.slice())
+    }
+    #[test]
+    fn pseudo_code() {
+        let text = " 
+        contain;
+
+            expose fn hello_world | foo, bar | (\" asdf \") : str;
+            
+            expose anon_fn = | c, e ,f  | (  str(c + e + f) )
+
+        ";
+
+        let tokens = Token::lexer(text);
+        for token in tokens {
+            println!("{:?}", &token)
+        }
     }
 
 }

@@ -29,8 +29,8 @@ pub enum Token {
     From,
     #[token("contain")]
     Container,
-    #[token("pub")]
-    Public,
+    #[token("expose")]
+    Expose,
     #[token("<")]
     LeftArr,
     #[token(">")]
@@ -96,7 +96,7 @@ pub enum Token {
     #[token("^")]
     Caret,
     #[error]
-    //multiline comments :>(anything) <:
+    //multiline comments :> (anything) <:
     #[regex(r":>[^<]*(?:[^<:]*)<:", logos::skip)]
     //single line comments
     #[regex(r"~[^\n\r]*\n", logos::skip)]
