@@ -12,3 +12,4 @@ path = "src/main.rs"
 nums_vm = {path = "../numsVM"}
 logos = "0.12.0"
 smol_str = "0.1.21"
+peekmore = "1.0.0"

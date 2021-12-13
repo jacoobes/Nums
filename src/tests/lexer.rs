@@ -97,6 +97,14 @@ mod lexer {
         assert_eq!("", token.slice())
     }
     #[test]
+    fn char() {
+        let text = " ''  'b' 'c' 'exxz' ";
+        let mut tokens = Token::lexer(text);
+        for token in tokens {
+            println!("{:?}", &token)
+        }
+    }
+    #[test]
     fn pseudo_code() {
         let text = " 
         contain;

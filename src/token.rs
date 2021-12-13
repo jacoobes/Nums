@@ -51,6 +51,9 @@ pub enum Token {
     #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, make_str)]
     String(SmolStr),
 
+    #[regex(r"'[a-zA-Z0-9\n\r\t \f]'", parse_char)]
+    Char(char),
+
     #[regex(r"[a-zA-Z_]+\d?", priority = 2)]
     Identifier,
 
@@ -133,4 +136,9 @@ fn percent_float(lex: &mut Lexer<Token>) -> Option<f32> {
     let slice = lex.slice();
     let n: f32 = slice[..slice.len() - 1].parse().ok()?;
     Some( n / 100.0 )
+}
+
+fn parse_char(lex: &mut Lexer<Token>) -> Option<char> {
+    let slice = lex.slice().chars().nth(1);
+    slice
 }
