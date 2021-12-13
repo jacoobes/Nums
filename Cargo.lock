@@ -50,6 +50,9 @@ dependencies = [
 [[package]]
 name = "nums_vm"
 version = "0.1.0"
+dependencies = [
+ "smol_str",
+]
 
 [[package]]
 name = "proc-macro2"

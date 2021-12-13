@@ -1,5 +1,5 @@
-contain;
+fun main | args:str[] | (
+    
 
-    expose fn tes | a: i32, c:str | (
-        a + c
-    )
+
+)

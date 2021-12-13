@@ -17,7 +17,7 @@ pub enum Token {
     And,
     #[token("or")]
     Or,
-    #[token("fn")]
+    #[token("fun")]
     Function,
     #[token("by")]
     By,
@@ -97,13 +97,17 @@ pub enum Token {
     Star,
     #[token("^")]
     Caret,
+    #[token("[")]
+    LeftBrack,
+    #[token("]")]
+    RightBrack,
     //multiline comments :> (anything) <:
-    #[regex(r":>[^<]*(?:[^<:]*)<:", |_| logos::Skip)]
+    #[regex(r":>[^<]*(?:[^<:]*)<:", logos::skip)]
     //single line comments
-    #[regex(r"~[^\n]*\n+", |_| logos::Skip)]
+    #[regex(r"~[^\n]*\n+", logos::skip)]
     Omit,
     //skip
-    #[regex(r"[ \t\n\f\r]", |_| logos::Skip)]
+    #[regex(r"[ \t\n\f\r]", logos::skip)]
     #[error]
     Error
 }
