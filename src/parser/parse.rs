@@ -62,13 +62,16 @@ impl <'a> Parser <'a> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, Cow<'a, str>> {
+    pub fn parse(&mut self) -> Result<Vec<Expr>, Cow<'a, str>> {
+        let mut temp_vec : Vec<Expr> = Vec::new();
         loop {
             if !self.is_at_end() {
                 match self.expr() {
-                    Ok(c) => println!("{:?}", &c),
+                    Ok(c) => temp_vec.push(c),
                     Err(e) => break Err(e)
                 }
+            } else {
+                break Ok(temp_vec)
             }
             
         }

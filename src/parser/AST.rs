@@ -1,7 +1,7 @@
 use smol_str::SmolStr;
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Term(Vec<Expr>),
     Factor(Vec<Expr>),

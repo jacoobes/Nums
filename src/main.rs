@@ -16,7 +16,8 @@ fn main() {
    let mut parser = parser::parse::Parser::new(iterator);
 
    match parser.parse() {
-       Ok(e) => e.traverse(),
-       Err(e) => return println!("{}", &e)
+       Ok(vec) => println!("{:?}", &vec),
+       Err(e) => println!("{}", e)
    }
+
 }

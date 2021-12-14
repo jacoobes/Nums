@@ -21,13 +21,27 @@ mod ast {
     }
     #[test]
     fn simple_exprs() {
-      let text = " '\n' 'r' 123213.2321312 420 %  ";
+      let text = " '\n' 'r' 123213.2321312 420%  ";
       let iterator = Token::lexer(text);
       let mut parser = parse::Parser::new(iterator);
         
       match parser.parse() {
-        Ok(e) => e.traverse(),
+        Ok(e) => println!("{:?}", &e),
         Err(e) => return println!("{}", &e)
         }
     }
+    #[test]
+    fn grouping() {
+        let text = "((' '))";
+        let iterator = Token::lexer(text);
+        let mut parser = parse::Parser::new(iterator);
+
+        let tree =  parser.parse().unwrap();
+        
+        assert_eq!(
+            tree[0],
+            Expr::Group(Box::new(Expr::Group(Box::new(Expr::Char(' ')))))
+        )
+    }
+
 }
