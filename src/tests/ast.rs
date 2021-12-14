@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod ast {
     use std::vec;
-
-    use crate::parser::ast::Expr;
+    use logos::Logos;
+    use crate::{parser::{parse, ast::Expr}, token::Token};
 
     #[test]
     fn traverse () {
@@ -18,5 +18,16 @@ mod ast {
            ]
        );
        new_expr.traverse(); 
+    }
+    #[test]
+    fn simple_exprs() {
+      let text = " '\n' 'r' 123213.2321312 420 %  ";
+      let iterator = Token::lexer(text);
+      let mut parser = parse::Parser::new(iterator);
+        
+      match parser.parse() {
+        Ok(e) => e.traverse(),
+        Err(e) => return println!("{}", &e)
+    }
     }
 }

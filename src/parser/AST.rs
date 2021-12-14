@@ -26,7 +26,7 @@ impl Expr {
             }
           }
            Expr::Unary(expr)  => println!("{:?}", *expr),
-           other => println!("{:?}", &self)
+           _ => println!("{:?}", &self)
         }
     }
 }

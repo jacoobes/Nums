@@ -7,7 +7,7 @@ use smol_str::SmolStr;
 /// Regular grammar for Nums
 /// 
 #[derive(Logos, Debug, PartialEq)]
-#[logos(subpattern cast = r"[str|f32|i32|i64|f64]?")]
+
 pub enum Token {
 
     #[token("when")]

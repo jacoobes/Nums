@@ -1,12 +1,13 @@
-use std::{borrow::Cow, iter::Peekable};
-
+use std::borrow::Cow;
+use crate::parser::peekable_lexer::Peekable as PeekerWrap;
 use logos::Lexer;
 use crate::token::Token;
 
 use super::ast::Expr;
 pub struct Parser<'a> {
-    tokens : Peekable<logos::Lexer<'a, Token>>,
+    tokens : PeekerWrap<'a>,
 }
+
 
 ///iterator methods
 impl <'a> Parser <'a> {
@@ -19,26 +20,26 @@ impl <'a> Parser <'a> {
         }
     }
 
+    fn peek (&mut self) -> Result<&Token, ()> {
+        self.tokens.peek().ok_or(())
+    }
+
     fn next (&mut self) -> Result<Token, Cow<'a, str>> {
            self.tokens.next().ok_or(Cow::Borrowed("Unexpected end of parsing"))
     }
 
-    fn peek(&mut self) -> Result<&Token, ()> {
-            self.tokens.peek().ok_or(())
-    }
-
     fn check_peek (&mut self, token: &Token) -> bool {
-        match self.tokens.peek() {
-            Some(tok) => tok == token,
-            None => false
+        match self.peek() {
+            Ok(tok) => tok == token,
+            Err(_) => false
         }
     }
 
-    fn is_at_end(&mut self) -> bool { self.tokens.peek() == None }
+    fn is_at_end(&mut self) -> bool { matches!(self.peek(), Err(_)) }
 
     fn match_advance (&mut self, token: &Token ) -> bool  {
-        match self.tokens.peek() {
-            Some(_) => {
+        match self.peek() {
+            Ok(_) => {
                 if self.check_peek(token) {
                     self.next().unwrap();
                     return true
@@ -46,7 +47,7 @@ impl <'a> Parser <'a> {
                     false
                 
             },
-            None => false
+            Err(_) => false
 
         }
     }
@@ -56,7 +57,9 @@ impl <'a> Parser <'a> {
 /// Basic recursive descent parsing
 impl <'a> Parser <'a> {
     pub fn new (tokens: Lexer<'a, Token>) -> Self {
-        Self { tokens: tokens.peekable() }
+        Self { 
+            tokens: PeekerWrap::new(tokens.source()),
+        }
     }
 
     pub fn parse(&mut self) -> Result<Expr, Cow<'a, str>> {
@@ -93,23 +96,21 @@ impl <'a> Parser <'a> {
 
     fn primary (&mut self) -> Result<Expr, Cow<'a, str>> {
 
-            match self.peek().map_err(|_| Cow::Borrowed("End of parsing occured!")) {
-                Ok(_) => {
+            match self.peek().map_err(|_| Cow::Borrowed("End of parsing occured!"))? {
+                _ => {
                     match self.next()? {
-                        Token::Bool(val) => return Ok(Expr::Bool(val)),
-                        Token::Double(s) =>  return Ok(Expr::Double(s)),
-                        Token::Integer(val) => return Ok(Expr::Integer(val)),
-                        Token::String(val) => return Ok(Expr::String(val)),
-                        Token::Char(c) => return Ok(Expr::Char(c)),
-                        other => return Err(Cow::Owned(format!("{:?} found while parsing.", other )))
+                        Token::Bool(val) => Ok(Expr::Bool(val)),
+                        Token::Double(s) =>  Ok(Expr::Double(s)),
+                        Token::Integer(val) => Ok(Expr::Integer(val)),
+                        Token::String(val) => Ok(Expr::String(val)),
+                        Token::Char(c) => Ok(Expr::Char(c)),
+                        other => Err(Cow::Owned(format!("Invalid token {:?} ", other )))
                     }
                 }
-                Err(_) => return Err(Cow::Borrowed("DFs"))
-               
+                            
             }
 
         
         }
     }
     
-
