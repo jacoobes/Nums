@@ -1,3 +1,5 @@
+use std::str::ParseBoolError;
+
 use logos::{Logos, Lexer};
 use smol_str::SmolStr;
 
@@ -5,6 +7,7 @@ use smol_str::SmolStr;
 /// Regular grammar for Nums
 /// 
 #[derive(Logos, Debug, PartialEq)]
+#[logos(subpattern cast = r"[str|f32|i32|i64|f64]?")]
 pub enum Token {
 
     #[token("when")]
@@ -53,6 +56,8 @@ pub enum Token {
 
     #[regex(r"'[a-zA-Z0-9\n\r\t \f]'", parse_char)]
     Char(char),
+    #[regex(r"true|false", parse_bool)]
+    Bool(bool),
 
     #[regex(r"[a-zA-Z_]+\d?", priority = 2)]
     Identifier,
@@ -141,4 +146,8 @@ fn percent_float(lex: &mut Lexer<Token>) -> Option<f32> {
 fn parse_char(lex: &mut Lexer<Token>) -> Option<char> {
     let slice = lex.slice().chars().nth(1);
     slice
+}
+fn parse_bool(lex :  &mut Lexer<Token>) -> Option<bool> {
+    let slice = lex.slice();
+    slice.parse::<bool>().ok()
 }

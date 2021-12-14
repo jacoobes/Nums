@@ -2,10 +2,10 @@ use smol_str::SmolStr;
 
 
 #[derive(Debug, Clone)]
-pub enum GrammarItem {
-    Term,
-    Factor,
-    Unary,
+pub enum Expr {
+    Term(Vec<Expr>),
+    Factor(Vec<Expr>),
+    Unary(Box<Expr>),
     Double(f32),
     Integer(i32),
     String(SmolStr),
@@ -16,17 +16,17 @@ pub enum GrammarItem {
 
 }
 
-pub struct Node {
-    value: GrammarItem,
-    children: Vec<GrammarItem>
-}
-
-impl Node {
-    pub fn new(value: GrammarItem) -> Self {
-        Self {
-            value,
-            children : Vec::new()
+impl Expr {
+    pub fn traverse(&self) {
+        match self {
+            Expr::Term(children)
+          | Expr::Factor(children) => {
+            for node in children {
+                node.traverse();
+            }
+          }
+           Expr::Unary(expr)  => println!("{:?}", *expr),
+           other => println!("{:?}", &self)
         }
-    }   
-
+    }
 }

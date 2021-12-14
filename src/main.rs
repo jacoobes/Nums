@@ -11,10 +11,11 @@ mod parser;
 
 fn main() {
    let read_file = read_file(); 
-   let mut iterator = Token::lexer(&read_file);
-   println!("{:?}", read_file);
-   while let Some(tok) = iterator.next() {
-       println!("{:?}", &tok)
-   }
+   let iterator = Token::lexer(&read_file);
+   let mut parser = parser::parse::Parser::new(iterator);
 
+   match parser.parse() {
+       Ok(e) => e.traverse(),
+       Err(e) => return println!("{}", &e)
+   }
 }

@@ -1,28 +1,11 @@
-use std::borrow::Cow;
-use nums_vm::bytecode::chunk::Chunk;
-use peekmore::{PeekMore, PeekMoreIterator};
-use nums_vm::bytecode::data::{Data, Type};
-use nums_vm::bytecode::op_code::OpCode::{self, *};
+use std::{borrow::Cow, iter::Peekable};
 
 use logos::Lexer;
 use crate::token::Token;
-struct Parser<'a> {
-    tokens : PeekMoreIterator<logos::Lexer<'a, Token>>,
-    chunk : Chunk
-}
 
-///chunk
-impl <'a> Parser<'a> {
-
-    pub fn add_const(&mut self, data : Data) {
-       let loc_of_const =  self.chunk.add_const( data);
-       self.chunk.write(&LOAD_CONST);
-       self.chunk.write_const(loc_of_const)
-    }
-    
-    pub fn emit_op(chunk: &mut Chunk, code: &OpCode) {
-        chunk.write(&code);
-    }
+use super::ast::Expr;
+pub struct Parser<'a> {
+    tokens : Peekable<logos::Lexer<'a, Token>>,
 }
 
 ///iterator methods
@@ -40,6 +23,9 @@ impl <'a> Parser <'a> {
            self.tokens.next().ok_or(Cow::Borrowed("Unexpected end of parsing"))
     }
 
+    fn peek(&mut self) -> Result<&Token, ()> {
+            self.tokens.peek().ok_or(())
+    }
 
     fn check_peek (&mut self, token: &Token) -> bool {
         match self.tokens.peek() {
@@ -47,22 +33,20 @@ impl <'a> Parser <'a> {
             None => false
         }
     }
-    
-    fn check_peek_next (&mut self, token: &Token) -> bool {
-        match self.tokens.peek_next() {
-            Some(t) =>  t == token,
-            None => false,
-        }
-    }
 
-    fn match_advance (&mut self, token: &Token )  {
+    fn is_at_end(&mut self) -> bool { self.tokens.peek() == None }
+
+    fn match_advance (&mut self, token: &Token ) -> bool  {
         match self.tokens.peek() {
             Some(_) => {
                 if self.check_peek(token) {
                     self.next().unwrap();
-                }
+                    return true
+                };
+                    false
+                
             },
-            None => ()
+            None => false
 
         }
     }
@@ -71,40 +55,61 @@ impl <'a> Parser <'a> {
 
 /// Basic recursive descent parsing
 impl <'a> Parser <'a> {
-    fn new (tokens: Lexer<'a, Token>) -> Self {
-        Self { tokens: tokens.peekmore(), chunk: Chunk::new() }
+    pub fn new (tokens: Lexer<'a, Token>) -> Self {
+        Self { tokens: tokens.peekable() }
     }
 
-    fn parse(&mut self, chunk : Chunk) -> Result<Chunk, Cow<'a, str>> {
+    pub fn parse(&mut self) -> Result<Expr, Cow<'a, str>> {
         loop {
-            self.expr()?;
+            if !self.is_at_end() {
+                match self.expr() {
+                    Ok(c) => println!("{:?}", &c),
+                    Err(e) => break Err(e)
+                }
+            }
+            
         }
 
     }
-    fn expr (&mut self)-> Result<Chunk, Cow<'a, str>>  {
+    fn expr (&mut self)-> Result<Expr, Cow<'a, str>>  {
         self.term()
     }
 
-    fn term (&mut self) -> Result<Chunk, Cow<'a, str>> {
+    fn term (&mut self) -> Result<Expr, Cow<'a, str>> {
        self.factor() 
     }
 
-    fn factor (&mut self)-> Result<Chunk, Cow<'a, str>> {
+    fn factor (&mut self)-> Result<Expr, Cow<'a, str>> {
         self.power()
     }
 
-    fn power (&mut self)-> Result<Chunk, Cow<'a, str>> {
+    fn power (&mut self)-> Result<Expr, Cow<'a, str>> {
         self.unary()
     }
 
-    fn unary (&mut self)-> Result<Chunk, Cow<'a, str>> {
+    fn unary (&mut self)-> Result<Expr, Cow<'a, str>> {
         self.primary()
     }
 
-    fn primary (&mut self) -> Result<Chunk, Cow<'a, str>> {
-        Err(Cow::Borrowed("a"))
+    fn primary (&mut self) -> Result<Expr, Cow<'a, str>> {
+
+            match self.peek().map_err(|_| Cow::Borrowed("End of parsing occured!")) {
+                Ok(_) => {
+                    match self.next()? {
+                        Token::Bool(val) => return Ok(Expr::Bool(val)),
+                        Token::Double(s) =>  return Ok(Expr::Double(s)),
+                        Token::Integer(val) => return Ok(Expr::Integer(val)),
+                        Token::String(val) => return Ok(Expr::String(val)),
+                        Token::Char(c) => return Ok(Expr::Char(c)),
+                        other => return Err(Cow::Owned(format!("{:?} found while parsing.", other )))
+                    }
+                }
+                Err(_) => return Err(Cow::Borrowed("DFs"))
+               
+            }
+
+        
+        }
     }
     
-
-}
 
