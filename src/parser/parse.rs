@@ -99,6 +99,11 @@ impl <'a> Parser <'a> {
             match self.peek().map_err(|_| Cow::Borrowed("End of parsing occured!"))? {
                 _ => {
                     match self.next()? {
+                        Token::LeftParen => {
+                            let expr = self.expr();
+                            self.expect_token(&Token::RightParen)?;
+                            Ok(Expr::Group(Box::new(expr?)))
+                        }
                         Token::Bool(val) => Ok(Expr::Bool(val)),
                         Token::Double(s) =>  Ok(Expr::Double(s)),
                         Token::Integer(val) => Ok(Expr::Integer(val)),

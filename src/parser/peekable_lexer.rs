@@ -1,3 +1,4 @@
+use std::ops::Range;
 use logos::{Lexer, Logos};
 
 use crate::token::Token;
@@ -5,6 +6,21 @@ use crate::token::Token;
 pub struct Peekable<'source> {
     lexer: Lexer<'source, Token>,
     peeked: Option<Option<Token>>,
+}
+
+impl <'source> Peekable<'source> {
+    pub fn slice(&mut self ) -> &'source str {
+        self.lexer.slice()
+    }
+
+    pub fn span(&mut self) -> Range<usize> {
+        self.lexer.span()
+    }
+
+    pub fn cur_line(&mut self) -> usize {
+        self.lexer.extras.line_breaks
+    }
+
 }
 
 impl<'source> Peekable<'source> {

@@ -1,13 +1,15 @@
-use std::str::ParseBoolError;
-
 use logos::{Logos, Lexer};
 use smol_str::SmolStr;
 
-///
-/// Regular grammar for Nums
-/// 
-#[derive(Logos, Debug, PartialEq)]
 
+#[derive(Default)]
+pub struct FileData {
+    pub line_breaks: usize,
+}
+
+/// Regular grammar for Nums 
+#[derive(Logos, Debug, PartialEq)]
+#[logos(extras = FileData)]
 pub enum Token {
 
     #[token("when")]
@@ -113,8 +115,8 @@ pub enum Token {
     #[regex(r":>[^<]*(?:[^<:]*)<:", logos::skip)]
     //single line comments
     #[regex(r"~[^\n]*\n+", logos::skip)]
-    Omit,
     //skip
+    #[token("\n", |lex| lex.extras.line_breaks += 1; logos::Skip)]
     #[regex(r"[ \t\n\f\r]", logos::skip)]
     #[error]
     Error

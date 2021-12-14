@@ -28,6 +28,6 @@ mod ast {
       match parser.parse() {
         Ok(e) => e.traverse(),
         Err(e) => return println!("{}", &e)
-    }
+        }
     }
 }

@@ -8,6 +8,7 @@ mod token;
 mod tests;
 mod cli;
 mod parser;
+mod error_handling;
 
 fn main() {
    let read_file = read_file(); 

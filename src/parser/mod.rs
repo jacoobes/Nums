@@ -1,3 +1,3 @@
 pub mod parse;
 pub mod ast;
-mod peekable_lexer;
+pub mod peekable_lexer;

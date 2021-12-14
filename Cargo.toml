@@ -11,5 +11,5 @@ path = "src/main.rs"
 [dependencies]
 nums_vm = {path = "../numsVM"}
 logos = "0.12.0"
+pretty = "0.11.1"
 smol_str = "0.1.21"
-peekmore = "1.0.0"

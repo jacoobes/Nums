@@ -99,7 +99,7 @@ mod lexer {
     #[test]
     fn char() {
         let text = " ''  'b' 'c' 'exxz' ";
-        let mut tokens = Token::lexer(text);
+        let tokens = Token::lexer(text);
         for token in tokens {
             println!("{:?}", &token)
         }
