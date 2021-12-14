@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use crate::parser::peekable_lexer::Peekable as PeekerWrap;
 use logos::Lexer;
 use crate::token::Token;
-
+use crate::match_adv;
 use super::ast::Expr;
 pub struct Parser<'a> {
     tokens : PeekerWrap<'a>,
@@ -19,7 +19,6 @@ impl <'a> Parser <'a> {
            None => Err(Cow::Owned(format!("Parsed until end of token stream. Expected {:?}", token))) 
         }
     }
-
     fn peek (&mut self) -> Option<&Token> {
         self.tokens.peek().take()
     }
@@ -69,24 +68,48 @@ impl <'a> Parser <'a> {
     }
 
     fn factor (&mut self)-> Result<Expr, Cow<'a, str>> {
-        self.power()
+        let mut left = self.power();
+        while let Some(tok) = match_adv! (&mut self, &Token::Star | &Token::FowardSlash ) {
+            let right = self.power();
+            left = Ok(Expr::Factor { operator: tok, left: Box::new(left?), right: Box::new(right?)  });
+        }
+        left
     }
 
     fn power (&mut self)-> Result<Expr, Cow<'a, str>> {
-
-        self.unary()
+        let left = self.unary();
+        match self.peek() {
+            Some(token) if matches!(token, &Token::Caret) => {
+                let _ = self.next()?;
+                let right = self.power();
+                Ok(Expr::Power { left : Box::new(left?), right:  Box::new(right?) })
+            }
+            _ => {
+                left
+            }
+        }
+        
     }
     /// right associative unary parser
     fn unary (&mut self)-> Result<Expr, Cow<'a, str>> {
-        self.grouping()
+        match self.peek() {
+            Some(token) if matches!(token, &Token::Bang | &Token::Minus) =>  {
+                let operator = self.next()?;
+                let expr = self.unary();
+                Ok(Expr::Unary { operator, expr: Box::new(expr?) })
+            },
+            _ => {
+               self.grouping() 
+            }
+        }
     }
 
-    fn grouping(&mut self) -> Result<Expr, Cow<'a, str>> {
+    fn grouping (&mut self) -> Result<Expr, Cow<'a, str>> {
         if self.check_peek(&Token::LeftParen) {
             self.next()?;
             let expr = self.expr()?;
             self.expect_token(&Token::RightParen)?;
-            Ok(Expr::Group(Box::new(expr)))
+            Ok( Expr::Group { expr : Box::new(expr) })
         } else {
             self.primary()
         } 

@@ -12,6 +12,6 @@ pub enum ErrTyp {
 
 
 pub enum WarnTyp {
-    
+
 }
 

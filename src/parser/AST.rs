@@ -1,13 +1,29 @@
 use smol_str::SmolStr;
-
+use crate::Token;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
-    Term(Vec<Expr>),
-    Factor(Vec<Expr>),
-    Unary(Box<Expr>),
-    Power(Vec<Expr>),
-    Group(Box<Expr>),
+    Term {
+        operator: Token,
+        left : Box<Expr>,
+        right : Box<Expr>
+    },
+    Factor {
+        operator: Token,
+        left : Box<Expr>,
+        right : Box<Expr>
+    },
+    Unary{
+        operator: Token,
+        expr : Box<Expr>,
+    },
+    Power {
+        left : Box<Expr>,
+        right : Box<Expr>
+    },
+    Group {
+        expr : Box<Expr>,
+    },
     Double(f32),
     Integer(i32),
     String(SmolStr),
@@ -20,15 +36,6 @@ pub enum Expr {
 
 impl Expr {
     pub fn traverse(&self) {
-        match self {
-            Expr::Term(children)
-          | Expr::Factor(children) => {
-            for node in children {
-                node.traverse();
-            }
-          }
-           Expr::Unary(expr)  => println!("{:?}", *expr),
-           _ => println!("{:?}", &self)
-        }
+    
     }
 }

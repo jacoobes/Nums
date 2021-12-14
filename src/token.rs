@@ -8,7 +8,7 @@ pub struct FileData {
 }
 
 /// Regular grammar for Nums 
-#[derive(Logos, Debug, PartialEq)]
+#[derive(Logos, Debug, PartialEq, Clone)]
 #[logos(extras = FileData)]
 pub enum Token {
 
@@ -42,6 +42,8 @@ pub enum Token {
     LeftArr,
     #[token(">")]
     RightArr,
+    #[token("/")]
+    FowardSlash,
 
     /// double must have a number before the '.' faulty: .12123, correct: 0.12123
     /// can also come in form of a percent!

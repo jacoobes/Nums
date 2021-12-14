@@ -1,31 +1,20 @@
 #[cfg(test)]
 mod ast {
-    use std::vec;
     use logos::Logos;
     use crate::{parser::{parse, ast::Expr}, token::Token};
+    use std::borrow::Cow;
 
-    #[test]
-    fn traverse () {
-       let new_expr = Expr::Term( 
-           vec![ 
-               Expr::Double(1.2),
-               Expr::Term( 
-                   vec![
-                       Expr::Double(10f32),
-                       Expr::Double(23213f32)
-                   ]
-               )
-           ]
-       );
-       new_expr.traverse(); 
+    fn create_tree<'a>(text: &'a str) -> Result<Vec<Expr>, Cow<'a, str>> {
+        let iterator = Token::lexer(text);
+        let mut parser = parse::Parser::new(iterator);
+        parser.parse()
     }
+
     #[test]
     fn simple_exprs() {
       let text = " '\n' 'r' 123213.2321312 420%  ";
-      let iterator = Token::lexer(text);
-      let mut parser = parse::Parser::new(iterator);
-        
-      match parser.parse() {
+      let tree= create_tree(text);
+      match tree {
         Ok(e) => println!("{:?}", &e),
         Err(e) => return println!("{}", &e)
         }
@@ -33,10 +22,7 @@ mod ast {
     #[test]
     fn grouping() {
         let text = r#"(((1)))"#;
-        let iterator = Token::lexer(text);
-        let mut parser = parse::Parser::new(iterator);
-
-        let tree =  parser.parse();
+        let tree= create_tree(text);
         match &tree {
             Ok(e) => println!("{:?}", &e),
             Err(_) => ()
@@ -46,14 +32,23 @@ mod ast {
     }
     #[test]
     fn unary() {
-        let text = "!true";
-        let iterator = Token::lexer(text);
-        let mut parser = parse::Parser::new(iterator);
-
-        let tree =  parser.parse();
+        let text = "!true !false +5 -5";
+        let tree= create_tree(text);
         
         println!("{:?}", &tree)
 
+    }
+    #[test]
+    fn power() {
+        let text = " 5 ^ 10    16 ^ 12 ^ 2";
+        let tree= create_tree(text);
+        println!("{:?}", &tree)
+    }
+    #[test]
+    fn factor() {
+        let text = "10 * 1 / 5";
+        let tree = create_tree(text);
+        println!("{:?}", &tree)
     }
 
 }
