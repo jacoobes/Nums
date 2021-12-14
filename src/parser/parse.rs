@@ -13,44 +13,30 @@ pub struct Parser<'a> {
 impl <'a> Parser <'a> {
     /// advances, expecting to there to be a token
     fn expect_token (&mut self, token: &Token) -> Result<Token, Cow<'a, str>> {
-        match self.tokens.next() {
-           Some(tok) if &tok == token => Ok(tok),
+        match self.tokens.peek() {
+           Some(tok) if tok == token => Ok(self.tokens.next().unwrap()),
            Some(tok) => Err(Cow::Owned(format!("Got {:?} token when expecting {:?}", &tok, token))),
            None => Err(Cow::Owned(format!("Parsed until end of token stream. Expected {:?}", token))) 
         }
     }
 
-    fn peek (&mut self) -> Result<&Token, ()> {
-        self.tokens.peek().ok_or(())
+    fn peek (&mut self) -> Option<&Token> {
+        self.tokens.peek().take()
     }
 
-    fn next (&mut self) -> Result<Token, Cow<'a, str>> {
-           self.tokens.next().ok_or(Cow::Borrowed("Unexpected end of parsing"))
+    fn next (&mut self) -> Result<Token, &'static str> {
+           self.tokens.next().ok_or("Unexpected end of parsing!")
     }
 
     fn check_peek (&mut self, token: &Token) -> bool {
         match self.peek() {
-            Ok(tok) => tok == token,
-            Err(_) => false
+            Some(tok) => tok == token,
+            None => false
         }
     }
 
-    fn is_at_end(&mut self) -> bool { matches!(self.peek(), Err(_)) }
+    fn is_at_end(&mut self) -> bool { matches!(self.peek(), None) }
 
-    fn match_advance (&mut self, token: &Token ) -> bool  {
-        match self.peek() {
-            Ok(_) => {
-                if self.check_peek(token) {
-                    self.next().unwrap();
-                    return true
-                };
-                    false
-                
-            },
-            Err(_) => false
-
-        }
-    }
 }
 
 
@@ -65,14 +51,11 @@ impl <'a> Parser <'a> {
     pub fn parse(&mut self) -> Result<Vec<Expr>, Cow<'a, str>> {
         let mut temp_vec : Vec<Expr> = Vec::new();
         loop {
-            if !self.is_at_end() {
-                match self.expr() {
-                    Ok(c) => temp_vec.push(c),
-                    Err(e) => break Err(e)
-                }
-            } else {
+            if self.is_at_end() {
                 break Ok(temp_vec)
             }
+            temp_vec.push(self.expr()?)
+
             
         }
 
@@ -90,31 +73,39 @@ impl <'a> Parser <'a> {
     }
 
     fn power (&mut self)-> Result<Expr, Cow<'a, str>> {
+
         self.unary()
     }
-
+    /// right associative unary parser
     fn unary (&mut self)-> Result<Expr, Cow<'a, str>> {
-        self.primary()
+        self.grouping()
+    }
+
+    fn grouping(&mut self) -> Result<Expr, Cow<'a, str>> {
+        if self.check_peek(&Token::LeftParen) {
+            self.next()?;
+            let expr = self.expr()?;
+            self.expect_token(&Token::RightParen)?;
+            Ok(Expr::Group(Box::new(expr)))
+        } else {
+            self.primary()
+        } 
     }
 
     fn primary (&mut self) -> Result<Expr, Cow<'a, str>> {
-
-            match self.peek().map_err(|_| Cow::Borrowed("End of parsing occured!"))? {
-                _ => {
-                    match self.next()? {
-                        Token::LeftParen => {
-                            let expr = self.expr();
-                            self.expect_token(&Token::RightParen)?;
-                            Ok(Expr::Group(Box::new(expr?)))
-                        }
+        
+            match self.peek() {
+                Some(_) => {
+                     match self.next()? {
                         Token::Bool(val) => Ok(Expr::Bool(val)),
                         Token::Double(s) =>  Ok(Expr::Double(s)),
                         Token::Integer(val) => Ok(Expr::Integer(val)),
                         Token::String(val) => Ok(Expr::String(val)),
                         Token::Char(c) => Ok(Expr::Char(c)),
                         other => Err(Cow::Owned(format!("Invalid token {:?} ", other )))
-                    }
+                     }  
                 }
+                None => Err(Cow::Borrowed("fdsfsd"))
                             
             }
 

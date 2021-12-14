@@ -6,7 +6,8 @@ pub enum Faults {
 
 
 pub enum ErrTyp {
-    UnknownToken
+    UnknownToken,
+    UnexpectedEndOfParsing
 }
 
 

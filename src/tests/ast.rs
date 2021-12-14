@@ -32,16 +32,28 @@ mod ast {
     }
     #[test]
     fn grouping() {
-        let text = "((' '))";
+        let text = r#"(((1)))"#;
         let iterator = Token::lexer(text);
         let mut parser = parse::Parser::new(iterator);
 
-        let tree =  parser.parse().unwrap();
+        let tree =  parser.parse();
+        match &tree {
+            Ok(e) => println!("{:?}", &e),
+            Err(_) => ()
+        }
+        println!("{:?}", &tree);
         
-        assert_eq!(
-            tree[0],
-            Expr::Group(Box::new(Expr::Group(Box::new(Expr::Char(' ')))))
-        )
+    }
+    #[test]
+    fn unary() {
+        let text = "!true";
+        let iterator = Token::lexer(text);
+        let mut parser = parse::Parser::new(iterator);
+
+        let tree =  parser.parse();
+        
+        println!("{:?}", &tree)
+
     }
 
 }

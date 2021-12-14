@@ -6,6 +6,7 @@ pub enum Expr {
     Term(Vec<Expr>),
     Factor(Vec<Expr>),
     Unary(Box<Expr>),
+    Power(Vec<Expr>),
     Group(Box<Expr>),
     Double(f32),
     Integer(i32),
