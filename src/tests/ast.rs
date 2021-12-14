@@ -40,13 +40,13 @@ mod ast {
     }
     #[test]
     fn power() {
-        let text = " 5 ^ 10    16 ^ 12 ^ 2";
+        let text = " 5 ^ 10    16 ^ 12 ^ 1";
         let tree= create_tree(text);
         println!("{:?}", &tree)
     }
     #[test]
     fn factor() {
-        let text = "10 * 1 / 5";
+        let text = "10 + 1 / 5";
         let tree = create_tree(text);
         println!("{:?}", &tree)
     }

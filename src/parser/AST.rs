@@ -1,14 +1,12 @@
 use smol_str::SmolStr;
 use crate::Token;
 
+///
+/// Possible to refactor and use different data structure (small vec)? instead of Box to increase compile speed!
+/// 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
-    Term {
-        operator: Token,
-        left : Box<Expr>,
-        right : Box<Expr>
-    },
-    Factor {
+    Binary {
         operator: Token,
         left : Box<Expr>,
         right : Box<Expr>
@@ -16,10 +14,6 @@ pub enum Expr {
     Unary{
         operator: Token,
         expr : Box<Expr>,
-    },
-    Power {
-        left : Box<Expr>,
-        right : Box<Expr>
     },
     Group {
         expr : Box<Expr>,
