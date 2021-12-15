@@ -2,9 +2,9 @@
 mod ast {
     use logos::Logos;
     use crate::{parser::{parse, ast::Expr}, token::Token};
-    use std::borrow::Cow;
+    use crate::error_handling::span::Span;
 
-    fn create_tree<'a>(text: &'a str) -> Result<Vec<Expr>, Cow<'a, str>> {
+    fn create_tree<'a>(text: &'a str) -> Result<Vec<Expr>, Span> {
         let iterator = Token::lexer(text);
         let mut parser = parse::Parser::new(iterator);
         parser.parse()
@@ -16,7 +16,7 @@ mod ast {
       let tree= create_tree(text);
       match tree {
         Ok(e) => println!("{:?}", &e),
-        Err(e) => return println!("{}", &e)
+        Err(e) => return println!("{:?}", &e)
         }
     }
     #[test]
@@ -25,9 +25,8 @@ mod ast {
         let tree= create_tree(text);
         match &tree {
             Ok(e) => println!("{:?}", &e),
-            Err(_) => ()
+            Err(e) => println!("{:?}", &e)
         }
-        println!("{:?}", &tree);
         
     }
     #[test]
@@ -40,15 +39,21 @@ mod ast {
     }
     #[test]
     fn power() {
-        let text = " 5 ^ 10    16 ^ 12 ^ 1";
+        let text = "5 ^ 10 16 ^ 12 ^ as";
         let tree= create_tree(text);
-        println!("{:?}", &tree)
+        match tree {
+            Ok(e) => println!("{:?}", &e),
+            Err(span) => println!("{:?}", span)
+        }
     }
     #[test]
     fn factor() {
-        let text = "10 + 1 / 5";
+        let text = "10 + 1 / 10";
         let tree = create_tree(text);
-        println!("{:?}", &tree)
+        match tree {
+            Ok(e) => println!("{:?}", &e),
+            Err(span) => println!("{:?}", span)
+        }
     }
 
 }

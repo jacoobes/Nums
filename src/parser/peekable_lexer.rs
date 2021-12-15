@@ -18,7 +18,7 @@ impl <'source> Peekable<'source> {
     }
 
     pub fn cur_line(&mut self) -> usize {
-        self.lexer.extras.line_breaks
+        self.lexer.extras.line_breaks + 1
     }
 
 }

@@ -21,15 +21,9 @@ pub enum Expr {
     Double(f32),
     Integer(i32),
     String(SmolStr),
-    F64(f64),
-    I64(i64),
+//    F64(f64), maybe add float64 and i64 literals in the future?
+//    I64(i64),
     Bool(bool),
     Char(char)
 
-}
-
-impl Expr {
-    pub fn traverse(&self) {
-    
-    }
 }

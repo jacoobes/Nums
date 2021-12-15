@@ -17,7 +17,7 @@ fn main() {
 
    match parser.parse() {
        Ok(vec) => println!("{:?}", &vec),
-       Err(e) => println!("{}", e)
+       Err(e) => println!("{:?}", e)
    }
 
 }

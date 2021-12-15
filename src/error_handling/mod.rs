@@ -1,2 +1,2 @@
 pub mod span;
-mod faults;
+pub mod faults;
