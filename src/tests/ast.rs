@@ -39,7 +39,7 @@ mod ast {
     }
     #[test]
     fn power() {
-        let text = "5 ^ 10 16 ^ 12 ^ as";
+        let text = "5 ^ 10 + 16 + - ^ ^";
         let tree= create_tree(text);
         match tree {
             Ok(e) => println!("{:?}", &e),

@@ -1,11 +1,12 @@
 use super::ast::Expr;
-use crate::{match_adv, lexer_span};
+use crate::match_adv;
 use crate::parser::peekable_lexer::Peekable as PeekerWrap;
 use crate::token::Token;
 use logos::Lexer;
+use smol_str::SmolStr;
 use crate::error_handling::faults::*;
 use crate::error_handling::span::Span;
-use crate::error_handling::faults::ErrTyp::*;
+use crate::error_handling::faults::{Faults::*, ErrTyp::*};
 pub struct Parser<'a> {
     tokens: PeekerWrap<'a>,
 }
@@ -16,8 +17,11 @@ impl<'a> Parser<'a> {
     fn expect_token(&mut self, token: &Token) -> Result<Token, Span> {
         match self.tokens.peek() {
             Some(tok) if tok == token => Ok(self.tokens.next().unwrap()),
-            Some(_) => Err( lexer_span!(&mut self, UnexpectedToken, "placeholder")),
-            None => Err( lexer_span!(&mut self, UnexpectedToken, "lorem ipsum")),
+            Some(_) => {
+                let fault = self.next()?;
+                Err(self.new_span(Error( Expected(fault, token.clone()))))
+            }
+            None => Err( self.new_span(Error( UnexpectedEndOfParsing)))
         }
     }
     fn peek(&mut self) -> Option<&Token> {
@@ -25,7 +29,7 @@ impl<'a> Parser<'a> {
     }
 
     fn next(&mut self) -> Result<Token, Span> {
-        self.tokens.next().ok_or( lexer_span!(&mut self, UnexpectedEndOfParsing, "placeholder"))
+        self.tokens.next().ok_or( self.new_span(Error(UnexpectedEndOfParsing)))
     }
 
     fn check_peek(&mut self, token: &Token) -> bool {
@@ -122,7 +126,7 @@ impl<'a> Parser<'a> {
         if self.check_peek(&Token::LeftParen) {
             self.next()?;
             let expr = self.expr()?;
-            self.expect_token(&Token::RightParen).map_err( |_| lexer_span!(&mut self, ExpectedClosingParen, "placeholder" ))?;
+            self.expect_token(&Token::RightParen).map_err( |_| self.new_span(Error(ExpectedClosingParen)))?;
             Ok(Expr::Group {
                 expr: Box::new(expr),
             })
@@ -133,7 +137,7 @@ impl<'a> Parser<'a> {
 
     fn primary(&mut self) -> Result<Expr, Span> {
         if self.is_at_end() {
-            return Err( lexer_span!(&mut self, UnexpectedEndOfParsing, "placeholder"  ));
+            return Err( self.new_span(Error(UnexpectedEndOfParsing)) );
         }
         match self.peek().unwrap() {
             _ => match self.next()? {
@@ -142,8 +146,25 @@ impl<'a> Parser<'a> {
                 Token::Integer(val) => Ok(Expr::Integer(val)),
                 Token::String(val) => Ok(Expr::String(val)),
                 Token::Char(c) => Ok(Expr::Char(c)),
-                _ => Err( lexer_span!(&mut self, UnknownToken,"placeholder")  ),
+                Token::Error => {
+                    let unknown_token = SmolStr::new(self.tokens.slice());
+                    Err( self.new_span( Error(UnknownToken(unknown_token)) ))
+                }
+                other => Err ( self.new_span(Error(UnexpectedToken(other))))
             },
         }
     }
+}
+
+
+impl <'a> Parser <'a> {
+
+    fn new_span(&mut self, fault:Faults) -> Span {
+        Span::new(
+            "placeholder".to_string(),
+              self.tokens.slice().to_string(),
+                     self.tokens.cur_line(),
+                 fault)
+    }
+
 }

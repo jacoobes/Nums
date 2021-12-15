@@ -1,5 +1,5 @@
 
-use std::{fmt::Debug, ops::Range};
+use std::fmt::Debug;
 use smol_str::SmolStr;
 use ansi_term::{Colour::*, Style};
 use super::faults::Faults;
@@ -15,7 +15,7 @@ impl Debug for Span {
         writeln!(f, "{: >10?}    ", self.typ)?;
         writeln!(f, "||  {}  {: >7}", Style::new().bold().paint("@"), Cyan.bold().paint(format!("{}{}", "src\\main.nums:", self.line)))?;
         writeln!(f, "||")?;
-        writeln!(f, "||    {}", Style::new().bold().paint(&self.source))?;    
+        writeln!(f, "||  \"{}\"", Style::new().bold().paint(&self.source))?;    
         writeln!(f, "||    {}", "^".repeat(self.source.len()))
     }
 }
