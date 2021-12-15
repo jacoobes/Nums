@@ -175,6 +175,7 @@ impl<'a> Parser<'a> {
                 Token::Integer(val) => Ok(Expr::Integer(val)),
                 Token::String(val) => Ok(Expr::String(val)),
                 Token::Char(c) => Ok(Expr::Char(c)),
+                Token::Unit => Ok(Expr::Unit),
                 Token::Error => {
                     let unknown_token = SmolStr::new(self.tokens.slice());
                     Err(self.new_span(Error(UnknownToken(unknown_token))))

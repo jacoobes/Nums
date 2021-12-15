@@ -21,6 +21,7 @@ pub enum Expr {
     Double(f32),
     Integer(i32),
     String(SmolStr),
+    Unit,
     //    F64(f64), maybe add float64 and i64 literals in the future?
     //    I64(i64),
     Bool(bool),
