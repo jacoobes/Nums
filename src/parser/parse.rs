@@ -1,12 +1,12 @@
 use super::ast::Expr;
+use crate::error_handling::faults::*;
+use crate::error_handling::faults::{ErrTyp::*, Faults::*};
+use crate::error_handling::span::Span;
 use crate::match_adv;
 use crate::parser::peekable_lexer::Peekable as PeekerWrap;
 use crate::token::Token;
 use logos::Lexer;
 use smol_str::SmolStr;
-use crate::error_handling::faults::*;
-use crate::error_handling::span::Span;
-use crate::error_handling::faults::{Faults::*, ErrTyp::*};
 pub struct Parser<'a> {
     tokens: PeekerWrap<'a>,
 }
@@ -19,9 +19,9 @@ impl<'a> Parser<'a> {
             Some(tok) if tok == token => Ok(self.tokens.next().unwrap()),
             Some(_) => {
                 let fault = self.next()?;
-                Err(self.new_span(Error( Expected(fault, token.clone()))))
+                Err(self.new_span(Error(Expected(fault, token.clone()))))
             }
-            None => Err( self.new_span(Error( UnexpectedEndOfParsing)))
+            None => Err(self.new_span(Error(UnexpectedEndOfParsing))),
         }
     }
     fn peek(&mut self) -> Option<&Token> {
@@ -29,7 +29,9 @@ impl<'a> Parser<'a> {
     }
 
     fn next(&mut self) -> Result<Token, Span> {
-        self.tokens.next().ok_or( self.new_span(Error(UnexpectedEndOfParsing)))
+        self.tokens
+            .next()
+            .ok_or(self.new_span(Error(UnexpectedEndOfParsing)))
     }
 
     fn check_peek(&mut self, token: &Token) -> bool {
@@ -79,7 +81,7 @@ impl<'a> Parser<'a> {
         left
     }
 
-    fn factor(&mut self) -> Result<Expr,Span> {
+    fn factor(&mut self) -> Result<Expr, Span> {
         let mut left = self.power();
         while let Some(tok) = match_adv!(&mut self, &Token::Star | &Token::FowardSlash) {
             let right = self.power();
@@ -92,7 +94,7 @@ impl<'a> Parser<'a> {
         left
     }
     ///right associative
-    fn power(&mut self) -> Result<Expr,Span> {
+    fn power(&mut self) -> Result<Expr, Span> {
         let left = self.unary();
         match self.peek() {
             Some(token) if matches!(token, &Token::Caret) => {
@@ -110,7 +112,7 @@ impl<'a> Parser<'a> {
     /// right associative unary parser
     fn unary(&mut self) -> Result<Expr, Span> {
         match self.peek() {
-            Some(token) if matches!(token, &Token::Bang | &Token::Minus | &Token::Plus ) => {
+            Some(token) if matches!(token, &Token::Bang | &Token::Minus | &Token::Plus) => {
                 let operator = self.next()?;
                 let expr = self.unary();
                 Ok(Expr::Unary {
@@ -126,7 +128,8 @@ impl<'a> Parser<'a> {
         if self.check_peek(&Token::LeftParen) {
             self.next()?;
             let expr = self.expr()?;
-            self.expect_token(&Token::RightParen).map_err( |_| self.new_span(Error(ExpectedClosingParen)))?;
+            self.expect_token(&Token::RightParen)
+                .map_err(|_| self.new_span(Error(ExpectedClosingParen)))?;
             Ok(Expr::Group {
                 expr: Box::new(expr),
             })
@@ -137,7 +140,7 @@ impl<'a> Parser<'a> {
 
     fn primary(&mut self) -> Result<Expr, Span> {
         if self.is_at_end() {
-            return Err( self.new_span(Error(UnexpectedEndOfParsing)) );
+            return Err(self.new_span(Error(UnexpectedEndOfParsing)));
         }
         match self.peek().unwrap() {
             _ => match self.next()? {
@@ -148,23 +151,21 @@ impl<'a> Parser<'a> {
                 Token::Char(c) => Ok(Expr::Char(c)),
                 Token::Error => {
                     let unknown_token = SmolStr::new(self.tokens.slice());
-                    Err( self.new_span( Error(UnknownToken(unknown_token)) ))
+                    Err(self.new_span(Error(UnknownToken(unknown_token))))
                 }
-                other => Err ( self.new_span(Error(UnexpectedToken(other))))
+                other => Err(self.new_span(Error(UnexpectedToken(other)))),
             },
         }
     }
 }
 
-
-impl <'a> Parser <'a> {
-
-    fn new_span(&mut self, fault:Faults) -> Span {
+impl<'a> Parser<'a> {
+    fn new_span(&mut self, fault: Faults) -> Span {
         Span::new(
             "placeholder".to_string(),
-              self.tokens.slice().to_string(),
-                     self.tokens.cur_line(),
-                 fault)
+            self.tokens.slice().to_string(),
+            self.tokens.cur_line(),
+            fault,
+        )
     }
-
 }
