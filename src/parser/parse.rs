@@ -1,6 +1,5 @@
 use super::ast::Expr;
-use crate::error_handling::faults::*;
-use crate::error_handling::faults::{ErrTyp::*, Faults::*};
+use crate::error_handling::faults::{ErrTyp::*, Faults::*, *};
 use crate::error_handling::span::Span;
 use crate::match_adv;
 use crate::parser::peekable_lexer::Peekable as PeekerWrap;
@@ -66,8 +65,35 @@ impl<'a> Parser<'a> {
         }
     }
     fn expr(&mut self) -> Result<Expr, Span> {
-        self.term()
+        self.equality()
     }
+    fn equality(&mut self) -> Result<Expr, Span> {
+        let mut left = self.compare();
+        while let Some(tok) = match_adv!(&mut self, &Token::Eq | &Token::NotEq) {
+            let right = self.compare();
+            left = Ok ( Expr::Binary {
+                operator: tok,
+                left : Box::new(left?),
+                right: Box::new(right?)
+             } )
+        }
+        left
+
+    }
+
+    fn compare(&mut self) -> Result<Expr, Span> {
+        let mut left = self.term();
+        while let Some(tok) = match_adv!(&mut self, &Token::LessEq | &Token::GreaterEq | &Token::LeftArr | &Token::RightArr) {
+            let right = self.term();
+            left = Ok ( Expr::Binary {
+                operator: tok,
+                left : Box::new(left?),
+                right: Box::new(right?)
+             } )
+        }
+        left
+    }
+
     fn term(&mut self) -> Result<Expr, Span> {
         let mut left = self.factor();
         while let Some(tok) = match_adv!(&mut self, &Token::Minus | &Token::Plus) {

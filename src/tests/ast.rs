@@ -55,5 +55,23 @@ mod ast {
             Err(span) => println!("{:?}", span)
         }
     }
+    #[test]
+    fn compare() {
+        let text = "1 != 1";
+        let tree = create_tree(text);
+        match tree {
+            Ok(e) => println!("{:?}", &e),
+            Err(span) => println!("{:?}", &span)
+        }
+    }
+    #[test]
+    fn  equality() {
+        let text = "(1 <= 1) + (1 == 5)";
+        let tree = create_tree(text);
+        match tree {
+            Ok(e) => println!("{:?}", &e),
+            Err(span) => println!("{:?}", &span)
+        }
+    }
 
 }
