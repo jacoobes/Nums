@@ -1,6 +1,6 @@
 module a;
 
 
-    fun test | a: int| (
+    fun test | a: int | (
         
     ) -> str

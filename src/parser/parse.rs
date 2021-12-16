@@ -6,12 +6,12 @@ use crate::parser::peekable_lexer::Peekable as PeekerWrap;
 use crate::token::Token;
 use logos::Lexer;
 use smol_str::SmolStr;
-pub struct Parser<'a> {
-    tokens: PeekerWrap<'a>,
+pub struct Parser<'source> {
+    tokens: PeekerWrap<'source>,
 }
 
 ///iterator methods
-impl<'a> Parser<'a> {
+impl<'source> Parser<'source> {
     /// advances, expecting to there to be a token
     fn expect_token(&mut self, token: &Token) -> Result<Token, Span> {
         match self.tokens.peek() {
@@ -48,8 +48,8 @@ impl<'a> Parser<'a> {
 /// Basic recursive descent parsing
 /// Errors are made using Spans, which will pretty print the error and its possible (not tested if accurate) location
 /// First pass of the parser can detect basic unknown token errors, expected tokens, etc
-impl<'a> Parser<'a> {
-    pub fn new(tokens: Lexer<'a, Token>) -> Self {
+impl<'source> Parser<'source> {
+    pub fn new(tokens: Lexer<'source, Token>) -> Self {
         Self {
             tokens: PeekerWrap::new(tokens.source()),
         }
@@ -193,7 +193,7 @@ impl<'a> Parser<'a> {
     }
 }
 
-impl<'a> Parser<'a> {
+impl<'source> Parser<'source> {
     fn new_span(&mut self, fault: Faults) -> Span {
         Span::new(
             "placeholder".to_string(),

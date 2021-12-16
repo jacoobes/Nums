@@ -31,8 +31,8 @@ pub enum Expr {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Statements {
     //an expression, but has semicolon at end
-    ExprStatement(Expr),
-
-   //function  name
-     Function(Token)
+     ExprStatement(Expr),
+    
+   //function  name  args: name : type   
+     Function(Token, Vec<(Token, Token)>)
 }
