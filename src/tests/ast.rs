@@ -12,7 +12,7 @@ mod ast {
 
     #[test]
     fn simple_exprs() {
-      let text = " '\n' 'r' 123213.2321312 420%  ";
+      let text = " '\n' 'r' 123213.2321312 420%  ()";
       let tree= create_tree(text);
       match tree {
         Ok(e) => println!("{:?}", &e),
