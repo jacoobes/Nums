@@ -1,4 +1,4 @@
-use super::ast::Expr;
+use super::ast::{Expr, Statements};
 use crate::error_handling::faults::{ErrTyp::*, Faults::*, *};
 use crate::error_handling::span::Span;
 use crate::match_adv;
@@ -55,18 +55,25 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Expr>, Span> {
-        let mut temp_vec: Vec<Expr> = Vec::new();
+    pub fn parse(&mut self) -> Result<Vec<Statements>, Span> {
+        let mut temp_vec: Vec<_> = Vec::new();
         loop {
             if self.is_at_end() {
                 break Ok(temp_vec);
             }
-            temp_vec.push(self.expr()?)
+            temp_vec.push(self.stmt_expr()?)
         }
     }
+    fn stmt_expr(&mut self) -> Result<Statements, Span> {
+       let value_of_statement = self.expr();
+       self.expect_token(&Token::Semi)?;
+       Ok(Statements::ExprStatement(value_of_statement?))
+    }
+
     fn expr(&mut self) -> Result<Expr, Span> {
         self.equality()
     }
+    
     fn equality(&mut self) -> Result<Expr, Span> {
         let mut left = self.compare();
         while let Some(tok) = match_adv!(&mut self, &Token::Eq | &Token::NotEq) {

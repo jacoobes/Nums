@@ -27,3 +27,12 @@ pub enum Expr {
     Bool(bool),
     Char(char),
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Statements {
+    //an expression, but has semicolon at end
+    ExprStatement(Expr),
+
+   //function  name
+     Function(Token)
+}

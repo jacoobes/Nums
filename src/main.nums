@@ -1,0 +1,6 @@
+module a;
+
+
+    fun test | a: int| (
+        
+    ) -> str
