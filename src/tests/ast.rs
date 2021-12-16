@@ -21,7 +21,7 @@ mod ast {
     }
     #[test]
     fn grouping() {
-        let text = r#"(((1)))"#;
+        let text = r#"((()))"#;
         let tree= create_tree(text);
         match &tree {
             Ok(e) => println!("{:?}", &e),

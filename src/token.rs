@@ -34,7 +34,7 @@ pub enum Token {
     Get,
     #[token("from")]
     From,
-    #[token("contain")]
+    #[token("module")]
     Container,
     #[token("expose")]
     Expose,
