@@ -29,10 +29,15 @@ pub enum Expr {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Statements {
+pub enum Stmt {
     //an expression, but has semicolon at end
      ExprStatement(Expr),
-    
-   //function  name  args: name : type   
-     Function(Token, Vec<(Token, Token)>)
+     
+     VarDecl(SmolStr, SmolStr, Box<Stmt>),
+
+     Block(Vec<Stmt>),
+   //function  name    args: name : type       Body         
+     Function(SmolStr, Option<Vec<(Token, Token)>>,  Vec<Stmt>, Option<Token>),
+
+     Module(SmolStr)
 }

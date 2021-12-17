@@ -76,17 +76,18 @@ pub enum Token {
     ///  can be used as expression to convert or type declaration
     // #[token("f64")]
     // F64,
-    #[token("f32")]
-    F32,
+    #[token("float")]
+    Float,
     // #[token("i64")]
     // I64,
-    #[token("i32")]
-    I32,
+    #[token("int")]
+    Int,
     #[token("str")]
     Str,
     #[token("boolean")]
     Boolean,
-
+    #[token("~")]
+    Infer,
     #[token(",")]
     Comma,
     #[token(".")]
@@ -119,6 +120,10 @@ pub enum Token {
     LeftBrack,
     #[token("]")]
     RightBrack,
+    #[token("{")]
+    LeftBrace,
+    #[token("}")]
+    RightBrace,
     #[token("==")]
     Eq,
     #[token("!=")]
@@ -132,7 +137,7 @@ pub enum Token {
     //multiline comments :> (anything) <:
     #[regex(r":>[^<]*(?:[^<:]*)<:", logos::skip)]
     //single line comments
-    #[regex(r"~~[^\n]*\n+", logos::skip)]
+    #[regex(r"--[^\n]*\n+", logos::skip)]
     //skip
     #[token("\n", |lex| lex.extras.line_breaks += 1; logos::Skip)]
     #[regex(r"[ \t\n\f\r]", logos::skip)]

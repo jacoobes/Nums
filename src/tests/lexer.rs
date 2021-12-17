@@ -70,8 +70,8 @@ mod lexer {
         assert_eq!(Some(Identifier), tokens.next());
         assert_eq!(Some(Container), tokens.next());
        // assert_eq!(Some(F64), tokens.next());
-        assert_eq!(Some(F32), tokens.next());
-        assert_eq!(Some(I32), tokens.next());
+        assert_eq!(Some(Float), tokens.next());
+        assert_eq!(Some(Int), tokens.next());
       //  assert_eq!(Some(I64), tokens.next());
         assert_eq!(Some(Boolean), tokens.next());
         assert_eq!(Some(Str), tokens.next());

@@ -1,4 +1,5 @@
 
+use core::panic;
 use std::fmt::Debug;
 use smol_str::SmolStr;
 use ansi_term::{Colour::*, Style};

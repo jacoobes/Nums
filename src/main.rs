@@ -16,7 +16,7 @@ fn main() {
    let mut parser = parser::parse::Parser::new(iterator);
 
    match parser.parse() {
-       Ok(vec) => println!("{:?}", &vec),
+       Ok(vec) => vec.iter().for_each(|s| println!("{:?}", s)),
        Err(e) => println!("{:?}", e)
    }
 

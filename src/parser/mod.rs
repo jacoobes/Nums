@@ -1,6 +1,7 @@
 pub mod parse;
 pub mod ast;
 pub mod peekable_lexer;
+pub mod types;
 
 #[macro_export]
 macro_rules! match_adv {

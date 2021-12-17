@@ -1,3 +1,4 @@
+
 use crate::Token;
 use ansi_term::Colour::*;
 use smol_str::SmolStr;
@@ -12,6 +13,9 @@ pub enum ErrTyp {
     UnexpectedToken(Token),
     ExpectedClosingParen,
     Expected(Token, Token),
+    NoTopLevelDeclaration,
+    UnknownType(Token),
+    MaxArgCount
 }
 
 #[derive(Debug)]
@@ -34,6 +38,9 @@ impl std::fmt::Debug for ErrTyp {
             Self::UnexpectedToken(arg0) => write!(f, "UnexpectedToken : {:?}", arg0),
             Self::ExpectedClosingParen => write!(f, "ExpectedClosingParen"),
             Self::Expected(tok, other) => write!(f, "Expected {:?} got {:?}", tok, other),
+            Self::NoTopLevelDeclaration => write!(f, "NoTopLevelDeclaration : In this file, expected a function or module declaration, found none"),
+            Self::UnknownType(token) => write!(f, "Unknown type. The compiler couldn't resolve {:?} as a type ", token),
+            Self::MaxArgCount => write!(f, "Maximum argument count reached! Max is 4")
         }
     }
 }

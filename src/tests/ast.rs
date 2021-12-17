@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod ast {
     use logos::Logos;
-    use crate::{parser::{parse, ast::Statements}, token::Token};
+    use crate::{parser::{parse, ast::Stmt}, token::Token};
     use crate::error_handling::span::Span;
 
-    fn create_tree<'a>(text: &'a str) -> Result<Vec<Statements>, Span> {
+    fn create_tree<'a>(text: &'a str) -> Result<Vec<Stmt>, Span> {
         let iterator = Token::lexer(text);
         let mut parser = parse::Parser::new(iterator);
         parser.parse()
@@ -82,5 +82,15 @@ mod ast {
             Err(span) => println!("{:?}", &span)
         }
     }
+    #[test]
+    fn var_decl() {
+        let text = " ~ a = 1 + 1;";
+        let text2 = "str a =\" 13221 \" ";
+        let tree = create_tree(text);
+        match tree {
+            Ok(e) => println!("{:?}", &e),
+            Err(span) => println!("{:?}", &span)
+        }
+    }   
 
 }

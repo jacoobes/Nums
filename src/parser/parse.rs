@@ -1,4 +1,4 @@
-use super::ast::{Expr, Statements};
+use super::ast::{Expr, Stmt};
 use crate::error_handling::faults::{ErrTyp::*, Faults::*, *};
 use crate::error_handling::span::Span;
 use crate::match_adv;
@@ -17,8 +17,8 @@ impl<'source> Parser<'source> {
         match self.tokens.peek() {
             Some(tok) if tok == token => Ok(self.tokens.next().unwrap()),
             Some(_) => {
-                let fault = self.next()?;
-                Err(self.new_span(Error(Expected(fault, token.clone()))))
+                let fault = self.next();
+                Err(self.new_span(Error(Expected( token.clone(), fault?,))))
             }
             None => Err(self.new_span(Error(UnexpectedEndOfParsing))),
         }
@@ -55,19 +55,49 @@ impl<'source> Parser<'source> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Statements>, Span> {
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, Span> {
         let mut temp_vec: Vec<_> = Vec::new();
         loop {
             if self.is_at_end() {
                 break Ok(temp_vec);
             }
-            temp_vec.push(self.stmt_expr()?)
+            temp_vec.push(self.stmt_block()?)
         }
     }
-    fn stmt_expr(&mut self) -> Result<Statements, Span> {
+
+    // fn top_level(&mut self) -> Result<Stmt, Span> {
+    //     if let Some(tok) = match_adv!(&mut self, &Token::Function | &Token::Container) {
+    //         match tok {
+    //             Token::Function  => Ok(self.parse_fn()?),
+    //             _ => Err(self.new_span(Error(UnknownType(Token::LeftParen))))
+    //         }
+    //     }   else {
+    //         self.var_decl()
+    //     }    
+        
+    // }
+
+    fn stmt_block(&mut self) -> Result<Stmt, Span> {
+        self.var_decl()
+    }
+
+    fn var_decl(&mut self) -> Result<Stmt, Span> {
+        match self.get_type() {
+            Ok(tok) => {
+                let typ_name = SmolStr::from(self.tokens.slice());
+                self.expect_token(&Token::Identifier)?;
+                let name = SmolStr::from(self.tokens.slice());
+                self.expect_token(&Token::Assign)?;
+                Ok(Stmt::VarDecl(typ_name, name, Box::new(self.stmt_expr()?)))
+            },
+            Err(e) => Err(e)
+        }
+    }
+
+    fn stmt_expr(&mut self) -> Result<Stmt, Span> {
        let value_of_statement = self.expr();
        self.expect_token(&Token::Semi)?;
-       Ok(Statements::ExprStatement(value_of_statement?))
+       Ok(Stmt::ExprStatement(value_of_statement?))
     }
 
     fn expr(&mut self) -> Result<Expr, Span> {
@@ -191,6 +221,59 @@ impl<'source> Parser<'source> {
             },
         }
     }
+
+    // fn parse_fn(&mut self) -> Result<Stmt, Span>  {
+    //         self.expect_token(&Token::Identifier)?;
+    //         let name = SmolStr::from(self.tokens.slice());
+    //         println!("{}", name);
+    //         let args = self.parse_args()?;
+    //         self.expect_token(&Token::Assign)?;
+    //         let ret_typ = self.get_type()?;
+    //         Ok(Stmt::Function(name, args, self.block()?, ret_typ))
+    // }
+    
+    // fn parse_args(&mut self, ) -> Result<Option<Vec<(Token, Token)>>, Span> {
+    //     match self.next()? {
+    //         Token::Bar => {
+    //             let mut vec_args  = Vec::new();
+    //             while !self.check_peek(&Token::Bar) {
+    //                 if vec_args.len() == 4 { return Err(self.new_span(Error(ErrTyp::MaxArgCount)));};
+    //                 let arg_typ = self.get_type()?;
+    //                 let arg_name = self.expect_token(&Token::Identifier)?;
+    //                 vec_args.push((arg_typ, arg_name));
+    //            }
+    //         self.expect_token(&Token::Bar)?;
+    //         Ok(Some(vec_args))
+    //         },
+    //      Token::LeftParen => Ok(None),
+    //      other => Err(self.new_span(Error(UnexpectedToken(other)))) 
+    //     }
+    // }
+
+    fn block(&mut self) -> Result<Vec<Stmt>, Span> {
+        let mut stmts_block = Vec::new();
+        self.expect_token(&Token::LeftBrace)?;
+        while !self.check_peek(&Token::RightBrace) {
+            stmts_block.push(self.var_decl()?)
+        }
+        self.expect_token(&Token::RightBrace)?;
+        Ok(stmts_block)
+    }
+
+    fn get_type(&mut self) -> Result<Token, Span> {
+        let typ = self.next()?;
+        match typ {
+             Token::Identifier  
+            | Token::Int 
+            | Token::Float 
+            | Token::Str
+            | Token::Boolean
+            | Token::Unit
+            | Token::Infer => Ok(typ),
+            other => Err(self.new_span(Error(UnknownType(other))))
+        }
+    }
+    
 }
 
 impl<'source> Parser<'source> {
