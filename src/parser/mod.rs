@@ -12,3 +12,16 @@ macro_rules! match_adv {
         }
     };
 }
+
+#[macro_export]
+macro_rules! create_binexpr {
+    (&mut $self:ident, $token:expr, $left:expr, $right:expr ) => {
+        Ok (
+            $crate::parser::ast::Expr::Binary {
+                operator : $token,
+                left : Box::new($left?),
+                right: Box::new($right?)
+            }
+        )
+    };
+}

@@ -1,7 +1,7 @@
 use super::ast::{Expr, Stmt};
 use crate::error_handling::faults::{ErrTyp::*, Faults::*, *};
 use crate::error_handling::span::Span;
-use crate::match_adv;
+use crate::{match_adv, create_binexpr};
 use crate::parser::peekable_lexer::Peekable as PeekerWrap;
 use crate::token::Token;
 use logos::Lexer;
@@ -106,13 +106,9 @@ impl<'source> Parser<'source> {
     
     fn equality(&mut self) -> Result<Expr, Span> {
         let mut left = self.compare();
-        while let Some(tok) = match_adv!(&mut self, &Token::Eq | &Token::NotEq) {
+        while let Some(operator) = match_adv!(&mut self, &Token::Eq | &Token::NotEq) {
             let right = self.compare();
-            left = Ok ( Expr::Binary {
-                operator: tok,
-                left : Box::new(left?),
-                right: Box::new(right?)
-             } )
+            left = create_binexpr!(&mut self, operator, left, right);
         }
         left
 
@@ -120,39 +116,27 @@ impl<'source> Parser<'source> {
 
     fn compare(&mut self) -> Result<Expr, Span> {
         let mut left = self.term();
-        while let Some(tok) = match_adv!(&mut self, &Token::LessEq | &Token::GreaterEq | &Token::LeftArr | &Token::RightArr) {
+        while let Some(operator) = match_adv!(&mut self, &Token::LessEq | &Token::GreaterEq | &Token::LeftArr | &Token::RightArr) {
             let right = self.term();
-            left = Ok ( Expr::Binary {
-                operator: tok,
-                left : Box::new(left?),
-                right: Box::new(right?)
-             } )
+            left = create_binexpr!(&mut self, operator, left, right);
         }
         left
     }
 
     fn term(&mut self) -> Result<Expr, Span> {
         let mut left = self.factor();
-        while let Some(tok) = match_adv!(&mut self, &Token::Minus | &Token::Plus) {
+        while let Some(operator) = match_adv!(&mut self, &Token::Minus | &Token::Plus) {
             let right = self.factor();
-            left = Ok(Expr::Binary {
-                operator: tok,
-                left: Box::new(left?),
-                right: Box::new(right?),
-            });
+            left = create_binexpr!(&mut self, operator, left, right);
         }
         left
     }
 
     fn factor(&mut self) -> Result<Expr, Span> {
         let mut left = self.power();
-        while let Some(tok) = match_adv!(&mut self, &Token::Star | &Token::FowardSlash) {
+        while let Some(operator) = match_adv!(&mut self, &Token::Star | &Token::FowardSlash) {
             let right = self.power();
-            left = Ok(Expr::Binary {
-                operator: tok,
-                left: Box::new(left?),
-                right: Box::new(right?),
-            });
+            left = create_binexpr!(&mut self, operator, left, right);
         }
         left
     }
@@ -163,11 +147,7 @@ impl<'source> Parser<'source> {
             Some(token) if matches!(token, &Token::Caret) => {
                 let operator = self.next()?;
                 let right = self.power();
-                Ok(Expr::Binary {
-                    operator,
-                    left: Box::new(left?),
-                    right: Box::new(right?),
-                })
+                create_binexpr!(&mut self, operator, left, right)
             }
             _ => left,
         }
