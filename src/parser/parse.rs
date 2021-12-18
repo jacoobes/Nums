@@ -1,6 +1,8 @@
 use super::ast::{Expr, Stmt};
-use crate::error_handling::faults::{ErrTyp::*, Faults::*, *};
-use crate::error_handling::span::Span;
+use crate::error_handling::{
+    faults::{ErrTyp::*, Faults::*, *},
+    span::Span
+};
 use crate::{match_adv, create_binexpr};
 use crate::parser::peekable_lexer::Peekable as PeekerWrap;
 use crate::token::Token;
@@ -23,7 +25,7 @@ impl<'source> Parser<'source> {
             None => Err(self.new_span(Error(UnexpectedEndOfParsing))),
         }
     }
-    fn peek(&mut self) -> Option<&Token> {
+    fn peek(&mut self) -> Option<&Token> { 
         self.tokens.peek().take()
     }
 
@@ -33,16 +35,9 @@ impl<'source> Parser<'source> {
             .ok_or(self.new_span(Error(UnexpectedEndOfParsing)))
     }
 
-    fn check_peek(&mut self, token: &Token) -> bool {
-        match self.peek() {
-            Some(tok) => tok == token,
-            None => false,
-        }
-    }
+    fn check_peek(&mut self, token: &Token) -> bool { self.peek() == Some(token) }
 
-    fn is_at_end(&mut self) -> bool {
-        matches!(self.peek(), None)
-    }
+    fn is_at_end(&mut self) -> bool { matches!(self.peek(), None) }
 }
 
 /// Basic recursive descent parsing
@@ -56,12 +51,12 @@ impl<'source> Parser<'source> {
     }
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, Span> {
-        let mut temp_vec: Vec<_> = Vec::new();
+        let mut temp_vec= Vec::new();
         loop {
             if self.is_at_end() {
                 break Ok(temp_vec);
             }
-            temp_vec.push(self.stmt_block()?)
+            temp_vec.push(self.statements()?)
         }
     }
 
@@ -76,19 +71,43 @@ impl<'source> Parser<'source> {
     //     }    
         
     // }
+    fn statements(&mut self) -> Result<Stmt, Span> {
+        match self.peek().unwrap() {
+            tok => match tok {
+                &Token::While => self.while_loop(),
+                &Token::Type(_) | &Token::Identifier => self.var_decl(),
+                &Token::If => self.if_else(),
+                _ => self.stmt_expr()
+            },
+        }
+    }
 
-    fn stmt_block(&mut self) -> Result<Stmt, Span> {
-        self.var_decl()
+    fn if_else(&mut self) -> Result<Stmt, Span> {
+        self.next()?;
+        let condition = self.expr();
+        let block = self.block();
+        let else_block = if let Some(_) = match_adv!(&mut self, &Token::Else) {
+            Some(self.block()?)
+        } else {
+            None
+        };
+        Ok(Stmt::IfElse(condition?, block?, else_block))
+    }
+
+    fn while_loop(&mut self) -> Result<Stmt, Span> {
+        self.next()?;
+        let cond = self.expr();
+        let block = self.block();
+        Ok(Stmt::While(cond?, block?))
     }
 
     fn var_decl(&mut self) -> Result<Stmt, Span> {
         match self.get_type() {
-            Ok(tok) => {
-                let typ_name = SmolStr::from(self.tokens.slice());
+            Ok(typ_tok) => {
                 self.expect_token(&Token::Identifier)?;
                 let name = SmolStr::from(self.tokens.slice());
                 self.expect_token(&Token::Assign)?;
-                Ok(Stmt::VarDecl(typ_name, name, Box::new(self.stmt_expr()?)))
+                Ok(Stmt::VarDecl(typ_tok, name, Box::new(self.stmt_expr()?)))
             },
             Err(e) => Err(e)
         }
@@ -143,33 +162,29 @@ impl<'source> Parser<'source> {
     ///right associative
     fn power(&mut self) -> Result<Expr, Span> {
         let left = self.unary();
-        match self.peek() {
-            Some(token) if matches!(token, &Token::Caret) => {
-                let operator = self.next()?;
-                let right = self.power();
-                create_binexpr!(&mut self, operator, left, right)
-            }
-            _ => left,
+        if let Some(operator) = match_adv!(&mut self, &Token::Caret) {
+            let right = self.power();
+            create_binexpr!(&mut self, operator, left, right)
+        } else {
+            left
         }
+        
     }
     /// right associative unary parser
     fn unary(&mut self) -> Result<Expr, Span> {
-        match self.peek() {
-            Some(token) if matches!(token, &Token::Bang | &Token::Minus | &Token::Plus) => {
-                let operator = self.next()?;
-                let expr = self.unary();
-                Ok(Expr::Unary {
-                    operator,
-                    expr: Box::new(expr?),
-                })
-            }
-            _ => self.grouping(),
+        if let Some(operator) = match_adv!(&mut self, &Token::Bang | &Token::Minus | &Token::Plus) {
+            let expr = self.unary();
+            Ok(Expr::Unary{
+                operator,
+                expr: Box::new(expr?)
+            })
+        } else {
+            self.grouping()
         }
     }
 
     fn grouping(&mut self) -> Result<Expr, Span> {
-        if self.check_peek(&Token::LeftParen) {
-            self.next()?;
+        if let Some(_) = match_adv!(&mut self, &Token::LeftParen) {
             let expr = self.expr()?;
             self.expect_token(&Token::RightParen)
                 .map_err(|_| self.new_span(Error(ExpectedClosingParen)))?;
@@ -182,9 +197,7 @@ impl<'source> Parser<'source> {
     }
 
     fn primary(&mut self) -> Result<Expr, Span> {
-        if self.is_at_end() {
-            return Err(self.new_span(Error(UnexpectedEndOfParsing)));
-        }
+
         match self.peek().unwrap() {
             _ => match self.next()? {
                 Token::Bool(val) => Ok(Expr::Bool(val)),
@@ -234,7 +247,7 @@ impl<'source> Parser<'source> {
         let mut stmts_block = Vec::new();
         self.expect_token(&Token::LeftBrace)?;
         while !self.check_peek(&Token::RightBrace) {
-            stmts_block.push(self.var_decl()?)
+            stmts_block.push(self.statements()?)
         }
         self.expect_token(&Token::RightBrace)?;
         Ok(stmts_block)
@@ -243,13 +256,8 @@ impl<'source> Parser<'source> {
     fn get_type(&mut self) -> Result<Token, Span> {
         let typ = self.next()?;
         match typ {
-             Token::Identifier  
-            | Token::Int 
-            | Token::Float 
-            | Token::Str
-            | Token::Boolean
-            | Token::Unit
-            | Token::Infer => Ok(typ),
+             Token::Identifier => Ok(typ),
+             Token::Type(_) => Ok(typ),
             other => Err(self.new_span(Error(UnknownType(other))))
         }
     }

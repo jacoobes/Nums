@@ -21,7 +21,7 @@ mod ast {
     }
     #[test]
     fn grouping() {
-        let text = r#"((()));"#;
+        let text = r#"unit a = ((()));"#;
         let tree= create_tree(text);
         match &tree {
             Ok(e) => println!("{:?}", &e),
@@ -84,13 +84,26 @@ mod ast {
     }
     #[test]
     fn var_decl() {
-        let text = " ~ a = 1 + 1;";
-        let text2 = "str a =\" 13221 \" ";
+        let text = " *_ a = 1 + 1;";
+        let _text2 = "str a =\" 13221 \" ";
         let tree = create_tree(text);
         match tree {
             Ok(e) => println!("{:?}", &e),
             Err(span) => println!("{:?}", &span)
         }
-    }   
+    }
+    #[test]
+    fn while_loop() {
+        let text = " while 1 < 10 { 
+            ~~ a random comment
+            1 + 1;
+         }";
+
+         let tree = create_tree(text);
+         match tree {
+            Ok(e) => println!("{:?}", &e),
+            Err(span) => println!("{:?}", &span)
+        }
+    }
 
 }

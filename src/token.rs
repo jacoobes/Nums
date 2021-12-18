@@ -10,12 +10,19 @@ pub struct FileData {
 /// Regular grammar for Nums 
 #[derive(Logos, Debug, PartialEq, Clone)]
 #[logos(extras = FileData)]
+#[logos(subpattern typ = r"float|int|str|boolean|\*_|unit")]
+#[logos(subpattern int = r"\d+")]
+
 pub enum Token {
 
     #[token("when")]
     When,
     #[token("to")]
     To,
+    #[token("if")]
+    If,
+    #[token("else")]
+    Else, 
     #[token("while")]
     While,
     #[token("and")] 
@@ -54,7 +61,7 @@ pub enum Token {
     #[regex(r"\d+(?:\.\d+)?%", percent_float)] 
     Double(f32),
     /// standard 4 byte numbers 
-    #[regex(r"\d+", parse_num)]
+    #[regex(r"(?&int)", parse_num)]
     Integer(i32),
     ///only ascii!
     ///smolstr is heap allocated if 23 bytes + ofc
@@ -65,29 +72,20 @@ pub enum Token {
     Char(char),
     #[regex(r"true|false", parse_bool)]
     Bool(bool),
-
     #[token("()", priority = 3)]
     Unit,
 
-    #[regex(r"[a-zA-Z_]+\d?", priority = 2)]
+    #[regex(r"[a-zA-Z][_0-9a-zA-Z]*", priority = 2)]
     Identifier,
 
     /// token types and expr to denote the conversion of one type to another.
     ///  can be used as expression to convert or type declaration
     // #[token("f64")]
     // F64,
-    #[token("float")]
-    Float,
+    #[regex(r"(?&typ)", priority = 3, callback = |lex| SmolStr::from(lex.slice()))]
+    Type(SmolStr),
     // #[token("i64")]
     // I64,
-    #[token("int")]
-    Int,
-    #[token("str")]
-    Str,
-    #[token("boolean")]
-    Boolean,
-    #[token("~")]
-    Infer,
     #[token(",")]
     Comma,
     #[token(".")]
@@ -137,7 +135,7 @@ pub enum Token {
     //multiline comments :> (anything) <:
     #[regex(r":>[^<]*(?:[^<:]*)<:", logos::skip)]
     //single line comments
-    #[regex(r"--[^\n]*\n+", logos::skip)]
+    #[regex(r"~~[^\n]*\n", logos::skip)]
     //skip
     #[token("\n", |lex| lex.extras.line_breaks += 1; logos::Skip)]
     #[regex(r"[ \t\n\f\r]", logos::skip)]

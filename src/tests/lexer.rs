@@ -55,7 +55,7 @@ mod lexer {
     }
     #[test]
     fn keywords() {
-        let text = "expose fn when by by try none and or while cont contain f64 f32 i32 i64 boolean str to";
+        let text = "expose fun when by by try none and or while cont module float int boolean str to";
         let mut tokens = Token::lexer(text);
         assert_eq!(Some(Expose), tokens.next());
         assert_eq!(Some(Function), tokens.next());
@@ -70,17 +70,17 @@ mod lexer {
         assert_eq!(Some(Identifier), tokens.next());
         assert_eq!(Some(Container), tokens.next());
        // assert_eq!(Some(F64), tokens.next());
-        assert_eq!(Some(Float), tokens.next());
-        assert_eq!(Some(Int), tokens.next());
+        assert_eq!(Some(Type(SmolStr::from("float"))), tokens.next());
+        assert_eq!(Some(Type(SmolStr::from("int"))), tokens.next());
       //  assert_eq!(Some(I64), tokens.next());
-        assert_eq!(Some(Boolean), tokens.next());
-        assert_eq!(Some(Str), tokens.next());
+        assert_eq!(Some(Type(SmolStr::from("boolean"))), tokens.next());
+        assert_eq!(Some(Type(SmolStr::from("str"))), tokens.next());
         assert_eq!(Some(To), tokens.next());
     }
 
     #[test]
     fn single_ln_comments() {
-        let text = "~ a single line comment\n";
+        let text = "~~ a single line comment\n";
         let mut token = Token::lexer(text);
         assert_eq!(token.next(), None)
     }
@@ -109,9 +109,9 @@ mod lexer {
         let text = " 
         contain;
             
-            expose fn hello_world | foo, bar | (\" asdf \") : str;
+            expose fun hello_world | foo, bar | = str (\" asdf \")
 
-            expose anon_fn = | c, e ,f  | (  c  ) : f64
+            expose anon_fun = | c, e ,f  | (  c  ) : f64
 
         ";
 
