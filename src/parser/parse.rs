@@ -72,8 +72,9 @@ impl<'source> Parser<'source> {
         match self.peek().unwrap() {
             tok => match tok {
                 &Token::While => self.while_loop(),
-                &Token::Type(_) | &Token::Identifier => self.var_decl(),
-                &Token::If => self.if_else(),             
+                &Token::Type(_) | &Token::Identifier(_) => self.var_decl(),
+                &Token::If => self.if_else(),
+                &Token::LeftBrace => Ok(Stmt::Block(self.block()?)),              
                 _ => self.stmt_expr()
             },
         }
@@ -99,15 +100,10 @@ impl<'source> Parser<'source> {
     }
 
     fn var_decl(&mut self) -> Result<Stmt, Span> {
-        match self.expect_token(&Token::Identifier) {
-            Ok(tok) => {
-                let name = SmolStr::from(self.tokens.slice());
-                self.expect_token(&Token::Colon)?;
-                let typ_tok = self.get_type()?;
-                Ok(Stmt::VarDecl(name, typ_tok, Box::new(self.stmt_expr()?)))
-            }
-            Err(e) => Err(e)
-        }
+        let name = self.get_name()?;
+        self.expect_token(&Token::Colon)?;
+        let typ_tok = self.get_type()?;
+        Ok(Stmt::VarDecl(name, typ_tok, Box::new(self.stmt_expr()?)))
     }
 
     fn stmt_expr(&mut self) -> Result<Stmt, Span> {
@@ -225,7 +221,7 @@ impl<'source> Parser<'source> {
     fn get_type(&mut self) -> Result<Token, Span> {
         let typ = self.next()?;
         match typ {
-             Token::Identifier => Ok(typ),
+             Token::Identifier(_) => Ok(Token::Type(SmolStr::from(self.tokens.slice()))),
              Token::Type(_) => Ok(typ),
             other => Err(self.new_span(Error(UnknownType(other))))
         }
@@ -233,15 +229,15 @@ impl<'source> Parser<'source> {
 
     fn parse_fn(&mut self) -> Result<Decl, Span> {
         self.next()?;
-        let name = {
-            self.expect_token(&Token::Identifier)?;
-            SmolStr::from(self.tokens.slice())
-        };
+        let name = self.get_name()?;
         let args = self.parse_args()?;
-        self.expect_token(&Token::Assign)?;
-        let fn_ret_type = self.get_type();
+        let fn_ret_type = if let Some(_) = match_adv!(&mut self, &Token::Assign) {
+            self.get_type()?
+        } else {
+            Token::Unit
+        };
         let block = self.block();
-        Ok(Decl::Function(name,args, fn_ret_type?, block?  ))
+        Ok(Decl::Function(name,args, fn_ret_type, block?  ))
     }
 
     fn parse_args(&mut self, ) -> Result<Option<Vec<(SmolStr, Token)>>, Span> {
@@ -263,13 +259,25 @@ impl<'source> Parser<'source> {
         }
     }
     fn parse_single_arg(&mut self) -> Result<(SmolStr, Token), Span> { 
-        let name = {
-            self.expect_token(&Token::Identifier)?;
-            SmolStr::from(self.tokens.slice())
-        };
+        let name = self.get_name()?;
         self.expect_token(&Token::Colon)?;
         let typ = self.get_type()?; 
         Ok((name, typ))
+    }
+
+    fn get_name(&mut self) -> Result<SmolStr, Span> {
+        match self.peek().unwrap() {
+            &Token::Identifier(_) => {
+                self.next()?;
+                Ok(SmolStr::from(self.tokens.slice()))
+            }
+            _ => {
+                let next = self.next()?;
+                Err(self.new_span(Error(UnexpectedToken(next))))
+            }
+            
+        } 
+
     }
 }
 

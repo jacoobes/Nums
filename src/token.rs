@@ -10,7 +10,7 @@ pub struct FileData {
 /// Regular grammar for Nums 
 #[derive(Logos, Debug, PartialEq, Clone)]
 #[logos(extras = FileData)]
-#[logos(subpattern typ = r"float|int|str|boolean|\*_|unit")]
+#[logos(subpattern typ = r"float|int|str|boolean|unit")]
 #[logos(subpattern int = r"\d+")]
 
 pub enum Token {
@@ -75,8 +75,8 @@ pub enum Token {
     #[token("()", priority = 3)]
     Unit,
 
-    #[regex(r"[a-zA-Z][_0-9a-zA-Z]*", priority = 2)]
-    Identifier,
+    #[regex(r"[a-zA-Z][_0-9a-zA-Z]*", priority = 2,  callback = |lex| SmolStr::from(lex.slice()))]
+    Identifier(SmolStr),
 
     /// token types and expr to denote the conversion of one type to another.
     ///  can be used as expression to convert or type declaration

@@ -33,11 +33,13 @@ pub enum Stmt {
     //an expression, but has semicolon at end
      ExprStatement(Expr),
             //ident   //typ   //expr stmt
-     VarDecl(SmolStr, Token,  Box<Stmt>),
+     VarDecl(SmolStr, Token, Box<Stmt>),
 
      While(Expr, Vec<Stmt>),
 
-     IfElse(Expr, Vec<Stmt>, Option<Vec<Stmt>>),
+    Block(Vec<Stmt>),
+
+    IfElse(Expr, Vec<Stmt>, Option<Vec<Stmt>>),
 
 
 }
