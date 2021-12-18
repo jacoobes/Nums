@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod ast {
     use logos::Logos;
-    use crate::{parser::{parse, ast::Stmt}, token::Token};
+    use crate::{parser::{parse, ast::Decl}, token::Token};
     use crate::error_handling::span::Span;
 
-    fn create_tree<'a>(text: &'a str) -> Result<Vec<Stmt>, Span> {
+    fn create_tree<'a>(text: &'a str) -> Result<Vec<Decl>, Span> {
         let iterator = Token::lexer(text);
         let mut parser = parse::Parser::new(iterator);
         parser.parse()
@@ -104,6 +104,32 @@ mod ast {
             Ok(e) => println!("{:?}", &e),
             Err(span) => println!("{:?}", &span)
         }
+    }
+    #[test]
+    fn if_else() {
+        let text = " if 1 == 1 {
+            1 + 1;
+        } ";
+        let tree = create_tree(text);
+        match tree {
+           Ok(e) => println!("{:?}", &e),
+           Err(span) => println!("{:?}", &span)
+       }
+    }
+    #[test]
+    fn function() {
+        let text = " 
+        ~~ commas are explicit, cannot add trailing commas to args
+        fun hello_world | abc: str, adc: a | = int {
+            1 + 1;
+        }
+        
+        ";
+        let tree = create_tree(text);
+        match tree {
+           Ok(e) => println!("{:?}", &e),
+           Err(span) => println!("{:?}", &span)
+       } 
     }
 
 }

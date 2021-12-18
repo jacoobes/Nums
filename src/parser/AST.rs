@@ -32,16 +32,19 @@ pub enum Expr {
 pub enum Stmt {
     //an expression, but has semicolon at end
      ExprStatement(Expr),
-     
-     VarDecl(Token, SmolStr, Box<Stmt>),
+            //ident   //typ   //expr stmt
+     VarDecl(SmolStr, Token,  Box<Stmt>),
 
      While(Expr, Vec<Stmt>),
 
      IfElse(Expr, Vec<Stmt>, Option<Vec<Stmt>>),
 
-     Block(Vec<Stmt>),
-   //function  name    args: name : type       Body         
-     Function(SmolStr, Option<Vec<(Token, Token)>>,  Vec<Stmt>, Token),
 
-     Module(SmolStr)
+}
+#[derive(Debug, Clone, PartialEq)]
+
+pub enum Decl {
+   //function  name    args:      name     type      ret_typ   body    
+    Function(SmolStr, Option<Vec<(SmolStr, Token)>>, Token, Vec<Stmt>),
+    Module(SmolStr)
 }

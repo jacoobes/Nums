@@ -1,4 +1,4 @@
-use super::ast::{Expr, Stmt};
+use super::ast::{Expr, Stmt, Decl};
 use crate::error_handling::{
     faults::{ErrTyp::*, Faults::*, *},
     span::Span
@@ -50,33 +50,30 @@ impl<'source> Parser<'source> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Stmt>, Span> {
+    pub fn parse(&mut self) -> Result<Vec<Decl>, Span> {
         let mut temp_vec= Vec::new();
         loop {
             if self.is_at_end() {
                 break Ok(temp_vec);
             }
-            temp_vec.push(self.statements()?)
+            temp_vec.push(self.top_level()?)
         }
     }
 
-    // fn top_level(&mut self) -> Result<Stmt, Span> {
-    //     if let Some(tok) = match_adv!(&mut self, &Token::Function | &Token::Container) {
-    //         match tok {
-    //             Token::Function  => Ok(self.parse_fn()?),
-    //             _ => Err(self.new_span(Error(UnknownType(Token::LeftParen))))
-    //         }
-    //     }   else {
-    //         self.var_decl()
-    //     }    
-        
-    // }
+    fn top_level(&mut self) -> Result<Decl, Span> {
+         match self.peek().unwrap() {
+             tok => match tok {
+                 &Token::Function => self.parse_fn(),
+                 _ => Err(self.new_span(Error(NoTopLevelDeclaration)))
+             }
+         }
+    }
     fn statements(&mut self) -> Result<Stmt, Span> {
         match self.peek().unwrap() {
             tok => match tok {
                 &Token::While => self.while_loop(),
                 &Token::Type(_) | &Token::Identifier => self.var_decl(),
-                &Token::If => self.if_else(),
+                &Token::If => self.if_else(),             
                 _ => self.stmt_expr()
             },
         }
@@ -102,13 +99,13 @@ impl<'source> Parser<'source> {
     }
 
     fn var_decl(&mut self) -> Result<Stmt, Span> {
-        match self.get_type() {
-            Ok(typ_tok) => {
-                self.expect_token(&Token::Identifier)?;
+        match self.expect_token(&Token::Identifier) {
+            Ok(tok) => {
                 let name = SmolStr::from(self.tokens.slice());
-                self.expect_token(&Token::Assign)?;
-                Ok(Stmt::VarDecl(typ_tok, name, Box::new(self.stmt_expr()?)))
-            },
+                self.expect_token(&Token::Colon)?;
+                let typ_tok = self.get_type()?;
+                Ok(Stmt::VarDecl(name, typ_tok, Box::new(self.stmt_expr()?)))
+            }
             Err(e) => Err(e)
         }
     }
@@ -215,34 +212,6 @@ impl<'source> Parser<'source> {
         }
     }
 
-    // fn parse_fn(&mut self) -> Result<Stmt, Span>  {
-    //         self.expect_token(&Token::Identifier)?;
-    //         let name = SmolStr::from(self.tokens.slice());
-    //         println!("{}", name);
-    //         let args = self.parse_args()?;
-    //         self.expect_token(&Token::Assign)?;
-    //         let ret_typ = self.get_type()?;
-    //         Ok(Stmt::Function(name, args, self.block()?, ret_typ))
-    // }
-    
-    // fn parse_args(&mut self, ) -> Result<Option<Vec<(Token, Token)>>, Span> {
-    //     match self.next()? {
-    //         Token::Bar => {
-    //             let mut vec_args  = Vec::new();
-    //             while !self.check_peek(&Token::Bar) {
-    //                 if vec_args.len() == 4 { return Err(self.new_span(Error(ErrTyp::MaxArgCount)));};
-    //                 let arg_typ = self.get_type()?;
-    //                 let arg_name = self.expect_token(&Token::Identifier)?;
-    //                 vec_args.push((arg_typ, arg_name));
-    //            }
-    //         self.expect_token(&Token::Bar)?;
-    //         Ok(Some(vec_args))
-    //         },
-    //      Token::LeftParen => Ok(None),
-    //      other => Err(self.new_span(Error(UnexpectedToken(other)))) 
-    //     }
-    // }
-
     fn block(&mut self) -> Result<Vec<Stmt>, Span> {
         let mut stmts_block = Vec::new();
         self.expect_token(&Token::LeftBrace)?;
@@ -261,7 +230,47 @@ impl<'source> Parser<'source> {
             other => Err(self.new_span(Error(UnknownType(other))))
         }
     }
-    
+
+    fn parse_fn(&mut self) -> Result<Decl, Span> {
+        self.next()?;
+        let name = {
+            self.expect_token(&Token::Identifier)?;
+            SmolStr::from(self.tokens.slice())
+        };
+        let args = self.parse_args()?;
+        self.expect_token(&Token::Assign)?;
+        let fn_ret_type = self.get_type();
+        let block = self.block();
+        Ok(Decl::Function(name,args, fn_ret_type?, block?  ))
+    }
+
+    fn parse_args(&mut self, ) -> Result<Option<Vec<(SmolStr, Token)>>, Span> {
+        let mut fn_args = Vec::new();
+        if let Some(_) = match_adv!(&mut self, &Token::Bar) {
+            let first_arg = self.parse_single_arg()?;
+            fn_args.push(first_arg);
+
+            while !self.check_peek(&Token::Bar) {
+                self.expect_token(&Token::Comma)?;
+                let remaining_args = self.parse_single_arg()?;
+                fn_args.push(remaining_args);
+            }
+            self.expect_token(&Token::Bar)?;
+            Ok(Some(fn_args))
+            
+        } else {
+            Ok(None)
+        }
+    }
+    fn parse_single_arg(&mut self) -> Result<(SmolStr, Token), Span> { 
+        let name = {
+            self.expect_token(&Token::Identifier)?;
+            SmolStr::from(self.tokens.slice())
+        };
+        self.expect_token(&Token::Colon)?;
+        let typ = self.get_type()?; 
+        Ok((name, typ))
+    }
 }
 
 impl<'source> Parser<'source> {
