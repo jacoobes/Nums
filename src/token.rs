@@ -41,8 +41,8 @@ pub enum Token {
     Get,
     #[token("from")]
     From,
-    #[token("module")]
-    Container,
+    #[token("package")]
+    Package,
     #[token("expose")]
     Expose,
     #[token("->")]

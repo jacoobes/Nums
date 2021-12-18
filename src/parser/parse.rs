@@ -64,6 +64,7 @@ impl<'source> Parser<'source> {
          match self.peek().unwrap() {
              tok => match tok {
                  &Token::Function => self.parse_fn(),
+                 &Token::Package => self.parse_mod(),
                  _ => Err(self.new_span(Error(NoTopLevelDeclaration)))
              }
          }
@@ -263,6 +264,11 @@ impl<'source> Parser<'source> {
         self.expect_token(&Token::Colon)?;
         let typ = self.get_type()?; 
         Ok((name, typ))
+    }
+
+    fn parse_mod(&mut self) -> Result<Decl, Span> {
+        let mod_name = self.get_name()?;
+        Ok(Decl::Module(mod_name))
     }
 
     fn get_name(&mut self) -> Result<SmolStr, Span> {

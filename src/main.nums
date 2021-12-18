@@ -1,16 +1,15 @@
+module __;
 
-:>
-    a dsfdf
+    :>
+        a dsfdf
 
-1 + 1
-DSAFSDHF SDFJHASD LKJFHDSALKJFH LA UWEHF LIWQ3ULIEFSVBLKERBFWEKJNCLKJDSN LKJEAHlkajschQELWKJDHLKQJBCLKqjdfqwELKJ
-<:
+    1 + 1
+    DSAFSDHF SDFJHASD LKJFHDSALKJFH LA UWEHF LIWQ3ULIEFSVBLKERBFWEKJNCLKJDSN LKJEAHlkajschQELWKJDHLKQJBCLKqjdfqwELKJ
+    <:
 
 
 
-fun hi_dina = c {
-    {
-        1;
+    fun hi_dina -> Struct {
+        
     }
-}
 
