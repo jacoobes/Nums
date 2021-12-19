@@ -1,16 +1,8 @@
-
-:>
-    a dsfdf
-
-1 + 1
-DSAFSDHF SDFJHASD LKJFHDSALKJFH LA UWEHF LIWQ3ULIEFSVBLKERBFWEKJNCLKJDSN LKJEAHlkajschQELWKJDHLKQJBCLKqjdfqwELKJ
-<:
+package a;
 
 
 
-fun hi_dina = c {
-    {
-        1;
+    fun hi_dina | a: str | {
+        1 + 1;
     }
-}
 

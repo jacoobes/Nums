@@ -1,6 +1,5 @@
 
 use crate::Token;
-use ansi_term::Colour::*;
 use smol_str::SmolStr;
 pub enum Faults {
     Error(ErrTyp),
@@ -24,8 +23,8 @@ pub enum WarnTyp {}
 impl std::fmt::Debug for Faults {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Error(arg) => write!(f, "{} : {:?}", Red.bold().paint("Error"), &arg),
-            Self::Warn(arg) => write!(f, "{} : {:?}", Yellow.bold().paint("Warning"), &arg),
+            Self::Error(arg) => write!(f, "{} : {:?}","Error", &arg),
+            Self::Warn(arg) => write!(f, "{} : {:?}", "Warning", &arg),
         }
     }
 }

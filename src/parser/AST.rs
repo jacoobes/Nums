@@ -1,6 +1,33 @@
+use core::panic;
+
 use crate::Token;
 use smol_str::SmolStr;
 
+
+
+pub enum AST {
+    Decl(Decl),
+    Stmt(Stmt),
+    Expr(Expr),
+}
+
+impl From<Decl> for AST {
+    fn from(node: Decl) -> Self {
+        AST::Decl(node)
+    }
+}
+
+impl From<Stmt> for AST {
+    fn from(node: Stmt) -> Self {
+        AST::Stmt(node)
+    }
+}
+
+impl From<Expr> for AST {
+    fn from(node: Expr) -> Self {
+        AST::Expr(node)
+    }
+}
 ///
 /// Possible to refactor and use different data structure (small vec)? instead of Box to increase compile speed!
 ///
@@ -31,22 +58,21 @@ pub enum Expr {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     //an expression, but has semicolon at end
-     ExprStatement(Expr),
+    ExprStatement(Expr),
             //ident   //typ   //expr stmt
-     VarDecl(SmolStr, Token, Box<Stmt>),
+    VarDecl(SmolStr, Token, Box<Stmt>),
 
-     While(Expr, Vec<Stmt>),
+    While(Expr, Vec<Stmt>),
 
     Block(Vec<Stmt>),
 
     IfElse(Expr, Vec<Stmt>, Option<Vec<Stmt>>),
-
-
 }
 #[derive(Debug, Clone, PartialEq)]
-
 pub enum Decl {
    //function  name    args:      name     type      ret_typ   body    
     Function(SmolStr, Option<Vec<(SmolStr, Token)>>, Token, Vec<Stmt>),
-    Module(SmolStr)
+    Module(SmolStr),
 }
+
+

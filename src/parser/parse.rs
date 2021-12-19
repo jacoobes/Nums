@@ -1,10 +1,10 @@
-use super::ast::{Expr, Stmt, Decl};
+use super::ast::{Expr, Stmt, Decl, AST};
 use crate::error_handling::{
     faults::{ErrTyp::*, Faults::*, *},
     span::Span
 };
 use crate::{match_adv, create_binexpr};
-use crate::parser::peekable_lexer::Peekable as PeekerWrap;
+use crate::parser::peekable_parser::Peekable as PeekerWrap;
 use crate::token::Token;
 use logos::Lexer;
 use smol_str::SmolStr;
@@ -34,10 +34,10 @@ impl<'source> Parser<'source> {
             .next()
             .ok_or(self.new_span(Error(UnexpectedEndOfParsing)))
     }
-
     fn check_peek(&mut self, token: &Token) -> bool { self.peek() == Some(token) }
-
     fn is_at_end(&mut self) -> bool { matches!(self.peek(), None) }
+
+
 }
 
 /// Basic recursive descent parsing
@@ -64,6 +64,7 @@ impl<'source> Parser<'source> {
          match self.peek().unwrap() {
              tok => match tok {
                  &Token::Function => self.parse_fn(),
+                 &Token::Package => self.parse_mod(),
                  _ => Err(self.new_span(Error(NoTopLevelDeclaration)))
              }
          }
@@ -103,7 +104,8 @@ impl<'source> Parser<'source> {
         let name = self.get_name()?;
         self.expect_token(&Token::Colon)?;
         let typ_tok = self.get_type()?;
-        Ok(Stmt::VarDecl(name, typ_tok, Box::new(self.stmt_expr()?)))
+        let var_val = self.stmt_expr();
+        Ok(Stmt::VarDecl(name, typ_tok, Box::new(var_val?)))
     }
 
     fn stmt_expr(&mut self) -> Result<Stmt, Span> {
@@ -263,6 +265,13 @@ impl<'source> Parser<'source> {
         self.expect_token(&Token::Colon)?;
         let typ = self.get_type()?; 
         Ok((name, typ))
+    }
+
+    fn parse_mod(&mut self) -> Result<Decl, Span> {
+        self.next()?;
+        let mod_name = self.get_name()?;
+        self.expect_token(&Token::Semi)?;
+        Ok(Decl::Module(mod_name))
     }
 
     fn get_name(&mut self) -> Result<SmolStr, Span> {

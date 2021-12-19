@@ -68,7 +68,7 @@ mod lexer {
         assert_eq!(Some(Or), tokens.next());
         assert_eq!(Some(While), tokens.next());
         assert_eq!(Some(Identifier(SmolStr::from("cont"))), tokens.next());
-        assert_eq!(Some(Container), tokens.next());
+        assert_eq!(Some(Package), tokens.next());
        // assert_eq!(Some(F64), tokens.next());
         assert_eq!(Some(Type(SmolStr::from("float"))), tokens.next());
         assert_eq!(Some(Type(SmolStr::from("int"))), tokens.next());
