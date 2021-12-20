@@ -3,13 +3,13 @@ use smol_str::SmolStr;
 
 
 #[derive(Default)]
-pub struct FileData {
+pub struct Source {
     pub line_breaks: usize,
 }
 
 /// Regular grammar for Nums 
 #[derive(Logos, Debug, PartialEq, Clone)]
-#[logos(extras = FileData)]
+#[logos(extras = Source)]
 #[logos(subpattern typ = r"float|int|str|boolean|unit")]
 #[logos(subpattern int = r"\d+")]
 
@@ -33,6 +33,8 @@ pub enum Token {
     Function,
     #[token("by")]
     By,
+    #[token("let")]
+    Let,
     #[token("none")]
     NoneOf,
     #[token("of")]
@@ -138,7 +140,7 @@ pub enum Token {
     #[regex(r"~~[^\n]*\n", logos::skip)]
     //skip
     #[token("\n", |lex| lex.extras.line_breaks += 1; logos::Skip)]
-    #[regex(r"[ \t\n\f\r]", logos::skip)]
+    #[regex(r"[ \t\f\r]", logos::skip)]
     #[error]
     Error
 }

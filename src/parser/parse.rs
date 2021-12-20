@@ -1,4 +1,4 @@
-use super::ast::{Expr, Stmt, Decl, AST};
+use super::ast::{Expr, Stmt, Decl};
 use crate::error_handling::{
     faults::{ErrTyp::*, Faults::*, *},
     span::Span
@@ -16,8 +16,8 @@ pub struct Parser<'source> {
 impl<'source> Parser<'source> {
     /// advances, expecting to there to be a token
     fn expect_token(&mut self, token: &Token) -> Result<Token, Span> {
-        match self.tokens.peek() {
-            Some(tok) if tok == token => Ok(self.tokens.next().unwrap()),
+        match self.peek() {
+            Some(tok) if tok == token => Ok(self.next().unwrap()),
             Some(_) => {
                 let fault = self.next();
                 Err(self.new_span(Error(Expected( token.clone(), fault?,))))
@@ -36,7 +36,6 @@ impl<'source> Parser<'source> {
     }
     fn check_peek(&mut self, token: &Token) -> bool { self.peek() == Some(token) }
     fn is_at_end(&mut self) -> bool { matches!(self.peek(), None) }
-
 
 }
 
@@ -73,7 +72,7 @@ impl<'source> Parser<'source> {
         match self.peek().unwrap() {
             tok => match tok {
                 &Token::While => self.while_loop(),
-                &Token::Type(_) | &Token::Identifier(_) => self.var_decl(),
+                &Token::Let => self.var_decl(),
                 &Token::If => self.if_else(),
                 &Token::LeftBrace => Ok(Stmt::Block(self.block()?)),              
                 _ => self.stmt_expr()
@@ -197,12 +196,13 @@ impl<'source> Parser<'source> {
             _ => match self.next()? {
                 Token::Bool(val) => Ok(Expr::Bool(val)),
                 Token::Double(s) => Ok(Expr::Double(s)),
+                Token::Identifier(s) => Ok(Expr::Val(s)),
                 Token::Integer(val) => Ok(Expr::Integer(val)),
                 Token::String(val) => Ok(Expr::String(val)),
                 Token::Char(c) => Ok(Expr::Char(c)),
                 Token::Unit => Ok(Expr::Unit),
                 Token::Error => {
-                    let unknown_token = SmolStr::new(self.tokens.slice());
+                    let unknown_token = self.tokens.slice();
                     Err(self.new_span(Error(UnknownToken(unknown_token))))
                 }
                 other => Err(self.new_span(Error(UnexpectedToken(other)))),
@@ -223,7 +223,7 @@ impl<'source> Parser<'source> {
     fn get_type(&mut self) -> Result<Token, Span> {
         let typ = self.next()?;
         match typ {
-             Token::Identifier(_) => Ok(Token::Type(SmolStr::from(self.tokens.slice()))),
+             Token::Identifier(_) => Ok(Token::Type(self.tokens.slice())),
              Token::Type(_) => Ok(typ),
             other => Err(self.new_span(Error(UnknownType(other))))
         }
@@ -268,7 +268,7 @@ impl<'source> Parser<'source> {
     }
 
     fn parse_mod(&mut self) -> Result<Decl, Span> {
-        self.next()?;
+        self.next().unwrap();
         let mod_name = self.get_name()?;
         self.expect_token(&Token::Semi)?;
         Ok(Decl::Module(mod_name))
@@ -278,7 +278,7 @@ impl<'source> Parser<'source> {
         match self.peek().unwrap() {
             &Token::Identifier(_) => {
                 self.next()?;
-                Ok(SmolStr::from(self.tokens.slice()))
+                Ok(self.tokens.slice())
             }
             _ => {
                 let next = self.next()?;
@@ -293,8 +293,7 @@ impl<'source> Parser<'source> {
 impl<'source> Parser<'source> {
     fn new_span(&mut self, fault: Faults) -> Span {
         Span::new(
-            "placeholder".to_string(),
-            self.tokens.slice().to_string(),
+     self.tokens.slice(),
             self.tokens.cur_line(),
             fault,
         )
