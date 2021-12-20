@@ -2,7 +2,7 @@ package a;
 
 
 
-    fun hi_dina | a: str | {
-        1 + 1;
+    fun test | a: str | {
+        b; c; d;
     }
 

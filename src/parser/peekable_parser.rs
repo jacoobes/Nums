@@ -1,12 +1,11 @@
-use core::ops::Range;
-use logos::{Lexer, Logos, Source};
+use logos::{Lexer, Logos};
+use smol_str::SmolStr;
 
 use crate::token::Token;
 
 pub struct Peekable<'source> {
     lexer: Lexer<'source, Token>,
     peeked: Option<Option<Token>>,
-    node_start: usize,
 }
 
 
@@ -15,10 +14,8 @@ impl<'source> Peekable<'source> {
         Self {
             lexer: Token::lexer(source),
             peeked: None,
-            node_start: 0,
         }
     }
-
     pub fn peek(&mut self) -> Option<&Token> {
         if self.peeked.is_none() {
             self.peeked = Some(self.lexer.next());
@@ -26,8 +23,8 @@ impl<'source> Peekable<'source> {
         self.peeked.as_ref().unwrap().as_ref()
     }
 
-    pub fn slice(&mut self) -> &'source str {
-        self.lexer.slice()
+    pub fn slice(&mut self) -> SmolStr {
+        SmolStr::from(self.lexer.slice())
     }
 
     pub fn cur_line(&mut self) -> usize {

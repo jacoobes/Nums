@@ -1,4 +1,3 @@
-use core::panic;
 
 use crate::Token;
 use smol_str::SmolStr;
@@ -53,6 +52,7 @@ pub enum Expr {
     //    I64(i64),
     Bool(bool),
     Char(char),
+    Val(SmolStr)
 }
 
 #[derive(Debug, Clone, PartialEq)]

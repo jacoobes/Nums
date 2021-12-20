@@ -1,11 +1,10 @@
 
 use std::fmt::Debug;
 use smol_str::SmolStr;
+
 use super::faults::Faults;
 pub struct Span {
-   //todo : for the file thats being parsed, detect its file path 
-   filename : SmolStr,
-   source : String,
+   source : SmolStr,
    line: usize,
    typ:  Faults
 }
@@ -21,9 +20,8 @@ impl Debug for Span {
 }
 
 impl Span {
-    pub fn new(filename: String, source: String,  line: usize,  typ: Faults) -> Self {
+    pub fn new( source: SmolStr,  line: usize,  typ: Faults) -> Self {
         Self {
-            filename: SmolStr::from(filename),
             source,
             line,
             typ
