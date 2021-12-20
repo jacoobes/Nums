@@ -64,7 +64,7 @@ pub enum Token {
     Double(f32),
     /// standard 4 byte numbers 
     #[regex(r"(?&int)", parse_num)]
-    Integer(i32),
+    Integer(i16),
     ///only ascii!
     ///smolstr is heap allocated if 23 bytes + ofc
     #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, make_str)]
@@ -145,9 +145,9 @@ pub enum Token {
     Error
 }
 
-fn parse_num(lex: &mut Lexer<Token>) -> Option<i32> {
+fn parse_num(lex: &mut Lexer<Token>) -> Option<i16> {
     let slice = lex.slice();
-    let n : i32 = slice.parse().ok()?;
+    let n = slice.parse().ok()?;
     Some(n)
 }
 
