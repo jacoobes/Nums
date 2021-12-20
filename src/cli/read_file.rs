@@ -2,6 +2,6 @@ use std::fs;
 
 
 
-pub fn read_file() -> String {
-     fs::read_to_string("src/main.nums").expect("Unable to read file")
+pub fn read_file(path: &'static str ) -> String {
+     fs::read_to_string(path).expect("Unable to read file")
 }

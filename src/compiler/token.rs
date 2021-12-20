@@ -3,13 +3,13 @@ use smol_str::SmolStr;
 
 
 #[derive(Default)]
-pub struct Source {
+pub struct MetaData {
     pub line_breaks: usize,
 }
 
 /// Regular grammar for Nums 
 #[derive(Logos, Debug, PartialEq, Clone)]
-#[logos(extras = Source)]
+#[logos(extras = MetaData)]
 #[logos(subpattern typ = r"float|int|str|boolean|unit")]
 #[logos(subpattern int = r"\d+")]
 

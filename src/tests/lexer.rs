@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod lexer {
-    use crate::token::Token;
+    use crate::compiler::token::Token;
     use logos::Logos;
     use smol_str::SmolStr;
     use crate::tests::lexer::lexer::Token::*;

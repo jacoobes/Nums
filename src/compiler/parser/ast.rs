@@ -1,5 +1,5 @@
 
-use crate::Token;
+use crate::compiler::token::Token;
 use smol_str::SmolStr;
 
 

@@ -1,11 +1,12 @@
+use std::rc::Rc;
+
 use super::ast::{Expr, Stmt, Decl};
-use crate::error_handling::{
+use crate::{error_handling::{
     faults::{ErrTyp::*, Faults::*, *},
     span::Span
-};
+}, compiler::compiler::ErrorGen};
 use crate::{match_adv, create_binexpr};
-use crate::parser::peekable_parser::Peekable as PeekerWrap;
-use crate::token::Token;
+use crate::compiler::{parser::peekable_parser::Peekable as PeekerWrap, token::Token};
 use logos::Lexer;
 use smol_str::SmolStr;
 pub struct Parser<'source> {
@@ -55,6 +56,7 @@ impl<'source> Parser<'source> {
             if self.is_at_end() {
                 break Ok(temp_vec);
             }
+            println!("{:?}", self.tokens.token_span());
             temp_vec.push(self.top_level()?)
         }
     }
@@ -292,10 +294,6 @@ impl<'source> Parser<'source> {
 
 impl<'source> Parser<'source> {
     fn new_span(&mut self, fault: Faults) -> Span {
-        Span::new(
-     self.tokens.slice(),
-            self.tokens.cur_line(),
-            fault,
-        )
+       
     }
 }

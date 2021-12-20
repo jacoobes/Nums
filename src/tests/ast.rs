@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod ast {
     use logos::Logos;
-    use crate::{parser::{parse, ast::Decl}, token::Token};
+    use crate::compiler::{parser::{parse, ast::Decl}, token::Token};
     use crate::error_handling::span::Span;
 
     fn create_tree<'a>(text: &'a str) -> Result<Vec<Decl>, Span> {
