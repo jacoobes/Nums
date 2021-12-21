@@ -26,8 +26,6 @@ impl Source {
         .with_message(message)
         .with_labels(vec![
             Label::primary((), location_of_err)
-
-
         ]).with_notes(vec![notes])
     }
 }

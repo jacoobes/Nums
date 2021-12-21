@@ -23,9 +23,9 @@ impl<'source> Parser<'source> {
             Some(tok) if tok == token => Ok(self.next().unwrap()),
             Some(_) => {
                 let fault = self.next();
-                Err(self.new_span(Error(Expected( token.clone(), fault?,)), String::from("No need ")))
+                Err(self.new_span(Error(Expected( token.clone(), fault?,)), ""))
             }
-            None => Err(self.new_span(Error(UnexpectedEndOfParsing), String::from("somewhre in ur code u fucked up"))),
+            None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
         }
     }
     fn peek(&mut self) -> Option<&Token> { 
@@ -36,7 +36,7 @@ impl<'source> Parser<'source> {
         self.tokens.reset_range();
         self.tokens
             .next()
-            .ok_or(self.new_span(Error(UnexpectedEndOfParsing), String::from("")))
+            .ok_or(self.new_span(Error(UnexpectedEndOfParsing), ""))
     }
     fn check_peek(&mut self, token: &Token) -> bool { self.peek() == Some(token) }
     fn is_at_end(&mut self) -> bool { matches!(self.peek(), None) }
@@ -60,7 +60,6 @@ impl<'source> Parser<'source> {
             if self.is_at_end() {
                 break Ok(temp_vec);
             }
-            self.tokens.reset_range();
             temp_vec.push(self.top_level()?)
         }
     }
@@ -70,7 +69,7 @@ impl<'source> Parser<'source> {
              tok => match tok {
                  &Token::Function => self.parse_fn(),
                  &Token::Package => self.parse_mod(),
-                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), String::from("found either an out of place statement or no top level declaration")))
+                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), "found either an out of place statement or no top level declaration"))
              }
          }
     }
@@ -83,7 +82,7 @@ impl<'source> Parser<'source> {
                 &Token::LeftBrace => Ok(Stmt::Block(self.block()?)),              
                 _ => self.stmt_expr()
             },
-            None => Err(self.new_span(Error(UnexpectedEndOfParsing), String::from("could not finish parsing")))
+            None => Err(self.new_span(Error(UnexpectedEndOfParsing), "could not finish parsing"))
         }
     }
 
@@ -187,8 +186,7 @@ impl<'source> Parser<'source> {
     fn grouping(&mut self) -> Result<Expr, Diagnostic<()>> {
         if let Some(_) = match_adv!(&mut self, &Token::LeftParen) {
             let expr = self.expr()?;
-            self.expect_token(&Token::RightParen)
-                .map_err(|_| self.new_span(Error(ExpectedClosingParen), String::from("check your parenthesis, maybe a closing delim")))?;
+            self.expect_token(&Token::RightParen)?;
             Ok(Expr::Group {
                 expr: Box::new(expr),
             })
@@ -210,9 +208,9 @@ impl<'source> Parser<'source> {
                 Token::Unit => Ok(Expr::Unit),
                 Token::Error => {
                     let unknown_token = self.tokens.slice();
-                    Err(self.new_span(Error(UnknownToken(unknown_token)), String::from("unknown token")))
+                    Err(self.new_span(Error(UnknownToken(unknown_token)),"unknown token"))
                 }
-                other => Err(self.new_span(Error(UnexpectedToken(other)), String::from("found an unexpected token out of place"))),
+                other => Err(self.new_span(Error(UnexpectedToken(other)), "found an unexpected token out of place")),
             },
         }
     }
@@ -232,7 +230,7 @@ impl<'source> Parser<'source> {
         match typ {
              Token::Identifier(_) => Ok(Token::Type(self.tokens.slice())),
              Token::Type(_) => Ok(typ),
-            other => Err(self.new_span(Error(UnknownType(other)), String::from("Found a token that cannot be qualified as a type")))
+            other => Err(self.new_span(Error(UnknownType(other)), "Found a token that cannot be qualified as a type"))
         }
     }
 
@@ -289,7 +287,7 @@ impl<'source> Parser<'source> {
             }
             _ => {
                 let next = self.next()?;
-                Err(self.new_span(Error(UnexpectedToken(next)), String::from("Try to use an identifier ")))
+                Err(self.new_span(Error(UnexpectedToken(next)), "Try to use an identifier "))
             }
             
         } 
@@ -298,10 +296,10 @@ impl<'source> Parser<'source> {
 }
 
 impl<'source> Parser<'source> {
-    fn new_span(&mut self, fault: Faults, note: String) -> Diagnostic<()> {
+    fn new_span(&mut self, fault: Faults, note: &'static str) -> Diagnostic<()> {
        self.source.create_diagnostic(
            format!("{:?}", fault),
            self.tokens.get_err_range(),
-           note)
+           note.to_string())
     }
 }
