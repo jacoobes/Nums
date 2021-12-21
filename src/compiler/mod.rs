@@ -1,4 +1,4 @@
 pub mod parser;
 pub mod source;
 pub mod token;
-pub mod compiler;
+pub mod nums_compiler;

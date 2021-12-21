@@ -1,12 +1,14 @@
 #[cfg(test)]
 mod ast {
-    use logos::Logos;
-    use crate::compiler::{parser::{parse, ast::Decl}, token::Token};
-    use crate::error_handling::span::Span;
+    use std::rc::Rc;
 
-    fn create_tree<'a>(text: &'a str) -> Result<Vec<Decl>, Span> {
+    use codespan_reporting::diagnostic::Diagnostic;
+    use logos::Logos;
+    use crate::compiler::{parser::{parse, ast::Decl}, token::Token, source::Source};
+
+    fn create_tree<'a>(text: &'a str) -> Result<Vec<Decl>, Diagnostic<()>> {
         let iterator = Token::lexer(text);
-        let mut parser = parse::Parser::new(iterator);
+        let mut parser = parse::Parser::new(iterator, Rc::new(Source::new(String::from(text), "text")));
         parser.parse()
     }
 

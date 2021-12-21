@@ -1,8 +1,8 @@
-package a;
+package a
 
 
 
     fun test | a: str | {
         b; c; d;
-    }
+    }    
 
