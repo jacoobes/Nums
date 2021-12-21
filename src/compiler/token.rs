@@ -25,6 +25,8 @@ pub enum Token {
     Else, 
     #[token("while")]
     While,
+    #[token("record")]
+    Record,
     #[token("and")] 
     And,
     #[token("or")]

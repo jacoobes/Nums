@@ -69,6 +69,7 @@ impl<'source> Parser<'source> {
              tok => match tok {
                  &Token::Function => self.parse_fn(),
                  &Token::Package => self.parse_mod(),
+                 &Token::Record => self.parse_rec(),
                  _ => Err(self.new_span(Error(NoTopLevelDeclaration), "found either an out of place statement or no top level declaration"))
              }
          }
@@ -285,6 +286,7 @@ impl<'source> Parser<'source> {
             Ok(None)
         }
     }
+    
     fn parse_single_arg(&mut self) -> Result<(SmolStr, Token), Diagnostic<()>> { 
         let name = self.get_name()?;
         self.expect_token(&Token::Colon)?;
@@ -297,6 +299,27 @@ impl<'source> Parser<'source> {
         let mod_name = self.get_name()?;
         self.expect_token(&Token::Semi)?;
         Ok(Decl::Module(mod_name))
+    }
+
+    fn parse_rec(&mut self) -> Result<Decl, Diagnostic<()>> {
+        self.next()?;
+        let name = self.get_name()?;
+        self.expect_token(&Token::LeftBrace)?;
+        let args = {
+            let mut fields = Vec::new();
+            while !self.check_peek(&Token::RightBrace) {
+                fields.push(self.parse_single_arg()?);
+                if self.check_peek(&Token::Comma) {
+                    self.expect_token(&Token::Comma).unwrap();
+                    continue;
+                } else {
+                    break;
+                }
+            }
+            self.expect_token(&Token::RightBrace)?;
+            fields
+        }; 
+        Ok(Decl::Record(name, args))
     }
 
     fn get_name(&mut self) -> Result<SmolStr, Diagnostic<()>> {

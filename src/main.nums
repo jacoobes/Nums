@@ -1,5 +1,9 @@
 package a;
 
+    record Person {
+        name : str 
+        age  : int 
+    }
 
 
     fun string | a: str |  {
