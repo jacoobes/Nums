@@ -108,9 +108,7 @@ impl<'source> Parser<'source> {
 
     fn var_decl(&mut self) -> Result<Stmt, Diagnostic<()>> {
         let mut_state = self.next()?;
-        let name = self.get_name()?;
-        self.expect_token(&Token::Colon)?;
-        let typ_tok = self.get_type()?;
+        let (name, typ_tok) = self.parse_single_arg()?;
         self.expect_token(&Token::Assign)?;
         let var_val = self.stmt_expr();
         Ok(Stmt::VarDecl(mut_state, name, typ_tok, Box::new(var_val?)))
