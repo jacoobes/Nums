@@ -34,7 +34,7 @@ impl<'source> Peekable<'source> {
     }
 
     pub fn reset_range(&mut self) {
-        self.start_node_loc = self.token_span().last().unwrap_or(self.start_node_loc + 1)
+        self.start_node_loc = self.token_span().last().unwrap_or(self.start_node_loc)
     }
 
     pub fn get_err_range(&mut self) -> Range<usize> {

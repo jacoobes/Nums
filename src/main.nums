@@ -2,7 +2,10 @@ package a;
 
 
 
-    fun string | a: str | {
-        b; c; d;
+    fun string | a: str |  {
+        
+        while a == "sdf" or a == "df" {
+            mut a : int = 3;
+        }
     }
 

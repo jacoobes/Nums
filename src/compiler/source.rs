@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
-use codespan_reporting::files::{SimpleFiles, SimpleFile};
-use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
+use codespan_reporting::files::SimpleFile;
 
 #[derive(Debug)]
 pub struct Source {

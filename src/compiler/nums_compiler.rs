@@ -1,7 +1,7 @@
 use std::{rc::Rc};
 
 use codespan_reporting::term::{termcolor::{StandardStream, ColorChoice}, self};
-use logos::{Logos, Lexer};
+use logos::Logos;
 
 use super::{source::Source, token::Token, parser::{parse::Parser, ast::Decl}};
 

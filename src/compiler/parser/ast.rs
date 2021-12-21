@@ -32,6 +32,11 @@ impl From<Expr> for AST {
 ///
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
+    Logical {
+        operator: Token,
+        left: Box<Expr>,
+        right: Box<Expr>
+    },
     Binary {
         operator: Token,
         left: Box<Expr>,
@@ -59,8 +64,8 @@ pub enum Expr {
 pub enum Stmt {
     //an expression, but has semicolon at end
     ExprStatement(Expr),
-            //ident   //typ   //expr stmt
-    VarDecl(SmolStr, Token, Box<Stmt>),
+    //Mut or const//ident  //typ //expr stmt
+    VarDecl(Token,SmolStr, Token, Box<Stmt>),
 
     While(Expr, Vec<Stmt>),
 

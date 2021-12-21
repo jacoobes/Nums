@@ -77,7 +77,7 @@ impl<'source> Parser<'source> {
         match self.peek() {
             Some(tok) => match tok {
                 &Token::While => self.while_loop(),
-                &Token::Let => self.var_decl(),
+                &Token::Let | &Token::Mut => self.var_decl(),
                 &Token::If => self.if_else(),
                 &Token::LeftBrace => Ok(Stmt::Block(self.block()?)),              
                 _ => self.stmt_expr()
@@ -106,11 +106,13 @@ impl<'source> Parser<'source> {
     }
 
     fn var_decl(&mut self) -> Result<Stmt, Diagnostic<()>> {
+        let mut_state = self.next()?;
         let name = self.get_name()?;
         self.expect_token(&Token::Colon)?;
         let typ_tok = self.get_type()?;
+        self.expect_token(&Token::Assign)?;
         let var_val = self.stmt_expr();
-        Ok(Stmt::VarDecl(name, typ_tok, Box::new(var_val?)))
+        Ok(Stmt::VarDecl(mut_state, name, typ_tok, Box::new(var_val?)))
     }
 
     fn stmt_expr(&mut self) -> Result<Stmt, Diagnostic<()>> {
@@ -120,7 +122,25 @@ impl<'source> Parser<'source> {
     }
 
     fn expr(&mut self) -> Result<Expr, Diagnostic<()>> {
-        self.equality()
+        self.or()
+    }
+
+    fn or(&mut self) -> Result<Expr, Diagnostic<()>> {
+        let mut left = self.and();
+        while let Some(operator) = match_adv!(&mut self, &Token::Or) {
+            let right = self.and();
+            left = Ok(Expr::Logical { operator, left: Box::new(left?) , right: Box::new(right?)  })
+        }
+        left
+    }
+
+    fn and(&mut self) -> Result<Expr, Diagnostic<()>> {
+        let mut left = self.equality();
+        while let Some(operator) = match_adv!(&mut self, &Token::And) {
+            let right = self.equality();
+            left = Ok(Expr::Logical { operator, left: Box::new(left?) , right: Box::new(right?)  })
+        }
+        left
     }
     
     fn equality(&mut self) -> Result<Expr, Diagnostic<()>> {
@@ -287,7 +307,7 @@ impl<'source> Parser<'source> {
             }
             _ => {
                 let next = self.next()?;
-                Err(self.new_span(Error(UnexpectedToken(next)), "Try to use an identifier "))
+                Err(self.new_span(Error(UnexpectedToken(next)), "note : Try to use an identifier"))
             }
             
         } 

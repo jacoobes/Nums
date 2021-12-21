@@ -35,6 +35,8 @@ pub enum Token {
     By,
     #[token("let")]
     Let,
+    #[token("mut")]
+    Mut,
     #[token("none")]
     NoneOf,
     #[token("of")]
