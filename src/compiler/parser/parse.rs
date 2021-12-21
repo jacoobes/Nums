@@ -105,7 +105,6 @@ impl<'source> Parser<'source> {
         let block = self.block();
         Ok(Stmt::While(cond?, block?))
     }
-
     fn var_decl(&mut self) -> Result<Stmt, Diagnostic<()>> {
         let mut_state = self.next()?;
         let (name, typ_tok) = self.parse_single_arg()?;
