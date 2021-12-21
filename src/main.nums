@@ -1,15 +1,14 @@
 package a;
 
     record Person {
-        name : str 
-        age  : int 
+        a: str,
+        b: int
     }
-
 
     fun string | a: str |  {
         
         while a == "sdf" or a == "df" {
-            mut a : int = 3;
+            let a : int = 3;
         }
     }
 
