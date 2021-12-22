@@ -1,9 +1,8 @@
 #[cfg(test)]
 mod lexer {
-    use crate::compiler::token::Token;
+    use crate::compiler::tokens::Token::{*, self};
     use logos::Logos;
     use smol_str::SmolStr;
-    use crate::tests::lexer::lexer::Token::*;
 
     #[test]
     fn test_single_keyword () {

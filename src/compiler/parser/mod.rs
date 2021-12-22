@@ -1,5 +1,5 @@
-pub mod parse;
 pub mod ast;
+pub mod parse;
 pub mod peekable_parser;
 
 #[macro_export]
@@ -15,12 +15,10 @@ macro_rules! match_adv {
 #[macro_export]
 macro_rules! create_binexpr {
     (&mut $self:ident, $token:expr, $left:expr, $right:expr ) => {
-        Ok (
-            $crate::compiler::parser::ast::Expr::Binary {
-                operator : $token,
-                left : Box::new($left?),
-                right: Box::new($right?)
-            }
-        )
+        Ok($crate::compiler::parser::ast::Expr::Binary {
+            operator: $token,
+            left: Box::new($left?),
+            right: Box::new($right?),
+        })
     };
 }

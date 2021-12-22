@@ -1,21 +1,20 @@
+use crate::compiler::tokens::Token;
 use logos::{Lexer, Logos};
 use smol_str::SmolStr;
 use std::ops::Range;
-use crate::compiler::token::Token;
 
 pub struct Peekable<'source> {
     lexer: Lexer<'source, Token>,
     peeked: Option<Option<Token>>,
-    start_node_loc : usize,
+    start_node_loc: usize,
 }
-
 
 impl<'source> Peekable<'source> {
     pub fn new(source: &'source str) -> Self {
         Self {
             lexer: Token::lexer(source),
             peeked: None,
-            start_node_loc : 0,
+            start_node_loc: 0,
         }
     }
     pub fn peek(&mut self) -> Option<&Token> {
@@ -40,10 +39,6 @@ impl<'source> Peekable<'source> {
     pub fn get_err_range(&mut self) -> Range<usize> {
         self.start_node_loc..self.token_span().last().unwrap_or(self.start_node_loc + 1)
     }
-
-    
-
-
 }
 
 impl<'source> Iterator for Peekable<'source> {
@@ -57,4 +52,3 @@ impl<'source> Iterator for Peekable<'source> {
         }
     }
 }
-

@@ -1,8 +1,5 @@
-
-use crate::compiler::token::Token;
+use crate::compiler::tokens::Token;
 use smol_str::SmolStr;
-
-
 
 pub enum AST {
     Decl(Decl),
@@ -35,7 +32,7 @@ pub enum Expr {
     Logical {
         operator: Token,
         left: Box<Expr>,
-        right: Box<Expr>
+        right: Box<Expr>,
     },
     Binary {
         operator: Token,
@@ -57,7 +54,7 @@ pub enum Expr {
     //    I64(i64),
     Bool(bool),
     Char(char),
-    Val(SmolStr)
+    Val(SmolStr),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -65,7 +62,7 @@ pub enum Stmt {
     //an expression, but has semicolon at end
     ExprStatement(Expr),
     //Mut or const//ident  //typ //expr stmt
-    VarDecl(Token,SmolStr, Token, Box<Stmt>),
+    VarDecl(Token, SmolStr, Token, Box<Stmt>),
 
     While(Expr, Vec<Stmt>),
 
@@ -75,10 +72,8 @@ pub enum Stmt {
 }
 #[derive(Debug, Clone, PartialEq)]
 pub enum Decl {
-   //function  name    args:      name     type      ret_typ   body    
+    //function  name    args:      name     type      ret_typ   body
     Function(SmolStr, Option<Vec<(SmolStr, Token)>>, Token, Vec<Stmt>),
     Record(SmolStr, Vec<(SmolStr, Token)>),
     Module(SmolStr),
 }
-
-

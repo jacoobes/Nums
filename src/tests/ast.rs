@@ -4,7 +4,7 @@ mod ast {
 
     use codespan_reporting::diagnostic::Diagnostic;
     use logos::Logos;
-    use crate::compiler::{parser::{parse, ast::Decl}, token::Token, source::Source};
+    use crate::compiler::{parser::{parse, ast::Decl}, tokens::Token, source::Source};
 
     fn create_tree<'a>(text: &'a str) -> Result<Vec<Decl>, Vec<Diagnostic<()>>> {
         let iterator = Token::lexer(text);

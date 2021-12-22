@@ -1,20 +1,18 @@
-use logos::{Logos, Lexer};
+use logos::{Lexer, Logos};
 use smol_str::SmolStr;
-
 
 #[derive(Default)]
 pub struct MetaData {
     pub line_breaks: usize,
 }
 
-/// Regular grammar for Nums 
+/// Regular grammar for Nums
 #[derive(Logos, Debug, PartialEq, Clone)]
 #[logos(extras = MetaData)]
 #[logos(subpattern typ = r"float|int|str|boolean|unit")]
 #[logos(subpattern int = r"\d+")]
 
 pub enum Token {
-
     #[token("when")]
     When,
     #[token("to")]
@@ -22,12 +20,12 @@ pub enum Token {
     #[token("if")]
     If,
     #[token("else")]
-    Else, 
+    Else,
     #[token("while")]
     While,
     #[token("record")]
     Record,
-    #[token("and")] 
+    #[token("and")]
     And,
     #[token("or")]
     Or,
@@ -63,9 +61,9 @@ pub enum Token {
     /// double must have a number before the '.' faulty: .12123, correct: 0.12123
     /// can also come in form of a percent!
     #[regex(r"\d+(?:\.\d+)+", parse_dub)]
-    #[regex(r"\d+(?:\.\d+)?%", percent_float)] 
+    #[regex(r"\d+(?:\.\d+)?%", percent_float)]
     Double(f32),
-    /// standard 4 byte numbers 
+    /// standard 4 byte numbers
     #[regex(r"(?&int)", parse_num)]
     Integer(i16),
     ///only ascii!
@@ -145,7 +143,7 @@ pub enum Token {
     #[token("\n", |lex| lex.extras.line_breaks += 1; logos::Skip)]
     #[regex(r"[ \t\f\r]", logos::skip)]
     #[error]
-    Error
+    Error,
 }
 
 fn parse_num(lex: &mut Lexer<Token>) -> Option<i16> {
@@ -156,26 +154,26 @@ fn parse_num(lex: &mut Lexer<Token>) -> Option<i16> {
 
 fn parse_dub(lex: &mut Lexer<Token>) -> Option<f32> {
     let slice = lex.slice();
-    let n : f32 = slice.parse().ok()?;
+    let n: f32 = slice.parse().ok()?;
     Some(n)
 }
 
 fn make_str(lex: &mut Lexer<Token>) -> Option<SmolStr> {
     let slice = lex.slice();
-    Some(SmolStr::new(&slice[1..slice.len()-1]))
+    Some(SmolStr::new(&slice[1..slice.len() - 1]))
 }
 
 fn percent_float(lex: &mut Lexer<Token>) -> Option<f32> {
     let slice = lex.slice();
     let n: f32 = slice[..slice.len() - 1].parse().ok()?;
-    Some( n / 100.0 )
+    Some(n / 100.0)
 }
 
 fn parse_char(lex: &mut Lexer<Token>) -> Option<char> {
     let slice = lex.slice().chars().nth(1);
     slice
 }
-fn parse_bool(lex :  &mut Lexer<Token>) -> Option<bool> {
+fn parse_bool(lex: &mut Lexer<Token>) -> Option<bool> {
     let slice = lex.slice();
     slice.parse::<bool>().ok()
 }

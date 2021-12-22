@@ -1,18 +1,18 @@
-
 use std::rc::Rc;
 
-use super::ast::{Expr, Stmt, Decl};
-use crate::{error_handling::{
-    faults::{ErrTyp::*, Faults::*, *},
-}, compiler::source::Source};
-use crate::{match_adv, create_binexpr};
-use crate::compiler::{parser::peekable_parser::Peekable as PeekerWrap, token::Token};
+use super::ast::{Decl, Expr, Stmt};
+use crate::compiler::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
+use crate::{
+    compiler::source::Source,
+    error_handling::faults::{ErrTyp::*, Faults::*, *},
+};
+use crate::{create_binexpr, match_adv};
 use codespan_reporting::diagnostic::Diagnostic;
 use logos::Lexer;
 use smol_str::SmolStr;
 pub struct Parser<'source> {
     tokens: PeekerWrap<'source>,
-    source: std::rc::Rc<Source>
+    source: std::rc::Rc<Source>,
 }
 
 ///iterator methods
@@ -23,12 +23,12 @@ impl<'source> Parser<'source> {
             Some(tok) if tok == token => Ok(self.next().unwrap()),
             Some(_) => {
                 let fault = self.next();
-                Err(self.new_span(Error(Expected( token.clone(), fault?,)), ""))
+                Err(self.new_span(Error(Expected(token.clone(), fault?)), ""))
             }
             None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
         }
     }
-    fn peek(&mut self) -> Option<&Token> { 
+    fn peek(&mut self) -> Option<&Token> {
         self.tokens.peek().take()
     }
 
@@ -39,9 +39,12 @@ impl<'source> Parser<'source> {
             .ok_or(self.new_span(Error(UnexpectedEndOfParsing), ""))
     }
     /// check if token matches the current peeked token in the iterator
-    fn check_peek(&mut self, token: &Token) -> bool { self.peek() == Some(token) }
-    fn is_at_end(&mut self) -> bool { matches!(self.peek(), None) }
-
+    fn check_peek(&mut self, token: &Token) -> bool {
+        self.peek() == Some(token)
+    }
+    fn is_at_end(&mut self) -> bool {
+        matches!(self.peek(), None)
+    }
 }
 
 /// Basic recursive descent parsing
@@ -51,18 +54,20 @@ impl<'source> Parser<'source> {
     pub fn new(tokens: Lexer<'source, Token>, source: Rc<Source>) -> Self {
         Self {
             tokens: PeekerWrap::new(tokens.source()),
-            source
+            source,
         }
     }
 
     pub fn parse(&mut self) -> Result<Vec<Decl>, Vec<Diagnostic<()>>> {
-        let mut dec_vec= Vec::new();
+        let mut dec_vec = Vec::new();
         let mut diagnostics_vec = Vec::new();
         let mut had_parse_err = false;
         loop {
             if self.is_at_end() {
-                if had_parse_err { break Err(diagnostics_vec)}
-                 break Ok(dec_vec);
+                if had_parse_err {
+                    break Err(diagnostics_vec);
+                }
+                break Ok(dec_vec);
             }
             match self.top_level() {
                 Ok(decl) => dec_vec.push(decl),
@@ -74,33 +79,29 @@ impl<'source> Parser<'source> {
             }
         }
     }
-    
 
     fn synchronize(&mut self) {
         while let Some(token) = self.peek() {
             match token {
-                &Token::Function 
-                | &Token::Semi 
-                | &Token::Record 
-                | &Token::Package => break,
-                _ => { 
-                    self.next().unwrap(); continue;
-                 }
+                &Token::Function | &Token::Semi | &Token::Record | &Token::Package => break,
+                _ => {
+                    self.next().unwrap();
+                    continue;
+                }
             }
         }
     }
 
-    /// top level declarations. If it finds anything that 
+    /// top level declarations. If it finds anything that
     fn top_level(&mut self) -> Result<Decl, Diagnostic<()>> {
-         match self.peek().unwrap() {
-             tok => match tok {
-                 &Token::Function => self.parse_fn(),
-                 &Token::Package =>  self.parse_mod(),
-                 &Token::Record =>   self.parse_rec(),
-                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), ""))
-             }
-         }
-         
+        match self.peek().unwrap() {
+            tok => match tok {
+                &Token::Function => self.parse_fn(),
+                &Token::Package => self.parse_mod(),
+                &Token::Record => self.parse_rec(),
+                _ => Err(self.new_span(Error(NoTopLevelDeclaration), "")),
+            },
+        }
     }
     fn statements(&mut self) -> Result<Stmt, Diagnostic<()>> {
         match self.peek() {
@@ -108,10 +109,10 @@ impl<'source> Parser<'source> {
                 &Token::While => self.while_loop(),
                 &Token::Let | &Token::Mut => self.var_decl(),
                 &Token::If => self.if_else(),
-                &Token::LeftBrace => Ok(Stmt::Block(self.block()?)),              
-                _ => self.stmt_expr()
+                &Token::LeftBrace => Ok(Stmt::Block(self.block()?)),
+                _ => self.stmt_expr(),
             },
-            None => Err(self.new_span(Error(UnexpectedEndOfParsing), "could not finish parsing"))
+            None => Err(self.new_span(Error(UnexpectedEndOfParsing), "could not finish parsing")),
         }
     }
 
@@ -142,9 +143,9 @@ impl<'source> Parser<'source> {
     }
 
     fn stmt_expr(&mut self) -> Result<Stmt, Diagnostic<()>> {
-       let value_of_statement = self.expr();
-       self.expect_token(&Token::Semi)?;
-       Ok(Stmt::ExprStatement(value_of_statement?))
+        let value_of_statement = self.expr();
+        self.expect_token(&Token::Semi)?;
+        Ok(Stmt::ExprStatement(value_of_statement?))
     }
 
     fn expr(&mut self) -> Result<Expr, Diagnostic<()>> {
@@ -155,7 +156,11 @@ impl<'source> Parser<'source> {
         let mut left = self.and();
         while let Some(operator) = match_adv!(&mut self, &Token::Or) {
             let right = self.and();
-            left = Ok(Expr::Logical { operator, left: Box::new(left?) , right: Box::new(right?)  })
+            left = Ok(Expr::Logical {
+                operator,
+                left: Box::new(left?),
+                right: Box::new(right?),
+            })
         }
         left
     }
@@ -164,11 +169,15 @@ impl<'source> Parser<'source> {
         let mut left = self.equality();
         while let Some(operator) = match_adv!(&mut self, &Token::And) {
             let right = self.equality();
-            left = Ok(Expr::Logical { operator, left: Box::new(left?) , right: Box::new(right?)  })
+            left = Ok(Expr::Logical {
+                operator,
+                left: Box::new(left?),
+                right: Box::new(right?),
+            })
         }
         left
     }
-    
+
     fn equality(&mut self) -> Result<Expr, Diagnostic<()>> {
         let mut left = self.compare();
         while let Some(operator) = match_adv!(&mut self, &Token::Eq | &Token::NotEq) {
@@ -176,12 +185,14 @@ impl<'source> Parser<'source> {
             left = create_binexpr!(&mut self, operator, left, right);
         }
         left
-
     }
 
     fn compare(&mut self) -> Result<Expr, Diagnostic<()>> {
         let mut left = self.term();
-        while let Some(operator) = match_adv!(&mut self, &Token::LessEq | &Token::GreaterEq | &Token::LeftArr | &Token::RightArr) {
+        while let Some(operator) = match_adv!(
+            &mut self,
+            &Token::LessEq | &Token::GreaterEq | &Token::LeftArr | &Token::RightArr
+        ) {
             let right = self.term();
             left = create_binexpr!(&mut self, operator, left, right);
         }
@@ -214,15 +225,14 @@ impl<'source> Parser<'source> {
         } else {
             left
         }
-        
     }
     /// right associative unary parser
     fn unary(&mut self) -> Result<Expr, Diagnostic<()>> {
         if let Some(operator) = match_adv!(&mut self, &Token::Bang | &Token::Minus | &Token::Plus) {
             let expr = self.unary();
-            Ok(Expr::Unary{
+            Ok(Expr::Unary {
                 operator,
-                expr: Box::new(expr?)
+                expr: Box::new(expr?),
             })
         } else {
             self.grouping()
@@ -242,7 +252,6 @@ impl<'source> Parser<'source> {
     }
 
     fn primary(&mut self) -> Result<Expr, Diagnostic<()>> {
-
         match self.peek().unwrap() {
             _ => match self.next()? {
                 Token::Bool(val) => Ok(Expr::Bool(val)),
@@ -254,9 +263,12 @@ impl<'source> Parser<'source> {
                 Token::Unit => Ok(Expr::Unit),
                 Token::Error => {
                     let unknown_token = self.tokens.slice();
-                    Err(self.new_span(Error(UnknownToken(unknown_token)),"unknown token"))
+                    Err(self.new_span(Error(UnknownToken(unknown_token)), "unknown token"))
                 }
-                other => Err(self.new_span(Error(UnexpectedToken(other)), "found an unexpected token out of place")),
+                other => Err(self.new_span(
+                    Error(UnexpectedToken(other)),
+                    "found an unexpected token out of place",
+                )),
             },
         }
     }
@@ -274,9 +286,12 @@ impl<'source> Parser<'source> {
     fn get_type(&mut self) -> Result<Token, Diagnostic<()>> {
         let typ = self.next()?;
         match typ {
-             Token::Identifier(_) => Ok(Token::Type(self.tokens.slice())),
-             Token::Type(_) => Ok(typ),
-            other => Err(self.new_span(Error(UnknownType(other)), "Found a token that cannot be qualified as a type"))
+            Token::Identifier(_) => Ok(Token::Type(self.tokens.slice())),
+            Token::Type(_) => Ok(typ),
+            other => Err(self.new_span(
+                Error(UnknownType(other)),
+                "Found a token that cannot be qualified as a type",
+            )),
         }
     }
 
@@ -290,10 +305,10 @@ impl<'source> Parser<'source> {
             Token::Unit
         };
         let block = self.block();
-        Ok(Decl::Function(name,args, fn_ret_type, block?  ))
+        Ok(Decl::Function(name, args, fn_ret_type, block?))
     }
 
-    fn parse_args(&mut self, ) -> Result<Option<Vec<(SmolStr, Token)>>, Diagnostic<()>> {
+    fn parse_args(&mut self) -> Result<Option<Vec<(SmolStr, Token)>>, Diagnostic<()>> {
         let mut fn_args = Vec::new();
         if let Some(_) = match_adv!(&mut self, &Token::Bar) {
             let first_arg = self.parse_single_arg()?;
@@ -306,16 +321,15 @@ impl<'source> Parser<'source> {
             }
             self.expect_token(&Token::Bar)?;
             Ok(Some(fn_args))
-            
         } else {
             Ok(None)
         }
     }
-    
-    fn parse_single_arg(&mut self) -> Result<(SmolStr, Token), Diagnostic<()>> { 
+
+    fn parse_single_arg(&mut self) -> Result<(SmolStr, Token), Diagnostic<()>> {
         let name = self.get_name()?;
         self.expect_token(&Token::Colon)?;
-        let typ = self.get_type()?; 
+        let typ = self.get_type()?;
         Ok((name, typ))
     }
 
@@ -343,7 +357,7 @@ impl<'source> Parser<'source> {
             }
             self.expect_token(&Token::RightBrace)?;
             fields
-        }; 
+        };
         Ok(Decl::Record(name, args))
     }
 
@@ -355,19 +369,21 @@ impl<'source> Parser<'source> {
             }
             _ => {
                 let next = self.next()?;
-                Err(self.new_span(Error(UnexpectedToken(next)), "note : Try to use an identifier"))
+                Err(self.new_span(
+                    Error(UnexpectedToken(next)),
+                    "note : Try to use an identifier",
+                ))
             }
-            
-        } 
-
+        }
     }
 }
 
 impl<'source> Parser<'source> {
     fn new_span(&mut self, fault: Faults, note: &'static str) -> Diagnostic<()> {
-       self.source.create_diagnostic(
-           format!("{:?}", fault),
-           self.tokens.get_err_range(),
-           note.to_string())
+        self.source.create_diagnostic(
+            format!("{:?}", fault),
+            self.tokens.get_err_range(),
+            note.to_string(),
+        )
     }
 }

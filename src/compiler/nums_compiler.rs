@@ -1,26 +1,31 @@
-use std::{rc::Rc};
+use std::rc::Rc;
 
-use codespan_reporting::term::{termcolor::{StandardStream, ColorChoice}, self};
+use codespan_reporting::term::{
+    self,
+    termcolor::{ColorChoice, StandardStream},
+};
 use logos::Logos;
 
-use super::{source::Source, token::Token, parser::{parse::Parser, ast::Decl}};
+use super::{
+    parser::{ast::Decl, parse::Parser},
+    source::Source,
+    tokens::Token,
+};
 
 pub struct Compiler {
     source: Rc<Source>,
 }
 
-
-
 impl Compiler {
-    pub fn new( source: Source) -> Self {
+    pub fn new(source: Source) -> Self {
         Self {
-            source: Rc::new(source)
+            source: Rc::new(source),
         }
     }
 
-    pub fn compile(&self) -> Option<Vec<Decl>>{
+    pub fn compile(&self) -> Option<Vec<Decl>> {
         let source = &self.source.source;
-        let tokenizer =  Token::lexer(source);
+        let tokenizer = Token::lexer(source);
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(res) => Some(res),
@@ -29,11 +34,11 @@ impl Compiler {
                 let writer = StandardStream::stderr(ColorChoice::Always);
                 let config = codespan_reporting::term::Config::default();
                 for error in diagnostics {
-                term::emit(&mut writer.lock(), &config, src, &error).expect("Could not emit code_span");
-                } 
+                    term::emit(&mut writer.lock(), &config, src, &error)
+                        .expect("Could not emit code_span");
+                }
                 None
             }
         }
     }
-    
 }
