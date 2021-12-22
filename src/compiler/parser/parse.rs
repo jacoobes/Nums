@@ -38,6 +38,7 @@ impl<'source> Parser<'source> {
             .next()
             .ok_or(self.new_span(Error(UnexpectedEndOfParsing), ""))
     }
+    /// check if token matches the current peeked token in the iterator
     fn check_peek(&mut self, token: &Token) -> bool { self.peek() == Some(token) }
     fn is_at_end(&mut self) -> bool { matches!(self.peek(), None) }
 
@@ -54,25 +55,52 @@ impl<'source> Parser<'source> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Decl>, Diagnostic<()>> {
-        let mut temp_vec= Vec::new();
+    pub fn parse(&mut self) -> Result<Vec<Decl>, Vec<Diagnostic<()>>> {
+        let mut dec_vec= Vec::new();
+        let mut diagnostics_vec = Vec::new();
+        let mut had_parse_err = false;
         loop {
             if self.is_at_end() {
-                break Ok(temp_vec);
+                if had_parse_err { break Err(diagnostics_vec)}
+                 break Ok(dec_vec);
             }
-            temp_vec.push(self.top_level()?)
+            match self.top_level() {
+                Ok(decl) => dec_vec.push(decl),
+                Err(e) => {
+                    had_parse_err = true;
+                    diagnostics_vec.push(e);
+                    self.synchronize()
+                }
+            }
+        }
+    }
+    
+
+    fn synchronize(&mut self) {
+        while let Some(token) = self.peek() {
+            match token {
+                &Token::Function 
+                | &Token::Semi 
+                | &Token::Record 
+                | &Token::Package => break,
+                _ => { 
+                    self.next().unwrap(); continue;
+                 }
+            }
         }
     }
 
+    /// top level declarations. If it finds anything that 
     fn top_level(&mut self) -> Result<Decl, Diagnostic<()>> {
          match self.peek().unwrap() {
              tok => match tok {
                  &Token::Function => self.parse_fn(),
-                 &Token::Package => self.parse_mod(),
-                 &Token::Record => self.parse_rec(),
-                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), "found either an out of place statement or no top level declaration"))
+                 &Token::Package =>  self.parse_mod(),
+                 &Token::Record =>   self.parse_rec(),
+                 _ => Err(self.new_span(Error(UnexpectedEndOfParsing), ""))
              }
          }
+         
     }
     fn statements(&mut self) -> Result<Stmt, Diagnostic<()>> {
         match self.peek() {

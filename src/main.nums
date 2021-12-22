@@ -1,14 +1,14 @@
 package a;
 
     record Person {
-        a: str,
-        b: int
+        a : str,
+        b : int,;
     }
 
-    fun string | a: str |  {
+    fun hi_dina | a: str |  {
         
         while a == "sdf" or a == "df" {
-            let a : int = 3;
+            let a : int = 3
         }
     }
 

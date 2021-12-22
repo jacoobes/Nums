@@ -53,7 +53,6 @@ pub enum Token {
     Expose,
     #[token("->")]
     SmallPointer,
-    
     #[token("<")]
     LeftArr,
     #[token(">")]

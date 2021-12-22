@@ -24,11 +24,13 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(res) => Some(res),
-            Err(diagnostic) => {
+            Err(diagnostics) => {
                 let src = &self.source.as_ref().simple_file;
                 let writer = StandardStream::stderr(ColorChoice::Always);
                 let config = codespan_reporting::term::Config::default();
-                term::emit(&mut writer.lock(), &config, src, &diagnostic).expect("Could not emit code_span");
+                for error in diagnostics {
+                term::emit(&mut writer.lock(), &config, src, &error).expect("Could not emit code_span");
+                } 
                 None
             }
         }
