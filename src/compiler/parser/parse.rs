@@ -97,7 +97,7 @@ impl<'source> Parser<'source> {
                  &Token::Function => self.parse_fn(),
                  &Token::Package =>  self.parse_mod(),
                  &Token::Record =>   self.parse_rec(),
-                 _ => Err(self.new_span(Error(UnexpectedEndOfParsing), ""))
+                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), ""))
              }
          }
          
