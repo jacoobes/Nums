@@ -12,6 +12,7 @@ pub enum ErrTyp {
     Expected(Token, Token),
     NoTopLevelDeclaration,
     UnknownType(Token),
+    UnclosedDelimiter,
 }
 
 #[derive(Debug)]
@@ -34,6 +35,7 @@ impl std::fmt::Debug for ErrTyp {
             Self::Expected(tok, other) => write!(f, "Expected {:?} got {:?}", tok, other),
             Self::NoTopLevelDeclaration => write!(f, "NoTopLevelDeclaration : In this file, expected a function or module declaration, found none"),
             Self::UnknownType(token) => write!(f, "Unknown type. The compiler couldn't resolve {:?} as a type ", token),
+            Self::UnclosedDelimiter => write!(f, "Unclosed delimiter"),
         }
     }
 }

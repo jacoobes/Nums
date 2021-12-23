@@ -63,12 +63,13 @@ impl<'source> Parser<'source> {
         let mut diagnostics_vec = Vec::new();
         let mut had_parse_err = false;
         loop {
-            if self.is_at_end() {
+            if self.is_at_end() { 
                 if had_parse_err {
-                    break Err(diagnostics_vec);
+                    break Err(diagnostics_vec)
                 }
                 break Ok(dec_vec);
             }
+
             match self.top_level() {
                 Ok(decl) => dec_vec.push(decl),
                 Err(e) => {
@@ -83,11 +84,9 @@ impl<'source> Parser<'source> {
     fn synchronize(&mut self) {
         while let Some(token) = self.peek() {
             match token {
-                &Token::Function | &Token::Semi | &Token::Record | &Token::Package => break,
-                _ => {
-                    self.next().unwrap();
-                    continue;
-                }
+                &Token::Function  | &Token::Record | &Token::Package => break,
+                &Token::Semi => { self.next().unwrap(); break; }
+                _ => { self.next().unwrap(); continue; }
             }
         }
     }
@@ -112,20 +111,20 @@ impl<'source> Parser<'source> {
                 &Token::LeftBrace => Ok(Stmt::Block(self.block()?)),
                 _ => self.stmt_expr(),
             },
-            None => Err(self.new_span(Error(UnexpectedEndOfParsing), "could not finish parsing")),
+            None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
         }
     }
 
     fn if_else(&mut self) -> Result<Stmt, Diagnostic<()>> {
         self.next()?;
-        let condition = self.expr();
-        let block = self.block();
+        let condition = self.expr()?;
+        let block = self.block()?;
         let else_block = if let Some(_) = match_adv!(&mut self, &Token::Else) {
             Some(self.block()?)
         } else {
             None
         };
-        Ok(Stmt::IfElse(condition?, block?, else_block))
+        Ok(Stmt::IfElse(condition, block, else_block))
     }
 
     fn while_loop(&mut self) -> Result<Stmt, Diagnostic<()>> {
@@ -279,7 +278,7 @@ impl<'source> Parser<'source> {
         while !self.check_peek(&Token::RightBrace) {
             stmts_block.push(self.statements()?)
         }
-        self.expect_token(&Token::RightBrace)?;
+        self.expect_token(&Token::RightBrace).map_err(|_| self.new_span(Error(UnclosedDelimiter), "Check closing brace `}` "))?;
         Ok(stmts_block)
     }
 
