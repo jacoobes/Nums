@@ -148,7 +148,22 @@ impl<'source> Parser<'source> {
     }
 
     fn expr(&mut self) -> Result<Expr, Diagnostic<()>> {
-        self.or()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expr, Diagnostic<()>> {
+        let asignee = self.or();
+        if let Some(_) = match_adv!(&mut self, &Token::Assign) {
+            let assignment = self.assignment();
+            match asignee {
+                Ok(e) if matches!(e, Expr::Val(_)) => {
+                     Ok(Expr::Assignment { var: SmolStr::from(self.tokens.slice()), value: Box::new(assignment?) })
+                },
+                _ => Err(self.new_span(Error(InvalidAssignmentTarget), "Cannot assign {:?}"))
+            }
+        } else {
+            asignee
+        }
     }
 
     fn or(&mut self) -> Result<Expr, Diagnostic<()>> {

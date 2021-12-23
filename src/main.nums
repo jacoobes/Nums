@@ -8,8 +8,8 @@ package a;
     fun hi_dina | a : str | = Person {
         
         if a == "sdf" and b == "dsf" {
-            let a : int = 3;
-        }
-        
+            a = 3;
+        }    
+    }
     
 

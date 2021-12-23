@@ -1,4 +1,6 @@
 
+use std::fmt::write;
+
 use crate::compiler::tokens::Token;
 use smol_str::SmolStr;
 pub enum Faults {
@@ -13,6 +15,7 @@ pub enum ErrTyp {
     NoTopLevelDeclaration,
     UnknownType(Token),
     UnclosedDelimiter,
+    InvalidAssignmentTarget
 }
 
 #[derive(Debug)]
@@ -36,6 +39,7 @@ impl std::fmt::Debug for ErrTyp {
             Self::NoTopLevelDeclaration => write!(f, "NoTopLevelDeclaration : In this file, expected a function or module declaration, found none"),
             Self::UnknownType(token) => write!(f, "Unknown type. The compiler couldn't resolve {:?} as a type ", token),
             Self::UnclosedDelimiter => write!(f, "Unclosed delimiter"),
+            Self::InvalidAssignmentTarget => write!(f, "Invalid assignment target!")
         }
     }
 }

@@ -46,6 +46,10 @@ pub enum Expr {
     Group {
         expr: Box<Expr>,
     },
+    Assignment {
+        var : SmolStr,
+        value: Box<Expr>
+    },
     Double(f32),
     Integer(i16),
     String(SmolStr),
