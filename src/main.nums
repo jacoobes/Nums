@@ -5,11 +5,10 @@ package a;
         b : int,
     }
 
-    fun hi_dina | a : str | = Person {
+    fun hi_dina | a: str | = Person {
         
         if a == "sdf" and b == "dsf" {
-            a = 3;
+
         }    
     }
     
-

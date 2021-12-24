@@ -158,8 +158,10 @@ impl<'source> Parser<'source> {
             match asignee {
                 Ok(e) if matches!(e, Expr::Val(_)) => {
                      Ok(Expr::Assignment { var: SmolStr::from(self.tokens.slice()), value: Box::new(assignment?) })
-                },
-                _ => Err(self.new_span(Error(InvalidAssignmentTarget), "Cannot assign {:?}"))
+                }
+                other => {
+                    return Err(self.new_span(Error(InvalidAssignmentTarget(other?)), ""))
+                }
             }
         } else {
             asignee
