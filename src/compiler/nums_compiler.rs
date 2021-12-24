@@ -7,9 +7,10 @@ use codespan_reporting::term::{
 use logos::Logos;
 
 use super::{
-    parser::{ast::Decl, parse::Parser},
+    parser::parse::Parser,
     source::Source,
     tokens::Token,
+    nodes::decl::Decl
 };
 
 pub struct Compiler {

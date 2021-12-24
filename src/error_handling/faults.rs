@@ -1,5 +1,5 @@
 
-use crate::compiler::{tokens::Token, parser::ast::Expr};
+use crate::compiler::{tokens::Token, nodes::expr::Expr};
 use smol_str::SmolStr;
 pub enum Faults {
     Error(ErrTyp),

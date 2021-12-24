@@ -1,6 +1,5 @@
 use std::rc::Rc;
-
-use super::ast::{Decl, Expr, Stmt};
+use crate::compiler::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
 use crate::compiler::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
 use crate::{
     compiler::source::Source,
