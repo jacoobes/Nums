@@ -8,8 +8,8 @@ use super::expr::Expr;
 pub enum Stmt {
     //an expression, but has semicolon at end
     ExprStatement(Expr),
-    //Mut or const//ident  //typ //expr stmt
-    VarDecl(Token, SmolStr, Token, Box<Stmt>),
+    //Mut or const //ident  //typ //expr stmt
+    VarDecl(Token, SmolStr, Option<Token>, Box<Stmt>),
 
     While(Expr, Vec<Stmt>),
 

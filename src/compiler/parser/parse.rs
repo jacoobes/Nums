@@ -132,9 +132,15 @@ impl<'source> Parser<'source> {
         let block = self.block();
         Ok(Stmt::While(cond?, block?))
     }
+
     fn var_decl(&mut self) -> Result<Stmt, Diagnostic<()>> {
         let mut_state = self.next()?;
-        let (name, typ_tok) = self.parse_single_arg()?;
+        let name = self.get_name()?;
+        let typ_tok = if let Some(_) =  match_adv!(&mut self, &Token::Colon) {
+            Some(self.get_type()?)
+        } else {
+            None
+        };
         self.expect_token(&Token::Assign)?;
         let var_val = self.stmt_expr();
         Ok(Stmt::VarDecl(mut_state, name, typ_tok, Box::new(var_val?)))
@@ -341,7 +347,7 @@ impl<'source> Parser<'source> {
         }
     }
 
-    fn parse_single_arg(&mut self) -> Result<(SmolStr, Token), Diagnostic<()>> {
+    fn parse_single_arg(&mut self,) -> Result<(SmolStr, Token), Diagnostic<()>> {
         let name = self.get_name()?;
         self.expect_token(&Token::Colon)?;
         let typ = self.get_type()?;
