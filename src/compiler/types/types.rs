@@ -1,10 +1,10 @@
 
 
 enum LiteralType {
-    Unit,
-    Char,
-    String,
+    Unit, //unit
+    Char, //char
+    String, //String literal
     Int,  //isize
     Float, //f32
-    Bool,
+    Bool,  //boolean
 }
