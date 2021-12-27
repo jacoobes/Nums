@@ -2,14 +2,14 @@ use super::{nodes::expr::Expr, nodes::decl::*, nodes::stmt::*};
 
 trait Visitor {
     type Node;
-    fn visit(&self, node : Self::Node ) -> Self::Node;
+    fn visit(&self) -> Self::Node;
 }
 
 
 impl Visitor for Expr {
     type Node = Expr;
-    fn visit(&self, node: Self::Node) -> Self::Node {
-        match node {
+    fn visit(&self) -> Self::Node {
+        match self {
             Expr::Logical { operator, left, right } => todo!(),
             Expr::Binary { operator, left, right } => todo!(),
             Expr::Unary { operator, expr } => todo!(),
@@ -28,8 +28,8 @@ impl Visitor for Expr {
 
 impl Visitor for Decl {
     type Node = Decl;
-    fn visit(&self, node : Self::Node ) -> Self::Node {
-        match node {
+    fn visit(&self,  ) -> Self::Node {
+        match self {
             Decl::Function(_, _, _, _) => todo!(),
             Decl::Record(_, _) => todo!(),
             Decl::Module(_) => todo!(),
@@ -40,8 +40,8 @@ impl Visitor for Decl {
 impl Visitor for Stmt {
     type Node = Stmt;
 
-    fn visit(&self, node : Self::Node ) -> Self::Node {
-        match node {
+    fn visit(&self) -> Self::Node {
+        match self {
             Stmt::ExprStatement(_) => todo!(),
             Stmt::VarDecl(_, _, _, _) => todo!(),
             Stmt::While(_, _) => todo!(),

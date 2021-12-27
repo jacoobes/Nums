@@ -26,7 +26,7 @@ pub enum Expr {
         value: Box<Expr>
     },
     Double(f32),
-    Integer(i16),
+    Integer(isize),
     String(SmolStr),
     Unit,
     //    F64(f64), maybe add float64 and i64 literals in the future?
