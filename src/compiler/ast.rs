@@ -1,5 +1,5 @@
 use crate::compiler::nodes::*;
-
+#[derive(Debug)]
 pub enum AST {
     Decl(decl::Decl),
     Stmt(stmt::Stmt),

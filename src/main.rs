@@ -15,6 +15,4 @@ fn main() {
       Some(vec) => println!("{:?}", &vec),
       None => println!("error")
    }
-   
-
 }

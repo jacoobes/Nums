@@ -1,6 +1,6 @@
-pub mod ast;
 pub mod parse;
 pub mod peekable_parser;
+pub use smol_str::SmolStr;
 
 #[macro_export]
 macro_rules! match_adv {

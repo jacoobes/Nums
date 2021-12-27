@@ -3,3 +3,4 @@ pub mod parser;
 pub mod source;
 pub mod tokens;
 pub mod nodes;
+pub mod ast;
