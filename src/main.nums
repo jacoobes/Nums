@@ -1,11 +1,3 @@
-package a;
+package main;
 
-    record Person {
-        a : str,
-        b : int,
-    }
 
-    fun hi_dina | a: str | = Person {
-        let b = 10;
-    }
-    
