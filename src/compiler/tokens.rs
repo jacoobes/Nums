@@ -9,7 +9,7 @@ pub struct MetaData {
 /// Regular grammar for Nums
 #[derive(Logos, Debug, PartialEq, Clone)]
 #[logos(extras = MetaData)]
-#[logos(subpattern typ = r"float|int|str|boolean|unit")]
+#[logos(subpattern typ = r"float|int|str|bool|unit")]
 #[logos(subpattern int = r"\d+")]
 
 pub enum Token {
