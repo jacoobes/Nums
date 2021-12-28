@@ -3,7 +3,8 @@
 
 pub type TypeId = usize;
 
-enum Type {
+pub enum Type {
+    Never,
     Unit,   
     Char,   
     String, 
