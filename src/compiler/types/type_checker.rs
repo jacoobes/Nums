@@ -12,18 +12,28 @@ pub struct TypeChecker {
 impl Visitor<()> for TypeChecker {
     fn visit_expr(&mut self, e: Expr) -> () {
         match e {
-            Expr::Logical { operator, left, right } => {},
-            Expr::Binary { operator, left, right } => todo!(),
-            Expr::Unary { operator, expr } => todo!(),
-            Expr::Group { expr } => {},
-            Expr::Assignment { var, value } => todo!(),
-            Expr::Double(_)
-            | Expr::Integer(_)
-            | Expr::String(_)
-            | Expr::Bool(_)
-            | Expr::Char(_) => (),
-            Expr::Unit => (),
-            Expr::Val(v,) => todo!(),
+            Expr::Logical { operator : _, left, right } => {
+                self.visit_expr(*left);
+                self.visit_expr(*right);
+            },
+            Expr::Binary { operator : _, left, right } => {
+                self.visit_expr(*left);
+                self.visit_expr(*right);
+            },
+            Expr::Unary { operator : _,  expr } => {
+                self.visit_expr(*expr);
+            },
+            Expr::Group { expr } => {
+                self.visit_expr(*expr);
+            },
+            Expr::Assignment { var: _, value : _ } => { self.insert_type(TypeInfo::Unit); },
+            Expr::Double(_)  => { self.insert_type(TypeInfo::Float); },
+            Expr::Integer(_) => { self.insert_type(TypeInfo::Int); },
+            Expr::String(_) => { self.insert_type(TypeInfo::String); },
+            Expr::Unit => { self.insert_type(TypeInfo::Unit); },
+            Expr::Bool(_) => { self.insert_type(TypeInfo::Bool); },
+            Expr::Char(_) => { self.insert_type(TypeInfo::Char); },
+            Expr::Val(_,) => { self.insert_type(TypeInfo::Unknown); },
         }
     }
 
