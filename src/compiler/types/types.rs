@@ -14,7 +14,7 @@ pub enum Type {
     Func(Box<Type>, Box<Type>),
     Record( Box<Type>, Vec<Box<Type>> )
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TypeInfo {
     Unknown,
     Unit,   

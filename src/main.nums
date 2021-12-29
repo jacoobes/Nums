@@ -1,3 +1,6 @@
 package main;
 
 
+fun test  {
+    true == false and 1 == 4;
+}
