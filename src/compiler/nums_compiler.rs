@@ -30,11 +30,8 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(res) => {
-                 let mut type_engine = TypeChecker;
-                for dec in res {
-                  println!("{:?}",  type_engine.visit_decl(dec))
-
-                };
+                 let type_engine = TypeChecker;
+                 println!("{:?}", &res);
                     
             },
             Err(diagnostics) => {

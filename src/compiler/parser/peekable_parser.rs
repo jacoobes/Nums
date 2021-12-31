@@ -4,9 +4,8 @@ use smol_str::SmolStr;
 use std::ops::Range;
 
 pub struct Peekable<'source> {
-    lexer: Lexer<'source, Token>,
+    lexer: Lexer<'source ,Token>,
     peeked: Option<Option<Token>>,
-    start_node_loc: usize,
 }
 
 impl<'source> Peekable<'source> {
@@ -14,7 +13,6 @@ impl<'source> Peekable<'source> {
         Self {
             lexer: Token::lexer(source),
             peeked: None,
-            start_node_loc: 0,
         }
     }
     pub fn peek(&mut self) -> Option<&Token> {
@@ -28,23 +26,15 @@ impl<'source> Peekable<'source> {
         SmolStr::from(self.lexer.slice())
     }
 
-    pub fn token_span(&mut self) -> std::ops::Range<usize> {
-        self.lexer.span()
-    }
-
-    pub fn reset_range(&mut self) {
-        self.start_node_loc = self.token_span().last().unwrap_or(self.start_node_loc)
-    }
-
-    pub fn get_err_range(&mut self) -> Range<usize> {
-        self.start_node_loc..self.token_span().last().unwrap_or(self.start_node_loc + 1)
+    pub fn token_span(&mut self) -> usize {
+        self.lexer.span().end
     }
 }
 
 impl<'source> Iterator for Peekable<'source> {
     type Item = Token;
 
-    fn next(&mut self) -> Option<Token> {
+    fn next(&mut self) -> Option<Self::Item> {
         if let Some(peeked) = self.peeked.take() {
             peeked
         } else {

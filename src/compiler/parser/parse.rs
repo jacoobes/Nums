@@ -5,6 +5,7 @@ use crate::{
     compiler::source::Source,
     error_handling::faults::{ErrTyp::*, Faults::*, *},
 };
+use std::ops::Range;
 use crate::{create_binexpr, match_adv};
 use codespan_reporting::diagnostic::Diagnostic;
 use logos::Lexer;
@@ -12,6 +13,8 @@ use smol_str::SmolStr;
 pub struct Parser<'source> {
     tokens: PeekerWrap<'source>,
     source: std::rc::Rc<Source>,
+    start : usize,
+    end : usize
 }
 
 ///iterator methods
@@ -27,23 +30,21 @@ impl<'source> Parser<'source> {
             None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
         }
     }
-    fn peek(&mut self) -> Option<&Token> {
-        self.tokens.peek().take()
-    }
+    fn peek(&mut self) -> Option<&Token> { self.tokens.peek().take() }
 
     fn next(&mut self) -> Result<Token, Diagnostic<()>> {
-        self.tokens.reset_range();
-        self.tokens
-            .next()
-            .ok_or(self.new_span(Error(UnexpectedEndOfParsing), ""))
+        self.end = self.tokens.token_span();
+        self.tokens.next().ok_or(self.new_span(Error(UnexpectedEndOfParsing), ""))
+    }
+    fn resolve_node<T>(&mut self, node: T) -> Result<T, Diagnostic<()>> {
+        self.start = self.end;
+        Ok(node)
+
     }
     /// check if token matches the current peeked token in the iterator
-    fn check_peek(&mut self, token: &Token) -> bool {
-        self.peek() == Some(token)
-    }
-    fn is_at_end(&mut self) -> bool {
-        matches!(self.peek(), None)
-    }
+    fn check_peek(&mut self, token: &Token) -> bool { self.peek() == Some(token) }
+    fn is_at_end(&mut self) -> bool { matches!(self.peek(), None)   }
+    fn span(&mut self) -> Range<usize> { self.start .. self.end }
 }
 
 /// Basic recursive descent parsing
@@ -54,6 +55,8 @@ impl<'source> Parser<'source> {
         Self {
             tokens: PeekerWrap::new(tokens.source()),
             source,
+            start: 0,
+            end: 0
         }
     }
 
@@ -68,7 +71,6 @@ impl<'source> Parser<'source> {
                 }
                 break Ok(dec_vec);
             }
-
             match self.top_level() {
                 Ok(decl) => dec_vec.push(decl),
                 Err(e) => {
@@ -107,7 +109,10 @@ impl<'source> Parser<'source> {
                 &Token::While => self.while_loop(),
                 &Token::Let | &Token::Mut => self.var_decl(),
                 &Token::If => self.if_else(),
-                &Token::LeftBrace => Ok(Stmt::Block(self.block()?)),
+                &Token::LeftBrace => {
+                  let block = self.block()?; 
+                  self.resolve_node(Stmt::Block(block)) 
+                } 
                 _ => self.stmt_expr(),
             },
             None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
@@ -130,7 +135,7 @@ impl<'source> Parser<'source> {
         self.next()?;
         let cond = self.expr();
         let block = self.block();
-        Ok(Stmt::While(cond?, block?))
+        self.resolve_node(Stmt::While(cond?, block?))
     }
 
     fn var_decl(&mut self) -> Result<Stmt, Diagnostic<()>> {
@@ -143,13 +148,13 @@ impl<'source> Parser<'source> {
         };
         self.expect_token(&Token::Assign)?;
         let var_val = self.stmt_expr();
-        Ok(Stmt::VarDecl(mut_state, name, typ_tok, Box::new(var_val?)))
+        self.resolve_node(Stmt::VarDecl(mut_state, name, typ_tok, Box::new(var_val?)))
     }
 
     fn stmt_expr(&mut self) -> Result<Stmt, Diagnostic<()>> {
         let value_of_statement = self.expr();
         self.expect_token(&Token::Semi)?;
-        Ok(Stmt::ExprStatement(value_of_statement?))
+        self.resolve_node(Stmt::ExprStatement(value_of_statement?))
     }
 
     fn expr(&mut self) -> Result<Expr, Diagnostic<()>> {
@@ -162,7 +167,8 @@ impl<'source> Parser<'source> {
             let assignment = self.assignment();
             match asignee {
                 Ok(e) if matches!(e, Expr::Val(_)) => {
-                     Ok(Expr::Assignment { var: SmolStr::from(self.tokens.slice()), value: Box::new(assignment?) })
+                    let var = SmolStr::from(self.tokens.slice());
+                    self.resolve_node(Expr::Assignment { var, value: Box::new(assignment?) })
                 }
                 other => {
                     return Err(self.new_span(Error(InvalidAssignmentTarget(other?)), ""))
@@ -177,7 +183,7 @@ impl<'source> Parser<'source> {
         let mut left = self.and();
         while let Some(operator) = match_adv!(&mut self, &Token::Or) {
             let right = self.and();
-            left = Ok(Expr::Logical {
+            left = self.resolve_node(Expr::Logical {
                 operator,
                 left: Box::new(left?),
                 right: Box::new(right?),
@@ -190,7 +196,7 @@ impl<'source> Parser<'source> {
         let mut left = self.equality();
         while let Some(operator) = match_adv!(&mut self, &Token::And) {
             let right = self.equality();
-            left = Ok(Expr::Logical {
+            left = self.resolve_node(Expr::Logical {
                 operator,
                 left: Box::new(left?),
                 right: Box::new(right?),
@@ -275,13 +281,13 @@ impl<'source> Parser<'source> {
     fn primary(&mut self) -> Result<Expr, Diagnostic<()>> {
         match self.peek().unwrap() {
             _ => match self.next()? {
-                Token::Bool(val) => Ok(Expr::Bool(val)),
-                Token::Double(s) => Ok(Expr::Double(s)),
-                Token::Identifier(s) => Ok(Expr::Val(s)),
-                Token::Integer(val) => Ok(Expr::Integer(val)),
-                Token::String(val) => Ok(Expr::String(val)),
-                Token::Char(c) => Ok(Expr::Char(c)),
-                Token::Unit => Ok(Expr::Unit),
+                Token::Bool(val) => self.resolve_node(Expr::Bool(val)),
+                Token::Double(s) => self.resolve_node(Expr::Double(s)),
+                Token::Identifier(s) => self.resolve_node(Expr::Val(s)),
+                Token::Integer(val) => self.resolve_node(Expr::Integer(val)),
+                Token::String(val) => self.resolve_node(Expr::String(val)),
+                Token::Char(c) => self.resolve_node(Expr::Char(c)),
+                Token::Unit => self.resolve_node(Expr::Unit),
                 Token::Error => {
                     let unknown_token = self.tokens.slice();
                     Err(self.new_span(Error(UnknownToken(unknown_token)), "unknown token"))
@@ -401,9 +407,10 @@ impl<'source> Parser<'source> {
 
 impl<'source> Parser<'source> {
     fn new_span(&mut self, fault: Faults, note: &'static str) -> Diagnostic<()> {
+        let span = self.span();
         self.source.create_diagnostic(
             format!("{:?}", fault),
-            self.tokens.get_err_range(),
+            span,
             note.to_string(),
         )
     }

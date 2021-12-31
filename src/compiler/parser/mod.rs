@@ -15,7 +15,7 @@ macro_rules! match_adv {
 #[macro_export]
 macro_rules! create_binexpr {
     (&mut $self:ident, $token:expr, $left:expr, $right:expr ) => {
-        Ok($crate::compiler::nodes::expr::Expr::Binary {
+        $self.resolve_node($crate::compiler::nodes::expr::Expr::Binary {
             operator: $token,
             left: Box::new($left?),
             right: Box::new($right?),
