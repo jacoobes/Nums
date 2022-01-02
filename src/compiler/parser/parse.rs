@@ -148,7 +148,11 @@ impl<'source> Parser<'source> {
         };
         self.expect_token(&Token::Assign)?;
         let var_val = self.stmt_expr();
-        self.resolve_node(Stmt::VarDecl(mut_state, name, typ_tok, Box::new(var_val?)))
+        if mut_state == Token::Mut {
+            self.resolve_node(Stmt::Mut( name, typ_tok, Box::new(var_val?)))
+        } else {
+            self.resolve_node(Stmt::Let( name, typ_tok, Box::new(var_val?)))
+        }
     }
 
     fn stmt_expr(&mut self) -> Result<Stmt, Diagnostic<()>> {
