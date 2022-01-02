@@ -16,9 +16,10 @@ pub enum Primitives {
     Bool
 }
 
-pub enum Type {
+pub enum TypeInfo {
     Never,
     Prim(Primitives),
-    Func(Box<Type>, Box<Type>),
-    Record( BTreeMap<Token, Box<Type>>)
+    Func(Box<TypeInfo>, Box<TypeInfo>),
+    Record( BTreeMap<Token, Box<TypeInfo>>),
+    Unknown,
 }

@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use crate::compiler::types::type_checker::TypeChecker;
+use crate::compiler::types::type_checker::TypeAnalyzer;
 use codespan_reporting::term::{
     self,
     termcolor::{ColorChoice, StandardStream},
@@ -30,7 +30,7 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(res) => {
-                 let type_engine = TypeChecker;
+                 let type_engine = TypeAnalyzer;
                  println!("{:?}", &res);
                     
             },
