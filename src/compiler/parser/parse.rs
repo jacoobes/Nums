@@ -60,27 +60,68 @@ impl<'source> Parser<'source> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Decl>, Vec<Diagnostic<()>>> {
-        let mut dec_vec = Vec::new();
-        let mut diagnostics_vec = Vec::new();
+    pub fn parse(&mut self) -> Result<Decl, Vec<Diagnostic<()>>> {
+        let mut diagnostic_vec = Vec::new();
         let mut had_parse_err = false;
-        loop {
-            if self.is_at_end() { 
-                if had_parse_err {
-                    break Err(diagnostics_vec)
+        if self.is_at_end() {
+            return Err(diagnostic_vec)
+        }
+            let get_name = match self.peek().unwrap() {
+                &Token::Package => {
+                    self.next().unwrap();
+                    self.get_name()
+                        .map_err(|error|  {
+                             had_parse_err = true; 
+                             self.synchronize();
+                             diagnostic_vec.push(error)
+                             })
                 }
-                break Ok(dec_vec);
-            }
-            match self.top_level() {
-                Ok(decl) => dec_vec.push(decl),
+                _ => {
+                    had_parse_err = true;
+                    self.synchronize();
+                    diagnostic_vec.push(self.new_span(Error(FileNotAModule), "This file is not registered as a module"));
+                    Err(())
+                }
+            };
+            match self.expect_token(&Token::Semi) {
+                Ok(_) => (),
                 Err(e) => {
                     had_parse_err = true;
-                    diagnostics_vec.push(e);
-                    self.synchronize()
+                    diagnostic_vec.push(e)
+                },
+            };
+            
+            let mut modules = fnv::FnvHashMap::<SmolStr, Decl>::default();
+            loop {
+                if self.is_at_end() {
+                    if had_parse_err {
+                        break Err(diagnostic_vec)
+                    }
+                    break Ok(Decl::Module(get_name.unwrap(), modules))
                 }
-            }
+                match self.top_level() {
+                    Ok(decl) => {
+                        match &decl {
+                            Decl::Function(nombre, _, _, _) => { modules.insert(nombre.clone(), decl); },
+                            Decl::Get =>  { modules.insert(SmolStr::from("sasd"), decl); } ,
+                            Decl::Record(nombre, _) => { modules.insert(nombre.clone(), decl); },
+                            Decl::Module(nombre, _) => { modules.insert(nombre.clone(), decl); },
+                        }
+                    },
+                    Err(e) => {
+                        had_parse_err = true;
+                        diagnostic_vec.push(e);
+                        self.synchronize();
+
+                    }
+                }
         }
+        
+
+
     }
+        
+    
 
     fn synchronize(&mut self) {
         while let Some(token) = self.peek() {
@@ -97,7 +138,6 @@ impl<'source> Parser<'source> {
         match self.peek().unwrap() {
             tok => match tok {
                 &Token::Function => self.parse_fn(),
-                &Token::Package => self.parse_mod(),
                 &Token::Record => self.parse_rec(),
                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), "")),
             },
@@ -364,12 +404,6 @@ impl<'source> Parser<'source> {
         Ok((name, typ))
     }
 
-    fn parse_mod(&mut self) -> Result<Decl, Diagnostic<()>> {
-        self.next().unwrap();
-        let mod_name = self.get_name()?;
-        self.expect_token(&Token::Semi)?;
-        Ok(Decl::Module(mod_name))
-    }
 
     fn parse_rec(&mut self) -> Result<Decl, Diagnostic<()>> {
         self.next()?;

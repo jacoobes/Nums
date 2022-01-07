@@ -1,6 +1,6 @@
 package main;
-
-
-fun test  {
-    true == false and ~~ dfs == 4;
-}
+    
+    fun main {
+        
+    }
+    

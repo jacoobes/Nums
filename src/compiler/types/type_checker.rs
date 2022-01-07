@@ -39,7 +39,12 @@ impl Visitor<Result<TypeInfo, std::string::String>> for TypeAnalyzer {
     }
 
     fn visit_decl(&mut self , d: Decl) -> Result<TypeInfo, std::string::String> {
-        todo!()
+        match d {
+            Decl::Function(name, args, ret, block) => todo!(),
+            Decl::Record(_, _) => todo!(),
+            Decl::Module(name, modules) => todo!(),
+            Decl::Get => todo!(),
+        }
     }
 }
 
@@ -68,7 +73,7 @@ impl TypeAnalyzer {
                 self.combine_type(operator, *left, *right)
             }
             (_,  _, Expr::Logical{operator , left, right} ) => {
-                self.combine_type(operator,*left, *right)
+                self.combine_type(operator, *left, *right)
             }
             (other, l, r) => Err(format!("TypeError: {:?} {:?} {:?} cannot be deduced as a type", &l, other, &r))
 

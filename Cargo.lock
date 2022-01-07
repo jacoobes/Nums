@@ -53,6 +53,7 @@ name = "nums"
 version = "0.1.0"
 dependencies = [
  "codespan-reporting",
+ "fnv",
  "logos",
  "nums_vm",
  "smol_str",

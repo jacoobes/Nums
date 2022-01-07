@@ -1,7 +1,6 @@
 use crate::compiler::tokens::Token;
 use logos::{Lexer, Logos};
 use smol_str::SmolStr;
-use std::ops::Range;
 
 pub struct Peekable<'source> {
     lexer: Lexer<'source ,Token>,
