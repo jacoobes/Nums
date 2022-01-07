@@ -45,6 +45,13 @@ impl<'source> Parser<'source> {
     fn check_peek(&mut self, token: &Token) -> bool { self.peek() == Some(token) }
     fn is_at_end(&mut self) -> bool { matches!(self.peek(), None)   }
     fn span(&mut self) -> Range<usize> { self.start .. self.end }
+    fn check_uniq_module(module : &fnv::FnvHashMap<SmolStr, Decl>, key: &SmolStr) -> bool {
+        if let Some(_) = module.get(key) {
+            false
+        } else {
+            true
+        }
+    }
 }
 
 /// Basic recursive descent parsing
@@ -102,10 +109,27 @@ impl<'source> Parser<'source> {
                 match self.top_level() {
                     Ok(decl) => {
                         match &decl {
-                            Decl::Function(nombre, _, _, _) => { modules.insert(nombre.clone(), decl); },
+                            Decl::Function(nombre, _, _, _) => {
+                                if Parser::check_uniq_module(&modules, nombre) {
+                                    modules.insert(nombre.clone(), decl); 
+                                } else {
+                                    had_parse_err = true;
+                                    diagnostic_vec.push(self.new_span(Error(DeclarationAlreadyFound), ""));
+                                    self.synchronize();
+                                }
+                            
+                            },
                             Decl::Get =>  { modules.insert(SmolStr::from("sasd"), decl); } ,
-                            Decl::Record(nombre, _) => { modules.insert(nombre.clone(), decl); },
-                            Decl::Module(nombre, _) => { modules.insert(nombre.clone(), decl); },
+                            Decl::Record(nombre, _) | Decl::Module(nombre, _) => { 
+                                if Parser::check_uniq_module(&modules, nombre) {
+                                    modules.insert(nombre.clone(), decl); 
+                                } else {
+                                    had_parse_err = true;
+                                    diagnostic_vec.push(self.new_span(Error(DeclarationAlreadyFound), ""));
+                                    self.synchronize();
+                                    
+                                }
+                            },
                         }
                     },
                     Err(e) => {

@@ -1,4 +1,6 @@
 
+use std::fmt::write;
+
 use crate::compiler::{tokens::Token, nodes::expr::Expr};
 use smol_str::SmolStr;
 pub enum Faults {
@@ -14,7 +16,8 @@ pub enum ErrTyp {
     UnknownType(Token),
     UnclosedDelimiter,
     InvalidAssignmentTarget(Expr),
-    FileNotAModule
+    FileNotAModule,
+    DeclarationAlreadyFound
 }
 
 #[derive(Debug)]
@@ -39,7 +42,8 @@ impl std::fmt::Debug for ErrTyp {
             Self::UnknownType(token) => write!(f, "Unknown type. The compiler couldn't resolve {:?} as a type ", token),
             Self::UnclosedDelimiter => write!(f, "Unclosed delimiter"),
             Self::InvalidAssignmentTarget(e) => write!(f, "{:?} is not a valid assignment target! ", &e ),
-            Self::FileNotAModule => write!(f, "File is not included in module")
+            Self::FileNotAModule => write!(f, "File is not included in module"),
+            Self::DeclarationAlreadyFound => write!(f, "Declaration has been previously registered under the same name" )
         }
     }
 }
