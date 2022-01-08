@@ -44,6 +44,9 @@ impl Visitor<Result<TypeInfo, std::string::String>> for TypeAnalyzer {
             Decl::Record(_, _) => todo!(),
             Decl::Module(name, modules) => todo!(),
             Decl::Get => todo!(),
+            Decl::ExposedFn(_, _, _, _) => todo!(),
+            Decl::ExposedRec(_, _) => todo!(),
+            Decl::ExposedMod(_, _) => todo!(),
         }
     }
 }

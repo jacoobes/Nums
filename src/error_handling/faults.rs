@@ -17,7 +17,7 @@ pub enum ErrTyp {
     UnclosedDelimiter,
     InvalidAssignmentTarget(Expr),
     FileNotAModule,
-    DeclarationAlreadyFound
+    DeclarationAlreadyFound(SmolStr)
 }
 
 #[derive(Debug)]
@@ -43,7 +43,7 @@ impl std::fmt::Debug for ErrTyp {
             Self::UnclosedDelimiter => write!(f, "Unclosed delimiter"),
             Self::InvalidAssignmentTarget(e) => write!(f, "{:?} is not a valid assignment target! ", &e ),
             Self::FileNotAModule => write!(f, "File is not included in module"),
-            Self::DeclarationAlreadyFound => write!(f, "Declaration has been previously registered under the same name" )
+            Self::DeclarationAlreadyFound(n) => write!(f, "Function or Record has been previously registered under the same name: `{}`", n )
         }
     }
 }

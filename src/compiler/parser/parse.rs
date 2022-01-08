@@ -46,11 +46,7 @@ impl<'source> Parser<'source> {
     fn is_at_end(&mut self) -> bool { matches!(self.peek(), None)   }
     fn span(&mut self) -> Range<usize> { self.start .. self.end }
     fn check_uniq_module(module : &fnv::FnvHashMap<SmolStr, Decl>, key: &SmolStr) -> bool {
-        if let Some(_) = module.get(key) {
-            false
-        } else {
-            true
-        }
+        if let Some(_) = module.get(key) { false } else { true }
     }
 }
 
@@ -83,20 +79,14 @@ impl<'source> Parser<'source> {
                              diagnostic_vec.push(error)
                              })
                 }
-                _ => {
-                    had_parse_err = true;
-                    self.synchronize();
-                    diagnostic_vec.push(self.new_span(Error(FileNotAModule), "This file is not registered as a module"));
-                    Err(())
-                }
+                _ => Err({
+                        had_parse_err = true;
+                        self.synchronize();
+                        diagnostic_vec.push(self.new_span(Error(FileNotAModule), "This file is not registered as a module"));
+                    })  
             };
-            match self.expect_token(&Token::Semi) {
-                Ok(_) => (),
-                Err(e) => {
-                    had_parse_err = true;
-                    diagnostic_vec.push(e)
-                },
-            };
+            // handling if there is no semicolon after attempting to get the name of the package
+            let _ = self.expect_token(&Token::Semi).map_err(|e|{ had_parse_err = true;  diagnostic_vec.push(e) });
             
             let mut modules = fnv::FnvHashMap::<SmolStr, Decl>::default();
             loop {
@@ -109,27 +99,22 @@ impl<'source> Parser<'source> {
                 match self.top_level() {
                     Ok(decl) => {
                         match &decl {
-                            Decl::Function(nombre, _, _, _) => {
+                              Decl::Function(nombre, ..) 
+                            | Decl::ExposedFn(nombre, ..)
+                            | Decl::Record(nombre,    ..)
+                            | Decl::ExposedRec(nombre, ..)
+                            | Decl::Module(nombre, ..)
+                            | Decl::ExposedMod(nombre, ..) => {
                                 if Parser::check_uniq_module(&modules, nombre) {
                                     modules.insert(nombre.clone(), decl); 
                                 } else {
                                     had_parse_err = true;
-                                    diagnostic_vec.push(self.new_span(Error(DeclarationAlreadyFound), ""));
+                                    diagnostic_vec.push(self.new_span(Error(DeclarationAlreadyFound(nombre.clone())), ""));
                                     self.synchronize();
                                 }
                             
                             },
-                            Decl::Get =>  { modules.insert(SmolStr::from("sasd"), decl); } ,
-                            Decl::Record(nombre, _) | Decl::Module(nombre, _) => { 
-                                if Parser::check_uniq_module(&modules, nombre) {
-                                    modules.insert(nombre.clone(), decl); 
-                                } else {
-                                    had_parse_err = true;
-                                    diagnostic_vec.push(self.new_span(Error(DeclarationAlreadyFound), ""));
-                                    self.synchronize();
-                                    
-                                }
-                            },
+                            Decl::Get =>  { modules.insert(SmolStr::from("sasd"), decl); },
                         }
                     },
                     Err(e) => {
@@ -161,8 +146,19 @@ impl<'source> Parser<'source> {
     fn top_level(&mut self) -> Result<Decl, Diagnostic<()>> {
         match self.peek().unwrap() {
             tok => match tok {
-                &Token::Function => self.parse_fn(),
-                &Token::Record => self.parse_rec(),
+                &Token::Expose => {
+                    self.next().unwrap();
+                    match self.peek() {
+                         Some(tok) if tok == &Token::Function => self.parse_fn(true),
+                         Some(tok) if tok == &Token::Record => self.parse_rec(true),
+                         _ =>{
+                            let other = self.next()?;
+                            Err(self.new_span(Error(UnexpectedToken(other)), "Expected `fun` or `record` after visibility modifier"))
+                         } 
+                    }   
+                }
+                &Token::Function => self.parse_fn(false),
+                &Token::Record => self.parse_rec(false),
                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), "")),
             },
         }
@@ -390,7 +386,7 @@ impl<'source> Parser<'source> {
         }
     }
 
-    fn parse_fn(&mut self) -> Result<Decl, Diagnostic<()>> {
+    fn parse_fn(&mut self, exposed: bool) -> Result<Decl, Diagnostic<()>> {
         self.next()?;
         let name = self.get_name()?;
         let args = self.parse_args()?;
@@ -400,7 +396,11 @@ impl<'source> Parser<'source> {
             Token::Unit
         };
         let block = self.block();
-        Ok(Decl::Function(name, args, fn_ret_type, block?))
+        if exposed {
+            Ok(Decl::ExposedFn(name, args, fn_ret_type, block?))
+        } else {
+            Ok(Decl::Function(name, args, fn_ret_type, block?))
+        }
     }
 
     fn parse_args(&mut self) -> Result<Option<Vec<(SmolStr, Token)>>, Diagnostic<()>> {
@@ -429,7 +429,7 @@ impl<'source> Parser<'source> {
     }
 
 
-    fn parse_rec(&mut self) -> Result<Decl, Diagnostic<()>> {
+    fn parse_rec(&mut self, exposed : bool) -> Result<Decl, Diagnostic<()>> {
         self.next()?;
         let name = self.get_name()?;
         self.expect_token(&Token::LeftBrace)?;
@@ -447,7 +447,11 @@ impl<'source> Parser<'source> {
             self.expect_token(&Token::RightBrace)?;
             fields
         };
-        Ok(Decl::Record(name, args))
+        if exposed {
+            Ok(Decl::ExposedRec(name, args))
+        } else {
+            Ok(Decl::Record(name, args))
+        }
     }
 
     fn get_name(&mut self) -> Result<SmolStr, Diagnostic<()>> {
@@ -468,7 +472,7 @@ impl<'source> Parser<'source> {
 }
 
 impl<'source> Parser<'source> {
-    fn new_span(&mut self, fault: Faults, note: &'static str) -> Diagnostic<()> {
+    fn new_span(&mut self, fault: Faults, note: &'source str) -> Diagnostic<()> {
         let span = self.span();
         self.source.create_diagnostic(
             format!("{:?}", fault),
