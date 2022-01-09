@@ -14,11 +14,4 @@ pub enum Decl {
     Record(SmolStr, Vec<(SmolStr, Token)>),
     ExposedRec(SmolStr, Vec<(SmolStr, Token)>),
     Module(SmolStr, fnv::FnvHashMap<SmolStr,  Decl>),
-    ExposedMod(SmolStr, fnv::FnvHashMap<SmolStr, Decl>)
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Vis {
-    Public,
-    Private
 }

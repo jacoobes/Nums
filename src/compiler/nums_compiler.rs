@@ -10,7 +10,6 @@ use super::{
     parser::parse::Parser,
     source::Source,
     tokens::Token,
-    nodes::decl::Decl, visitor::Visitor
 };
 
 pub struct Compiler {
@@ -30,7 +29,6 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(res) => {
-                 let type_engine = TypeAnalyzer;
                  println!("{:?}", &res);
                     
             },

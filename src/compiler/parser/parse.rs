@@ -1,20 +1,20 @@
-use std::rc::Rc;
 use crate::compiler::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
 use crate::compiler::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
 use crate::{
     compiler::source::Source,
     error_handling::faults::{ErrTyp::*, Faults::*, *},
 };
-use std::ops::Range;
 use crate::{create_binexpr, match_adv};
 use codespan_reporting::diagnostic::Diagnostic;
 use logos::Lexer;
 use smol_str::SmolStr;
+use std::ops::Range;
+use std::rc::Rc;
 pub struct Parser<'source> {
     tokens: PeekerWrap<'source>,
     source: std::rc::Rc<Source>,
-    start : usize,
-    end : usize
+    start: usize,
+    end: usize,
 }
 
 ///iterator methods
@@ -30,23 +30,36 @@ impl<'source> Parser<'source> {
             None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
         }
     }
-    fn peek(&mut self) -> Option<&Token> { self.tokens.peek().take() }
+    fn peek(&mut self) -> Option<&Token> {
+        self.tokens.peek().take()
+    }
 
     fn next(&mut self) -> Result<Token, Diagnostic<()>> {
         self.end = self.tokens.token_span();
-        self.tokens.next().ok_or(self.new_span(Error(UnexpectedEndOfParsing), ""))
+        self.tokens
+            .next()
+            .ok_or(self.new_span(Error(UnexpectedEndOfParsing), ""))
     }
     fn resolve_node<T>(&mut self, node: T) -> Result<T, Diagnostic<()>> {
         self.start = self.end;
         Ok(node)
-
     }
     /// check if token matches the current peeked token in the iterator
-    fn check_peek(&mut self, token: &Token) -> bool { self.peek() == Some(token) }
-    fn is_at_end(&mut self) -> bool { matches!(self.peek(), None)   }
-    fn span(&mut self) -> Range<usize> { self.start .. self.end }
-    fn check_uniq_module(module : &fnv::FnvHashMap<SmolStr, Decl>, key: &SmolStr) -> bool {
-        if let Some(_) = module.get(key) { false } else { true }
+    fn check_peek(&mut self, token: &Token) -> bool {
+        self.peek() == Some(token)
+    }
+    fn is_at_end(&mut self) -> bool {
+        matches!(self.peek(), None)
+    }
+    fn span(&mut self) -> Range<usize> {
+        self.start..self.end
+    }
+    fn check_uniq_module(module: &fnv::FnvHashMap<SmolStr, Decl>, key: &SmolStr) -> bool {
+        if let Some(_) = module.get(key) {
+            false
+        } else {
+            true
+        }
     }
 }
 
@@ -59,7 +72,7 @@ impl<'source> Parser<'source> {
             tokens: PeekerWrap::new(tokens.source()),
             source,
             start: 0,
-            end: 0
+            end: 0,
         }
     }
 
@@ -67,77 +80,84 @@ impl<'source> Parser<'source> {
         let mut diagnostic_vec = Vec::new();
         let mut had_parse_err = false;
         if self.is_at_end() {
-            return Err(diagnostic_vec)
+            return Err(diagnostic_vec);
         }
-            let get_name = match self.peek().unwrap() {
-                &Token::Package => {
-                    self.next().unwrap();
-                    self.get_name()
-                        .map_err(|error|  {
-                             had_parse_err = true; 
-                             self.synchronize();
-                             diagnostic_vec.push(error)
-                             })
+        let get_name = match self.peek().unwrap() {
+            &Token::Package => {
+                self.next().unwrap();
+                self.get_name().map_err(|error| {
+                    had_parse_err = true;
+                    self.synchronize();
+                    diagnostic_vec.push(error)
+                })
+            }
+            _ => Err({
+                had_parse_err = true;
+                diagnostic_vec.push(self.new_span(
+                    Error(FileNotAModule),
+                    "This file is not registered as a module",
+                ));
+            }),
+        };
+
+        if let Ok(_) = get_name {
+            let _ = self.expect_token(&Token::Semi).map_err(|e| {
+                had_parse_err = true;
+                diagnostic_vec.push(e)
+            });
+        }
+        // handling if there is no semicolon after attempting to get the name of the package
+       
+        let mut modules = fnv::FnvHashMap::<SmolStr, Decl>::default();
+        loop {
+            if self.is_at_end() {
+                if had_parse_err {
+                    break Err(diagnostic_vec);
                 }
-                _ => Err({
-                        had_parse_err = true;
-                        self.synchronize();
-                        diagnostic_vec.push(self.new_span(Error(FileNotAModule), "This file is not registered as a module"));
-                    })  
-            };
-            // handling if there is no semicolon after attempting to get the name of the package
-            let _ = self.expect_token(&Token::Semi).map_err(|e|{ had_parse_err = true;  diagnostic_vec.push(e) });
-            
-            let mut modules = fnv::FnvHashMap::<SmolStr, Decl>::default();
-            loop {
-                if self.is_at_end() {
-                    if had_parse_err {
-                        break Err(diagnostic_vec)
-                    }
-                    break Ok(Decl::Module(get_name.unwrap(), modules))
-                }
-                match self.top_level() {
-                    Ok(decl) => {
-                        match &decl {
-                              Decl::Function(nombre, ..) 
-                            | Decl::ExposedFn(nombre, ..)
-                            | Decl::Record(nombre,    ..)
-                            | Decl::ExposedRec(nombre, ..)
-                            | Decl::Module(nombre, ..)
-                            | Decl::ExposedMod(nombre, ..) => {
-                                if Parser::check_uniq_module(&modules, nombre) {
-                                    modules.insert(nombre.clone(), decl); 
-                                } else {
-                                    had_parse_err = true;
-                                    diagnostic_vec.push(self.new_span(Error(DeclarationAlreadyFound(nombre.clone())), ""));
-                                    self.synchronize();
-                                }
-                            
-                            },
-                            Decl::Get =>  { modules.insert(SmolStr::from("sasd"), decl); },
+                break Ok(Decl::Module(get_name.unwrap(), modules));
+            }
+            match self.top_level() {
+                Ok(decl) => match &decl {
+                    Decl::Function(nombre, ..)
+                    | Decl::ExposedFn(nombre, ..)
+                    | Decl::Record(nombre, ..)
+                    | Decl::ExposedRec(nombre, ..) => {
+                        if Parser::check_uniq_module(&modules, nombre) {
+                            modules.insert(nombre.clone(), decl);
+                        } else {
+                            had_parse_err = true;
+                            diagnostic_vec.push(
+                                self.new_span(Error(DeclarationAlreadyFound(nombre.clone())), ""),
+                            );
+                            self.synchronize();
                         }
                     },
-                    Err(e) => {
-                        had_parse_err = true;
-                        diagnostic_vec.push(e);
-                        self.synchronize();
-
+                    Decl::Module(..) => (),
+                    Decl::Get => {
+                        modules.insert(SmolStr::from("sasd"), decl);
                     }
+                },
+                Err(e) => {
+                    had_parse_err = true;
+                    diagnostic_vec.push(e);
+                    self.synchronize();
                 }
+            }
         }
-        
-
-
     }
-        
-    
 
     fn synchronize(&mut self) {
         while let Some(token) = self.peek() {
             match token {
-                &Token::Function  | &Token::Record | &Token::Package => break,
-                &Token::Semi => { self.next().unwrap(); break; }
-                _ => { self.next().unwrap(); continue; }
+                &Token::Function | &Token::Record | &Token::Package => break,
+                &Token::Semi => {
+                    self.next().unwrap();
+                    break;
+                }
+                _ => {
+                    self.next().unwrap();
+                    continue;
+                }
             }
         }
     }
@@ -149,16 +169,23 @@ impl<'source> Parser<'source> {
                 &Token::Expose => {
                     self.next().unwrap();
                     match self.peek() {
-                         Some(tok) if tok == &Token::Function => self.parse_fn(true),
-                         Some(tok) if tok == &Token::Record => self.parse_rec(true),
-                         _ =>{
+                        Some(tok) if tok == &Token::Function => self.parse_fn(true),
+                        Some(tok) if tok == &Token::Record => self.parse_rec(true),
+                        _ => {
                             let other = self.next()?;
-                            Err(self.new_span(Error(UnexpectedToken(other)), "Expected `fun` or `record` after visibility modifier"))
-                         } 
-                    }   
+                            Err(self.new_span(
+                                Error(UnexpectedToken(other)),
+                                "Expected `fun` or `record` after visibility modifier",
+                            ))
+                        }
+                    }
                 }
                 &Token::Function => self.parse_fn(false),
                 &Token::Record => self.parse_rec(false),
+                &Token::Package => {
+                    let name = self.next().and_then(|_| Ok(self.get_name()?))?;
+                    Err(self.new_span(Error(MultiplePackageDeclInFile(name)), "Remove one of the package declarations"))
+                }
                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), "")),
             },
         }
@@ -170,9 +197,9 @@ impl<'source> Parser<'source> {
                 &Token::Let | &Token::Mut => self.var_decl(),
                 &Token::If => self.if_else(),
                 &Token::LeftBrace => {
-                  let block = self.block()?; 
-                  self.resolve_node(Stmt::Block(block)) 
-                } 
+                    let block = self.block()?;
+                    self.resolve_node(Stmt::Block(block))
+                }
                 _ => self.stmt_expr(),
             },
             None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
@@ -201,7 +228,7 @@ impl<'source> Parser<'source> {
     fn var_decl(&mut self) -> Result<Stmt, Diagnostic<()>> {
         let mut_state = self.next()?;
         let name = self.get_name()?;
-        let typ_tok = if let Some(_) =  match_adv!(&mut self, &Token::Colon) {
+        let typ_tok = if let Some(_) = match_adv!(&mut self, &Token::Colon) {
             Some(self.get_type()?)
         } else {
             None
@@ -209,9 +236,9 @@ impl<'source> Parser<'source> {
         self.expect_token(&Token::Assign)?;
         let var_val = self.stmt_expr();
         if mut_state == Token::Mut {
-            self.resolve_node(Stmt::Mut( name, typ_tok, Box::new(var_val?)))
+            self.resolve_node(Stmt::Mut(name, typ_tok, Box::new(var_val?)))
         } else {
-            self.resolve_node(Stmt::Let( name, typ_tok, Box::new(var_val?)))
+            self.resolve_node(Stmt::Let(name, typ_tok, Box::new(var_val?)))
         }
     }
 
@@ -232,11 +259,12 @@ impl<'source> Parser<'source> {
             match asignee {
                 Ok(e) if matches!(e, Expr::Val(_)) => {
                     let var = SmolStr::from(self.tokens.slice());
-                    self.resolve_node(Expr::Assignment { var, value: Box::new(assignment?) })
+                    self.resolve_node(Expr::Assignment {
+                        var,
+                        value: Box::new(assignment?),
+                    })
                 }
-                other => {
-                    return Err(self.new_span(Error(InvalidAssignmentTarget(other?)), ""))
-                }
+                other => return Err(self.new_span(Error(InvalidAssignmentTarget(other?)), "")),
             }
         } else {
             asignee
@@ -370,7 +398,8 @@ impl<'source> Parser<'source> {
         while !self.check_peek(&Token::RightBrace) {
             stmts_block.push(self.statements()?)
         }
-        self.expect_token(&Token::RightBrace).map_err(|_| self.new_span(Error(UnclosedDelimiter), "Check closing brace `}` "))?;
+        self.expect_token(&Token::RightBrace)
+            .map_err(|_| self.new_span(Error(UnclosedDelimiter), "Check closing brace `}` "))?;
         Ok(stmts_block)
     }
 
@@ -421,15 +450,14 @@ impl<'source> Parser<'source> {
         }
     }
 
-    fn parse_single_arg(&mut self,) -> Result<(SmolStr, Token), Diagnostic<()>> {
+    fn parse_single_arg(&mut self) -> Result<(SmolStr, Token), Diagnostic<()>> {
         let name = self.get_name()?;
         self.expect_token(&Token::Colon)?;
         let typ = self.get_type()?;
         Ok((name, typ))
     }
 
-
-    fn parse_rec(&mut self, exposed : bool) -> Result<Decl, Diagnostic<()>> {
+    fn parse_rec(&mut self, exposed: bool) -> Result<Decl, Diagnostic<()>> {
         self.next()?;
         let name = self.get_name()?;
         self.expect_token(&Token::LeftBrace)?;
@@ -474,10 +502,7 @@ impl<'source> Parser<'source> {
 impl<'source> Parser<'source> {
     fn new_span(&mut self, fault: Faults, note: &'source str) -> Diagnostic<()> {
         let span = self.span();
-        self.source.create_diagnostic(
-            format!("{:?}", fault),
-            span,
-            note.to_string(),
-        )
+        self.source
+            .create_diagnostic(format!("{:?}", fault), span, note.to_string())
     }
 }

@@ -1,5 +1,4 @@
 
-use std::fmt::write;
 
 use crate::compiler::{tokens::Token, nodes::expr::Expr};
 use smol_str::SmolStr;
@@ -17,7 +16,8 @@ pub enum ErrTyp {
     UnclosedDelimiter,
     InvalidAssignmentTarget(Expr),
     FileNotAModule,
-    DeclarationAlreadyFound(SmolStr)
+    DeclarationAlreadyFound(SmolStr),
+    MultiplePackageDeclInFile(SmolStr)
 }
 
 #[derive(Debug)]
@@ -43,7 +43,8 @@ impl std::fmt::Debug for ErrTyp {
             Self::UnclosedDelimiter => write!(f, "Unclosed delimiter"),
             Self::InvalidAssignmentTarget(e) => write!(f, "{:?} is not a valid assignment target! ", &e ),
             Self::FileNotAModule => write!(f, "File is not included in module"),
-            Self::DeclarationAlreadyFound(n) => write!(f, "Function or Record has been previously registered under the same name: `{}`", n )
+            Self::DeclarationAlreadyFound(n) => write!(f, "Function or Record has been previously registered under the same name: `{}`", n ),
+            Self::MultiplePackageDeclInFile(m) => write!(f, "Found another package declaration `{}` in this file. Can only have one", &m)
         }
     }
 }
