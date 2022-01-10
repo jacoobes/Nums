@@ -105,6 +105,7 @@ impl<'source> Parser<'source> {
                 had_parse_err = true;
                 diagnostic_vec.push(e)
             });
+            self.start = self.end;
         }
         // handling if there is no semicolon after attempting to get the name of the package
        
@@ -133,9 +134,7 @@ impl<'source> Parser<'source> {
                         }
                     },
                     Decl::Module(..) => (),
-                    Decl::Get => {
-                        modules.insert(SmolStr::from("sasd"), decl);
-                    }
+                    Decl::Get => { modules.insert(SmolStr::from("sasd"), decl); }
                 },
                 Err(e) => {
                     had_parse_err = true;
@@ -186,10 +185,20 @@ impl<'source> Parser<'source> {
                     let name = self.next().and_then(|_| Ok(self.get_name()?))?;
                     Err(self.new_span(Error(MultiplePackageDeclInFile(name)), "Remove one of the package declarations"))
                 }
+                &Token::Get => { self.parse_get() }
                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), "")),
             },
         }
     }
+
+    fn parse_get(&mut self) -> Result<Decl, Diagnostic<()>> {
+      self.next()
+      .and_then(|_| {
+        todo!()
+      })  
+    }
+
+
     fn statements(&mut self) -> Result<Stmt, Diagnostic<()>> {
         match self.peek() {
             Some(tok) => match tok {

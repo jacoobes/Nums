@@ -1,4 +1,5 @@
 package main;
-    fun main {
+
+    expose fun main {
         
     }
