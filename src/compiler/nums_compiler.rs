@@ -1,10 +1,11 @@
 use std::rc::Rc;
-use crate::compiler::types::type_checker::TypeAnalyzer;
+use crate::compiler::nodes::decl::Decl;
 use codespan_reporting::term::{
     self,
     termcolor::{ColorChoice, StandardStream},
 };
 use logos::Logos;
+use smol_str::SmolStr;
 
 use super::{
     parser::parse::Parser,
@@ -23,14 +24,17 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&self) -> () {
+    pub fn compile(&self, base_pkg: &str) {
         let source = &self.source.source;
         let tokenizer = Token::lexer(source);
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(res) => {
                  println!("{:?}", &res);
-                    
+                 let mut mods = fnv::FnvHashMap::default();
+                 mods.insert(res.get_name(), res);
+                 let package = Decl::Module(SmolStr::from(base_pkg), mods);   
+                 println!("{:?}", package)
             },
             Err(diagnostics) => {
                 let src = &self.source.as_ref().simple_file;
