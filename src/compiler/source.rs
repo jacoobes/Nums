@@ -10,7 +10,7 @@ pub struct Source {
 }
 
 impl Source {
-    pub fn new(source: String, path: &'static str) -> Self {
+    pub fn new(source: String, path: &str) -> Self {
         let simple_file = SimpleFile::new(path.to_string(), source.clone());
         Self {
             source,
