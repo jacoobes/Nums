@@ -30,7 +30,6 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(res) => {
-                 println!("{:?}", &res);
                  let mut mods = fnv::FnvHashMap::default();
                  mods.insert(res.get_name(), res);
                  let package = Decl::Module(SmolStr::from(base_pkg), mods);   
