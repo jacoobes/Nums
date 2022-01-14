@@ -37,6 +37,8 @@ pub enum Token {
     Let,
     #[token("mut")]
     Mut,
+    #[token("~")]
+    Squiggly,
     #[token("none")]
     NoneOf,
     #[token("of")]

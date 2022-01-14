@@ -1,3 +1,4 @@
+use crate::compiler::nodes::decl::Path;
 use crate::compiler::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
 use crate::compiler::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
 use crate::{
@@ -107,8 +108,7 @@ impl<'source> Parser<'source> {
             });
             self.start = self.end;
         }
-        // handling if there is no semicolon after attempting to get the name of the package
-       
+        // getting the file's modules if there is no semicolon after attempting to get the name of the package
         let mut modules = fnv::FnvHashMap::<SmolStr, Decl>::default();
         loop {
             if self.is_at_end() {
@@ -133,8 +133,8 @@ impl<'source> Parser<'source> {
                             self.synchronize();
                         }
                     },
-                    Decl::Module(..) => (),
-                    Decl::Get => { modules.insert(SmolStr::from("sasd"), decl); }
+                    Decl::Module(..) | Decl::ExposedModule(..) => (),
+                    Decl::Get(..) => { modules.insert(decl.get_name(), decl); }
                 },
                 Err(e) => {
                     had_parse_err = true;
@@ -170,6 +170,7 @@ impl<'source> Parser<'source> {
                     match self.peek() {
                         Some(tok) if tok == &Token::Function => self.parse_fn(true),
                         Some(tok) if tok == &Token::Record => self.parse_rec(true),
+                        Some(tok) if tok == &Token::Get => self.parse_get(),
                         _ => {
                             let other = self.next()?;
                             Err(self.new_span(
@@ -192,9 +193,35 @@ impl<'source> Parser<'source> {
     }
 
     fn parse_get(&mut self) -> Result<Decl, Diagnostic<()>> {
+      let mut vec_path = Vec::new();
       self.next()
       .and_then(|_| {
-        todo!()
+          
+        while let Some(tok) = match_adv!(&mut self, &Token::Identifier(..) | &Token::Squiggly) {
+            match tok {
+                Token::Identifier(s) => vec_path.push(Path::Ident(s)),
+                Token::Squiggly => vec_path.push(Path::All),
+                other => return Err(self.new_span(Error(UnexpectedToken(other)), "Failed to parse a `get` declaration"))
+            };
+            if let Some(_) = match_adv!(&mut self, Token::Semi) {
+                break;
+            } else {
+                self.expect_token(&Token::Colon)?;
+                match self.peek() {
+                    Some(tok) if matches!(tok, &Token::Identifier(_) | &Token::Squiggly) => {
+                        continue;
+                    }
+                    None => return Err(self.new_span(Error(UnexpectedEndOfParsing),"Reached end of parsing while trying to parse get declaration")),
+                    Some(_) => {
+                     return self.next().and_then(|tok| {
+                        Err(self.new_span(Error(UnexpectedToken(tok)), ""))
+                     })   
+                    }
+                }
+            }
+
+        }
+        Ok(Decl::Get(vec_path))
       })  
     }
 
