@@ -21,6 +21,15 @@ pub enum Path {
     All
 }
 
+impl Path {
+    fn is_ident(&self) -> Option<SmolStr> {
+        match self {
+            Path::Ident(item) => Some(item.clone()),
+            Path::All => None,
+        }
+    }
+}
+
 impl Decl {
     pub fn get_name(&self) -> SmolStr {
         match &self {
@@ -30,7 +39,12 @@ impl Decl {
             | &Record(n, ..) 
             | &ExposedRec(n, .. ) 
             | &ExposedModule(n,.. ) => n.clone(),
-            &Get(..) => SmolStr::from("Get")
+            &Get(path) => {
+                path
+                .iter()
+                .rev()
+                .find_map(|path| path.is_ident() ).unwrap()
+            }
 
         }   
     }

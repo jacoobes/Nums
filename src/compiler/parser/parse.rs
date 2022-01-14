@@ -132,9 +132,11 @@ impl<'source> Parser<'source> {
                             );
                             self.synchronize();
                         }
-                    },
+                    }
                     Decl::Module(..) | Decl::ExposedModule(..) => (),
-                    Decl::Get(..) => { modules.insert(decl.get_name(), decl); }
+                    Decl::Get(..) => {
+                        modules.insert(decl.get_name(), decl);
+                    }
                 },
                 Err(e) => {
                     had_parse_err = true;
@@ -184,47 +186,56 @@ impl<'source> Parser<'source> {
                 &Token::Record => self.parse_rec(false),
                 &Token::Package => {
                     let name = self.next().and_then(|_| Ok(self.get_name()?))?;
-                    Err(self.new_span(Error(MultiplePackageDeclInFile(name)), "Remove one of the package declarations"))
+                    Err(self.new_span(
+                        Error(MultiplePackageDeclInFile(name)),
+                        "Remove one of the package declarations",
+                    ))
                 }
-                &Token::Get => { self.parse_get() }
+                &Token::Get => self.parse_get(),
                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), "")),
             },
         }
     }
 
     fn parse_get(&mut self) -> Result<Decl, Diagnostic<()>> {
-      let mut vec_path = Vec::new();
-      self.next()
-      .and_then(|_| {
-          
-        while let Some(tok) = match_adv!(&mut self, &Token::Identifier(..) | &Token::Squiggly) {
-            match tok {
-                Token::Identifier(s) => vec_path.push(Path::Ident(s)),
-                Token::Squiggly => vec_path.push(Path::All),
-                other => return Err(self.new_span(Error(UnexpectedToken(other)), "Failed to parse a `get` declaration"))
-            };
-            if let Some(_) = match_adv!(&mut self, Token::Semi) {
-                break;
-            } else {
-                self.expect_token(&Token::Colon)?;
-                match self.peek() {
-                    Some(tok) if matches!(tok, &Token::Identifier(_) | &Token::Squiggly) => {
-                        continue;
+        let mut vec_path = Vec::new();
+        self.next().and_then(|_| {
+            while let Some(tok) = match_adv!(&mut self, &Token::Identifier(..) | &Token::Squiggly) {
+                match tok {
+                    Token::Identifier(s) => vec_path.push(Path::Ident(s)),
+                    Token::Squiggly => vec_path.push(Path::All),
+                    other => {
+                        return Err(self.new_span(
+                            Error(UnexpectedToken(other)),
+                            "Failed to parse a `get` declaration",
+                        ))
                     }
-                    None => return Err(self.new_span(Error(UnexpectedEndOfParsing),"Reached end of parsing while trying to parse get declaration")),
-                    Some(_) => {
-                     return self.next().and_then(|tok| {
-                        Err(self.new_span(Error(UnexpectedToken(tok)), ""))
-                     })   
+                };
+                if let Some(_) = match_adv!(&mut self, Token::Semi) {
+                    break;
+                } else {
+                    self.expect_token(&Token::Colon)?;
+                    match self.peek() {
+                        Some(tok) if matches!(tok, &Token::Identifier(_) | &Token::Squiggly) => {
+                            continue
+                        }
+                        None => {
+                            return Err(self.new_span(
+                                Error(UnexpectedEndOfParsing),
+                                "Reached end of parsing while trying to parse get declaration",
+                            ))
+                        }
+                        Some(_) => {
+                            return self.next().and_then(|tok| {
+                                Err(self.new_span(Error(UnexpectedToken(tok)), ""))
+                            })
+                        }
                     }
                 }
             }
-
-        }
-        Ok(Decl::Get(vec_path))
-      })  
+            Ok(Decl::Get(vec_path))
+        })
     }
-
 
     fn statements(&mut self) -> Result<Stmt, Diagnostic<()>> {
         match self.peek() {
@@ -243,8 +254,7 @@ impl<'source> Parser<'source> {
     }
 
     fn if_else(&mut self) -> Result<Stmt, Diagnostic<()>> {
-        self.next()?;
-        let condition = self.expr()?;
+        let condition = self.next().and_then(|_| self.expr())?;
         let block = self.block()?;
         let else_block = if let Some(_) = match_adv!(&mut self, &Token::Else) {
             Some(self.block()?)
@@ -255,10 +265,9 @@ impl<'source> Parser<'source> {
     }
 
     fn while_loop(&mut self) -> Result<Stmt, Diagnostic<()>> {
-        self.next()?;
-        let cond = self.expr();
+        let condition = self.next().and_then(|_| self.expr());
         let block = self.block();
-        self.resolve_node(Stmt::While(cond?, block?))
+        self.resolve_node(Stmt::While(condition?, block?))
     }
 
     fn var_decl(&mut self) -> Result<Stmt, Diagnostic<()>> {
@@ -452,8 +461,7 @@ impl<'source> Parser<'source> {
     }
 
     fn parse_fn(&mut self, exposed: bool) -> Result<Decl, Diagnostic<()>> {
-        self.next()?;
-        let name = self.get_name()?;
+        let name = self.next().and_then(|_| self.get_name())?;
         let args = self.parse_args()?;
         let fn_ret_type = if let Some(_) = match_adv!(&mut self, &Token::Assign) {
             self.get_type()?
@@ -494,8 +502,7 @@ impl<'source> Parser<'source> {
     }
 
     fn parse_rec(&mut self, exposed: bool) -> Result<Decl, Diagnostic<()>> {
-        self.next()?;
-        let name = self.get_name()?;
+        let name = self.next().and_then(|_| self.get_name())?;
         self.expect_token(&Token::LeftBrace)?;
         let args = {
             let mut fields = Vec::new();
@@ -520,17 +527,13 @@ impl<'source> Parser<'source> {
 
     fn get_name(&mut self) -> Result<SmolStr, Diagnostic<()>> {
         match self.peek().unwrap() {
-            &Token::Identifier(_) => {
-                self.next()?;
-                Ok(self.tokens.slice())
-            }
-            _ => {
-                let next = self.next()?;
+            &Token::Identifier(_) => self.next().and_then(|_| Ok(self.tokens.slice())),
+            _ => self.next().and_then(|next| {
                 Err(self.new_span(
                     Error(UnexpectedToken(next)),
                     "note : Try to use an identifier",
                 ))
-            }
+            }),
         }
     }
 }
