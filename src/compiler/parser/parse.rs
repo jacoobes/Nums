@@ -151,13 +151,9 @@ impl<'source> Parser<'source> {
         while let Some(token) = self.peek() {
             match token {
                 &Token::Function | &Token::Record | &Token::Package => break,
-                &Token::Semi => {
-                    self.next().unwrap();
-                    break;
-                }
                 _ => {
-                    self.next().unwrap();
-                    continue;
+                    let is_semi = self.next().and_then(|t| Ok(if t == Token::Semi { true } else { false })).unwrap();
+                    if is_semi {break} else {continue;}
                 }
             }
         }

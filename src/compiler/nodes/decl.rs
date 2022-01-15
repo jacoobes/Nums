@@ -43,7 +43,7 @@ impl Decl {
                 path
                 .iter()
                 .rev()
-                .find_map(|path| path.is_ident() ).unwrap()
+                .find_map(|path| path.is_ident() ).unwrap_or(SmolStr::from("ALL"))
             }
 
         }   
