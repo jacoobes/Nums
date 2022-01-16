@@ -1,9 +1,10 @@
 use std::rc::Rc;
-use crate::compiler::nodes::decl::Decl;
-use codespan_reporting::term::{
+use crate::compiler::nodes::{decl::Decl, path::PackagePath};
+use crate::compiler::nodes::path::Path;
+use codespan_reporting::{term::{
     self,
     termcolor::{ColorChoice, StandardStream},
-};
+}, diagnostic::Diagnostic};
 use logos::Logos;
 use smol_str::SmolStr;
 
@@ -24,16 +25,21 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&self, base_pkg: &str) {
+    pub fn compile(&self, base_pkg: SmolStr) {
         let source = &self.source.source;
         let tokenizer = Token::lexer(source);
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(res) => {
+                 let mod_name = res.get_name();
+                 let mut pack_name = PackagePath::from(Path::from(&base_pkg)); 
+                 pack_name.join(Path::from(&mod_name));
+                 
                  let mut mods = fnv::FnvHashMap::default();
-                 mods.insert(res.get_name(), res);
-                 let package = Decl::Module(SmolStr::from(base_pkg), mods);   
+                 mods.insert(mod_name, res);
+                 let package = Decl::Module(base_pkg, mods);   
                  println!("{:?}", package)
+                 
             },
             Err(diagnostics) => {
                 let src = &self.source.as_ref().simple_file;

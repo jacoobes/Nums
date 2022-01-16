@@ -1,4 +1,4 @@
-use crate::compiler::nodes::decl::Path;
+use crate::compiler::nodes::path::{Path, PackagePath};
 use crate::compiler::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
 use crate::compiler::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
 use crate::{
@@ -152,8 +152,15 @@ impl<'source> Parser<'source> {
             match token {
                 &Token::Function | &Token::Record | &Token::Package => break,
                 _ => {
-                    let is_semi = self.next().and_then(|t| Ok(if t == Token::Semi { true } else { false })).unwrap();
-                    if is_semi {break} else {continue;}
+                    let is_semi = self
+                        .next()
+                        .and_then(|t| Ok(if t == Token::Semi { true } else { false }))
+                        .unwrap();
+                    if is_semi {
+                        break;
+                    } else {
+                        continue;
+                    }
                 }
             }
         }
@@ -229,7 +236,7 @@ impl<'source> Parser<'source> {
                     }
                 }
             }
-            Ok(Decl::Get(vec_path))
+            Ok(Decl::Get(PackagePath::from(vec_path)))
         })
     }
 
