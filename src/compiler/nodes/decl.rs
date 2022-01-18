@@ -1,7 +1,7 @@
 use smol_str::SmolStr;
 
 use super::decl::Decl::*;
-use super::path::{PackagePath, Path};
+use super::path::PackagePath;
 use super::stmt::Stmt;
 use crate::compiler::tokens::Token;
 
@@ -30,7 +30,7 @@ impl Decl {
                 .path()
                 .iter()
                 .rev()
-                .find_map(|path| path.is_ident())
+                .find_map(|path| path.get_ident())
                 .unwrap_or(SmolStr::from("ALL")),
         }
     }

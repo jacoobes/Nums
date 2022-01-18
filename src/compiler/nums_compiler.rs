@@ -34,7 +34,7 @@ impl Compiler {
                  let mod_name = res.get_name();
                  let mut pack_name = PackagePath::from(Path::from(&base_pkg)); 
                  pack_name.join(Path::from(&mod_name));
-                 
+                 println!("{}", pack_name.to_string());
                  let mut mods = fnv::FnvHashMap::default();
                  mods.insert(mod_name, res);
                  let package = Decl::Module(base_pkg, mods);   

@@ -34,4 +34,6 @@ pub enum Expr {
     Bool(bool),
     Char(char),
     Val(SmolStr),
+    Call(Box<Expr>, Vec<Expr>),
+    Get(Box<Expr>, SmolStr)
 }

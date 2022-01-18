@@ -29,6 +29,8 @@ impl Visitor<Result<TypeInfo, std::string::String>> for TypeAnalyzer {
             Expr::Bool(_) => Ok(TypeInfo::Prim(Bool)),
             Expr::Char(_) => Ok(TypeInfo::Prim(Char)),
             Expr::Val(_) => Ok(TypeInfo::Unknown),
+            Expr::Call(..) => todo!(),
+            Expr::Get(..) => todo!()
         }
     }
 

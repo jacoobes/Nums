@@ -11,6 +11,7 @@ use logos::Lexer;
 use smol_str::SmolStr;
 use std::ops::Range;
 use std::rc::Rc;
+use std::slice::SliceIndex;
 pub struct Parser<'source> {
     tokens: PeekerWrap<'source>,
     source: std::rc::Rc<Source>,
@@ -402,8 +403,35 @@ impl<'source> Parser<'source> {
                 expr: Box::new(expr?),
             })
         } else {
-            self.grouping()
+            self.callee()
         }
+    }
+
+    fn callee(&mut self) -> Result<Expr, Diagnostic<()>> {
+        let mut expr = self.grouping()?;
+        loop {
+            expr = if let Some(_) = match_adv!(&mut self, &Token::Bar) {
+                let finished_call = self.finish_call(expr)?;
+                self.resolve_node(finished_call)?
+            } else if let Some(_) = match_adv!(&mut self, &Token::Period) {
+                let name = self.get_name()?;
+                self.resolve_node(Expr::Get(Box::new(expr), name))?
+            } else { return Ok(self.resolve_node(expr)?); }
+        }
+    }
+
+    fn finish_call(&mut self, expr: Expr) -> Result<Expr, Diagnostic<()>> {
+        let mut list_of_args = Vec::new();
+        while !self.check_peek(&Token::Bar) {
+            list_of_args.push(self.expr()?);
+            if let Some(_) = match_adv!(&mut self, &Token::Comma) {
+                continue;
+            } else {
+                break;
+            }
+        }
+        self.expect_token(&Token::Bar)?;
+        Ok(Expr::Call(Box::new(expr), list_of_args))
     }
 
     fn grouping(&mut self) -> Result<Expr, Diagnostic<()>> {

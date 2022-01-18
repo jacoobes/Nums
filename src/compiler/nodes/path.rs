@@ -1,5 +1,6 @@
 use smol_str::SmolStr;
 
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct PackagePath {
     path: Vec<Path>,
@@ -30,8 +31,8 @@ impl From<Path> for PackagePath {
 }
 
 impl From<Vec<Path>> for PackagePath {
-    fn from(it: Vec<Path>) -> Self {
-        PackagePath { path: it }
+    fn from(path: Vec<Path>) -> Self {
+        PackagePath { path }
     }
 }
 
@@ -42,7 +43,7 @@ pub enum Path {
 }
 
 impl Path {
-    pub fn is_ident(&self) -> Option<smol_str::SmolStr> {
+    pub fn get_ident(&self) -> Option<smol_str::SmolStr> {
         match self {
             Path::Ident(item) => Some(item.clone()),
             Path::All => None,
@@ -55,6 +56,7 @@ impl Path {
             Path::All => "ALL",
         }
     }
+    
 }
 
 impl From<&SmolStr> for Path {
@@ -62,6 +64,15 @@ impl From<&SmolStr> for Path {
         match string {
             tilde if tilde == "~" => Path::All,
             other => Path::Ident(other.clone()),
+        }
+    }
+}
+
+impl From<&str> for Path {
+    fn from(string: &str) -> Self {
+        match string {
+            "~" => Path::All,
+            other => Path::Ident(other.into())
         }
     }
 }
