@@ -11,7 +11,6 @@ use logos::Lexer;
 use smol_str::SmolStr;
 use std::ops::Range;
 use std::rc::Rc;
-use std::slice::SliceIndex;
 pub struct Parser<'source> {
     tokens: PeekerWrap<'source>,
     source: std::rc::Rc<Source>,
@@ -493,7 +492,6 @@ impl<'source> Parser<'source> {
         } else {
             Token::Unit
         };
-        println!("{:?}", self.peek());
         let block = self.block();
         if exposed {
             Ok(Decl::ExposedFn(name, args, fn_ret_type, block?))
