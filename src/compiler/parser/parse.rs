@@ -229,11 +229,7 @@ impl<'source> Parser<'source> {
                                 "Reached end of parsing while trying to parse get declaration",
                             ))
                         }
-                        Some(_) => {
-                            return self.next().and_then(|tok| {
-                                Err(self.new_span(Error(UnexpectedToken(tok)), ""))
-                            })
-                        }
+                        Some(_) => return self.next().and_then(|tok| Err(self.new_span(Error(UnexpectedToken(tok)), "")))
                     }
                 }
             }
@@ -408,30 +404,32 @@ impl<'source> Parser<'source> {
     }
 
     fn callee(&mut self) -> Result<Expr, Diagnostic<()>> {
-        let mut expr = self.grouping()?;
+        let mut expr = self.grouping();
         loop {
             expr = if let Some(_) = match_adv!(&mut self, &Token::Bar) {
-                let finished_call = self.finish_call(expr)?;
-                self.resolve_node(finished_call)?
+                self.finish_call(expr)
             } else if let Some(_) = match_adv!(&mut self, &Token::Period) {
                 let name = self.get_name()?;
-                self.resolve_node(Expr::Get(Box::new(expr), name))?
-            } else { return Ok(self.resolve_node(expr)?); }
+                self.resolve_node(Expr::Get(Box::new(expr?), name))
+            } else {
+                break expr;
+            }
         }
     }
 
-    fn finish_call(&mut self, expr: Expr) -> Result<Expr, Diagnostic<()>> {
+    fn finish_call(&mut self, expr: Result<Expr, Diagnostic<()>>) -> Result<Expr, Diagnostic<()>> {
         let mut list_of_args = Vec::new();
-        while !self.check_peek(&Token::Bar) {
+        println!("{:?}", &self.peek());
+        if let Some(_) = match_adv!(&mut self, &Token::Bar) {
+            return self.resolve_node(Expr::Call(Box::new(expr?), list_of_args))
+        } else {
             list_of_args.push(self.expr()?);
-            if let Some(_) = match_adv!(&mut self, &Token::Comma) {
-                continue;
-            } else {
-                break;
+            while let Some(_) = match_adv!(&mut self, &Token::Comma) {
+                list_of_args.push(self.expr()?)
             }
         }
         self.expect_token(&Token::Bar)?;
-        Ok(Expr::Call(Box::new(expr), list_of_args))
+        Ok(Expr::Call(Box::new(expr?), list_of_args))
     }
 
     fn grouping(&mut self) -> Result<Expr, Diagnostic<()>> {
