@@ -493,6 +493,7 @@ impl<'source> Parser<'source> {
         } else {
             Token::Unit
         };
+        println!("{:?}", self.peek());
         let block = self.block();
         if exposed {
             Ok(Decl::ExposedFn(name, args, fn_ret_type, block?))
@@ -504,6 +505,10 @@ impl<'source> Parser<'source> {
     fn parse_args(&mut self) -> Result<Option<Vec<(SmolStr, Token)>>, Diagnostic<()>> {
         let mut fn_args = Vec::new();
         if let Some(_) = match_adv!(&mut self, &Token::LeftBrack) {
+            if self.check_peek(&Token::RightBrack) {
+                self.next().unwrap();
+                return Ok(None)
+            } 
             let first_arg = self.parse_single_arg()?;
             fn_args.push(first_arg);
 
@@ -512,7 +517,7 @@ impl<'source> Parser<'source> {
                 let remaining_args = self.parse_single_arg()?;
                 fn_args.push(remaining_args);
             }
-            self.expect_token(&Token::RightBrace)?;
+            self.expect_token(&Token::RightBrack)?;
             Ok(Some(fn_args))
         } else {
             Ok(None)
