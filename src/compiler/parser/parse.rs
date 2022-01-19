@@ -406,8 +406,10 @@ impl<'source> Parser<'source> {
     fn callee(&mut self) -> Result<Expr, Diagnostic<()>> {
         let mut expr = self.grouping();
         loop {
-            expr = if let Some(_) = match_adv!(&mut self, &Token::Bar) {
-                self.finish_call(expr)
+            expr = if let Some(_) = match_adv!(&mut self, &Token::LeftBrack) {
+                let call = self.finish_call(expr)?;
+                self.expect_token(&Token::RightBrack)?;
+                self.resolve_node(call)
             } else if let Some(_) = match_adv!(&mut self, &Token::Period) {
                 let name = self.get_name()?;
                 self.resolve_node(Expr::Get(Box::new(expr?), name))
@@ -419,16 +421,10 @@ impl<'source> Parser<'source> {
 
     fn finish_call(&mut self, expr: Result<Expr, Diagnostic<()>>) -> Result<Expr, Diagnostic<()>> {
         let mut list_of_args = Vec::new();
-        println!("{:?}", &self.peek());
-        if let Some(_) = match_adv!(&mut self, &Token::Bar) {
-            return self.resolve_node(Expr::Call(Box::new(expr?), list_of_args))
-        } else {
+        while !self.check_peek(&Token::RightBrack) {
             list_of_args.push(self.expr()?);
-            while let Some(_) = match_adv!(&mut self, &Token::Comma) {
-                list_of_args.push(self.expr()?)
-            }
+            match_adv!(&mut self, Token::Comma);
         }
-        self.expect_token(&Token::Bar)?;
         Ok(Expr::Call(Box::new(expr?), list_of_args))
     }
 
@@ -507,16 +503,16 @@ impl<'source> Parser<'source> {
 
     fn parse_args(&mut self) -> Result<Option<Vec<(SmolStr, Token)>>, Diagnostic<()>> {
         let mut fn_args = Vec::new();
-        if let Some(_) = match_adv!(&mut self, &Token::Bar) {
+        if let Some(_) = match_adv!(&mut self, &Token::LeftBrack) {
             let first_arg = self.parse_single_arg()?;
             fn_args.push(first_arg);
 
-            while !self.check_peek(&Token::Bar) {
+            while !self.check_peek(&Token::RightBrack) {
                 self.expect_token(&Token::Comma)?;
                 let remaining_args = self.parse_single_arg()?;
                 fn_args.push(remaining_args);
             }
-            self.expect_token(&Token::Bar)?;
+            self.expect_token(&Token::RightBrace)?;
             Ok(Some(fn_args))
         } else {
             Ok(None)

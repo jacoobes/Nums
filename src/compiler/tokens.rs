@@ -29,7 +29,7 @@ pub enum Token {
     And,
     #[token("or")]
     Or,
-    #[token("fun")]
+    #[token("fn")]
     Function,
     #[token("by")]
     By,
