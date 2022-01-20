@@ -18,4 +18,6 @@ pub enum Stmt {
     Block(Vec<Stmt>),
 
     IfElse(Expr, Vec<Stmt>, Option<Vec<Stmt>>),
+    
+    Return(Expr)
 }

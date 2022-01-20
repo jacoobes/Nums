@@ -51,6 +51,8 @@ pub enum Token {
     Package,
     #[token("expose")]
     Expose,
+    #[token("return")]
+    Return,
     #[token("->")]
     SmallPointer,
     #[token("<")]

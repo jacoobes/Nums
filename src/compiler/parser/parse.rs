@@ -238,6 +238,11 @@ impl<'source> Parser<'source> {
                 &Token::While => self.while_loop(),
                 &Token::Let | &Token::Mut => self.var_decl(),
                 &Token::If => self.if_else(),
+                &Token::Return => {
+                    let ret_expr = self.next().and_then(|_| self.expr())?;
+                    self.expect_token(&Token::Semi)
+                        .and_then(|_| self.resolve_node(Stmt::Return(ret_expr)))
+                }
                 &Token::LeftBrace => {
                     let block = self.block()?;
                     self.resolve_node(Stmt::Block(block))
