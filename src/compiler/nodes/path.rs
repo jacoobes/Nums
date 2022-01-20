@@ -1,3 +1,5 @@
+use std::io::BufRead;
+
 use smol_str::SmolStr;
 
 
@@ -11,16 +13,28 @@ impl PackagePath {
         self.path.push(path);
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn path(&self) -> &Vec<Path> {
+        &self.path
+    }
+}
+
+impl Into<String> for PackagePath {
+    fn into(self) -> String {
         self.path
             .iter()
             .map(|s| s.get_name())
             .collect::<Vec<&str>>()
             .join(":")
     }
+}
 
-    pub fn path(&self) -> &Vec<Path> {
-        &self.path
+impl From<String> for PackagePath {
+    fn from(strang: String) -> Self {
+        strang
+        .split(":")
+        .map(|s| Path::from(s))
+        .collect::<Vec<_>>()
+        .into()
     }
 }
 
