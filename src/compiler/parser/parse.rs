@@ -282,18 +282,19 @@ impl<'source> Parser<'source> {
             None
         };
         self.expect_token(&Token::Assign)?;
-        let var_val = self.stmt_expr();
+        let var_val = self.expr().and_then(|e| {self.expect_token(&Token::Semi)?; Ok(e)});
         if mut_state == Token::Mut {
-            self.resolve_node(Stmt::Mut(name, typ_tok, Box::new(var_val?)))
+            self.resolve_node(Stmt::Mut(name, typ_tok, var_val?))
         } else {
-            self.resolve_node(Stmt::Let(name, typ_tok, Box::new(var_val?)))
+            self.resolve_node(Stmt::Let(name, typ_tok, var_val?))
         }
     }
 
     fn stmt_expr(&mut self) -> Result<Stmt, Diagnostic<()>> {
         let value_of_statement = self.expr();
-        self.expect_token(&Token::Semi)?;
-        self.resolve_node(Stmt::ExprStatement(value_of_statement?))
+        self.expect_token(&Token::Semi).and_then(|_|{
+            self.resolve_node(Stmt::ExprStatement(value_of_statement?))
+        })
     }
 
     fn expr(&mut self) -> Result<Expr, Diagnostic<()>> {

@@ -9,9 +9,9 @@ pub enum Stmt {
     //an expression, but has semicolon at end
     ExprStatement(Expr),
     //Mut or const //ident  //typ //expr stmt
-    Mut(SmolStr, Option<Token>, Box<Stmt>),
+    Mut(SmolStr, Option<Token>, Expr),
 
-    Let(SmolStr, Option<Token>, Box<Stmt>),
+    Let(SmolStr, Option<Token>, Expr),
 
     While(Expr, Vec<Stmt>),
 
