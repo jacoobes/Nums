@@ -1,4 +1,4 @@
-use crate::compiler::nodes::path::{Path, PackagePath};
+use crate::compiler::nodes::path::{PackagePath, Path};
 use crate::compiler::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
 use crate::compiler::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
 use crate::{
@@ -152,11 +152,12 @@ impl<'source> Parser<'source> {
             match token {
                 &Token::Function | &Token::Record | &Token::Package => break,
                 _ => {
-                    let is_semi = self
-                        .next()
-                        .and_then(|t| Ok(t == Token::Semi))
-                        .unwrap();
-                    if is_semi { break } else { continue }
+                    let is_semi = self.next().and_then(|t| Ok(t == Token::Semi)).unwrap();
+                    if is_semi {
+                        break;
+                    } else {
+                        continue;
+                    }
                 }
             }
         }
@@ -224,7 +225,11 @@ impl<'source> Parser<'source> {
                                 "Reached end of parsing while trying to parse get declaration",
                             ))
                         }
-                        Some(_) => return self.next().and_then(|tok| Err(self.new_span(Error(UnexpectedToken(tok)), "")))
+                        Some(_) => {
+                            return self.next().and_then(|tok| {
+                                Err(self.new_span(Error(UnexpectedToken(tok)), ""))
+                            })
+                        }
                     }
                 }
             }
@@ -238,15 +243,13 @@ impl<'source> Parser<'source> {
                 &Token::While => self.while_loop(),
                 &Token::Let | &Token::Mut => self.var_decl(),
                 &Token::If => self.if_else(),
-                &Token::Return => {
-                    let ret_expr = self.next().and_then(|_| self.expr())?;
-                    self.expect_token(&Token::Semi)
-                        .and_then(|_| self.resolve_node(Stmt::Return(ret_expr)))
-                }
-                &Token::LeftBrace => {
-                    let block = self.block()?;
-                    self.resolve_node(Stmt::Block(block))
-                }
+                &Token::Return => self.next().and_then(|_| self.expr()).and_then(|e| {
+                    self.expect_token(&Token::Semi)?;
+                    self.resolve_node(Stmt::Return(e))
+                }),
+                &Token::LeftBrace => self
+                    .block()
+                    .and_then(|it| self.resolve_node(Stmt::Block(it))),
                 _ => self.stmt_expr(),
             },
             None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
@@ -506,8 +509,8 @@ impl<'source> Parser<'source> {
         if let Some(_) = match_adv!(&mut self, &Token::LeftBrack) {
             if self.check_peek(&Token::RightBrack) {
                 self.next().unwrap();
-                return Ok(None)
-            } 
+                return Ok(None);
+            }
             let first_arg = self.parse_single_arg()?;
             fn_args.push(first_arg);
 
