@@ -24,10 +24,7 @@ impl<'source> Parser<'source> {
     fn expect_token(&mut self, token: &Token) -> Result<Token, Diagnostic<()>> {
         match self.peek() {
             Some(tok) if tok == token => Ok(self.next().unwrap()),
-            Some(_) => {
-                let fault = self.next();
-                Err(self.new_span(Error(Expected(token.clone(), fault?)), ""))
-            }
+            Some(_) => self.next().and_then(|tok|  Err(self.new_span(Error(Expected(token.clone(), tok)), "")) ),
             None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
         }
     }
