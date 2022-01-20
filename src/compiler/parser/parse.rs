@@ -154,13 +154,9 @@ impl<'source> Parser<'source> {
                 _ => {
                     let is_semi = self
                         .next()
-                        .and_then(|t| Ok(if t == Token::Semi { true } else { false }))
+                        .and_then(|t| Ok(t == Token::Semi))
                         .unwrap();
-                    if is_semi {
-                        break;
-                    } else {
-                        continue;
-                    }
+                    if is_semi { break } else { continue }
                 }
             }
         }
