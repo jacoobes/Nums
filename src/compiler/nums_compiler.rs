@@ -41,8 +41,14 @@ impl Compiler {
                  let mut mods = fnv::FnvHashMap::default();
                  mods.insert(mod_name, res);
                  let package = Decl::Module(base_pkg, mods);   
+                   
                 //will target function called "main" by default. Maybe add customization in future?
-                
+                match package {
+                    Decl::Module(name, map) => {
+                       println!("{:?}",&map)
+                    },
+                    _ => panic!("Top level declaration must be a module!")
+                }
                  
             },
             Err(diagnostics) => {

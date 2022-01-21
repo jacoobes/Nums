@@ -1,7 +1,7 @@
 use smol_str::SmolStr;
 
 use super::decl::Decl::*;
-use super::path::PackagePath;
+use super::path::{PackagePath, Path};
 use super::stmt::Stmt;
 use crate::compiler::tokens::Token;
 
@@ -32,6 +32,16 @@ impl Decl {
                 .rev()
                 .find_map(|path| path.get_ident())
                 .unwrap_or(SmolStr::from("ALL")),
+        }
+    }
+
+    pub fn get_module(self, path: PackagePath) -> Self {
+        match self {
+            Module(n, map) => {
+                
+                todo!()
+            },
+            _ => self
         }
     }
 }

@@ -132,7 +132,7 @@ impl<'source> Parser<'source> {
                     }
                     Decl::Module(..) | Decl::ExposedModule(..) => (),
                     Decl::Get(..) => {
-                        modules.insert(decl.get_name(), decl);
+                        modules.insert(decl.get_name().clone(), decl);
                     }
                 },
                 Err(e) => {
