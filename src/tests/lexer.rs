@@ -12,7 +12,7 @@ mod lexer {
         let stream_of_toks = lexer.collect::<Vec<_>>();
         stream_of_toks.iter().for_each(|t| println!("{:?}", t));
         assert_eq!(
-            vec![Bang, Colon, LeftArr, RightArr, Star, Caret, Error, Unit, Plus, Minus, Unit],
+            vec![Bang, Colon, LeftArr, RightArr, Star, Caret, Error, Plus, Minus],
             stream_of_toks)
 
     }
@@ -54,27 +54,16 @@ mod lexer {
     }
     #[test]
     fn keywords() {
-        let text = "expose fun when by by try none and or while cont module float int boolean str to";
+        let text = "expose fun when by by try none and or while cont module float int boolean str";
         let mut tokens = Token::lexer(text);
         assert_eq!(Some(Expose), tokens.next());
         assert_eq!(Some(Function), tokens.next());
-        assert_eq!(Some(When), tokens.next());
-        assert_eq!(Some(By), tokens.next());
-        assert_eq!(Some(By), tokens.next());
         assert_eq!(Some(Identifier(SmolStr::from("try"))), tokens.next());
-        assert_eq!(Some(NoneOf), tokens.next());
         assert_eq!(Some(And), tokens.next());
         assert_eq!(Some(Or), tokens.next());
         assert_eq!(Some(While), tokens.next());
         assert_eq!(Some(Identifier(SmolStr::from("cont"))), tokens.next());
         assert_eq!(Some(Package), tokens.next());
-       // assert_eq!(Some(F64), tokens.next());
-        assert_eq!(Some(Type(SmolStr::from("float"))), tokens.next());
-        assert_eq!(Some(Type(SmolStr::from("int"))), tokens.next());
-      //  assert_eq!(Some(I64), tokens.next());
-        assert_eq!(Some(Type(SmolStr::from("boolean"))), tokens.next());
-        assert_eq!(Some(Type(SmolStr::from("str"))), tokens.next());
-        assert_eq!(Some(To), tokens.next());
     }
 
     #[test]

@@ -9,52 +9,43 @@ pub struct MetaData {
 /// Regular grammar for Nums
 #[derive(Logos, Debug, PartialEq, Clone)]
 #[logos(extras = MetaData)]
-#[logos(subpattern typ = r"float|int|str|bool|unit")]
 #[logos(subpattern int = r"\d+")]
 
 pub enum Token {
-    #[token("when")]
-    When,
-    #[token("to")]
-    To,
     #[token("if")]
     If,
     #[token("else")]
     Else,
     #[token("while")]
     While,
-    #[token("record")]
-    Record,
     #[token("and")]
     And,
     #[token("or")]
     Or,
+    #[token("task")]
+    Task,
     #[token("fn")]
     Function,
-    #[token("by")]
-    By,
     #[token("let")]
     Let,
     #[token("mut")]
     Mut,
-    #[token("~")]
-    Squiggly,
-    #[token("none")]
-    NoneOf,
-    #[token("of")]
-    Of,
-    #[token("get")]
-    Get,
-    #[token("from")]
-    From,
-    #[token("package")]
+    #[token("Use")]
+    Use,
+    #[token("stop")]
+    Stop,
+    #[token("continue")]
+    Continue,
+    #[token("Package")]
     Package,
     #[token("expose")]
     Expose,
     #[token("return")]
     Return,
-    #[token("->")]
-    SmallPointer,
+    #[token("start:")]
+    Start,
+    #[token("end.")]
+    End,
     #[token("<")]
     LeftArr,
     #[token(">")]
@@ -74,29 +65,12 @@ pub enum Token {
     ///smolstr is heap allocated if 23 bytes + ofc
     #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, make_str)]
     String(SmolStr),
-
-    #[regex(r"'[a-zA-Z0-9\n\r\t \f]'", parse_char)]
-    Char(char),
     #[regex(r"true|false", parse_bool)]
     Bool(bool),
-    #[token("()", priority = 3)]
-    Unit,
-
-    #[regex(r"[a-zA-Z][_0-9a-zA-Z]*", priority = 2,  callback = |lex| SmolStr::from(lex.slice()))]
+    #[regex(r"[a-zA-Z][_0-9a-zA-Z]*",  callback = |lex| SmolStr::from(lex.slice()))]
     Identifier(SmolStr),
-
-    /// token types and expr to denote the conversion of one type to another.
-    ///  can be used as expression to convert or type declaration
-    // #[token("f64")]
-    // F64,
-    #[regex(r"(?&typ)", priority = 3, callback = |lex| SmolStr::from(lex.slice()))]
-    Type(SmolStr),
-    // #[token("i64")]
-    // I64,
     #[token(",")]
     Comma,
-    #[token(".")]
-    Period,
     #[token("!")]
     Bang,
     #[token("+")]
@@ -107,8 +81,6 @@ pub enum Token {
     Question,
     #[token(";")]
     Semi,
-    #[token("..")]
-    Elipsis,
     #[token("(")]
     LeftParen,
     #[token(")")]
@@ -158,8 +130,7 @@ fn parse_num(lex: &mut Lexer<Token>) -> Option<isize> {
 
 fn parse_dub(lex: &mut Lexer<Token>) -> Option<f32> {
     let slice = lex.slice();
-    let n: f32 = slice.parse().ok()?;
-    Some(n)
+    slice.parse().ok()
 }
 
 fn make_str(lex: &mut Lexer<Token>) -> Option<SmolStr> {
@@ -170,12 +141,7 @@ fn make_str(lex: &mut Lexer<Token>) -> Option<SmolStr> {
 fn percent_float(lex: &mut Lexer<Token>) -> Option<f32> {
     let slice = lex.slice();
     let n: f32 = slice[..slice.len() - 1].parse().ok()?;
-    Some(n / 100.0)
-}
-
-fn parse_char(lex: &mut Lexer<Token>) -> Option<char> {
-    let slice = lex.slice().chars().nth(1);
-    slice
+    Some(n / 100.)
 }
 fn parse_bool(lex: &mut Lexer<Token>) -> Option<bool> {
     let slice = lex.slice();

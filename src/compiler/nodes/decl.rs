@@ -1,7 +1,7 @@
 use smol_str::SmolStr;
 
 use super::decl::Decl::*;
-use super::path::{PackagePath, Path};
+use super::path::{PackagePath};
 use super::stmt::Stmt;
 use crate::compiler::tokens::Token;
 
