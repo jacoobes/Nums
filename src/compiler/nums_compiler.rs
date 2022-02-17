@@ -31,25 +31,7 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(res) => {
-                 let mod_name = res.get_name();
-                 let mut pack_name = PackagePath::from(vec![Path::from(&base_pkg), Path::from(&mod_name)]); 
-                 if let Decl::Function(name,..)  = &res { 
-                    if name == "main" {
-                        pack_name.join(Path::from(name));
-                    }
-                 };
-                 let mut mods = fnv::FnvHashMap::default();
-                 mods.insert(mod_name, res);
-                 let package = Decl::Module(base_pkg, mods);   
-                   
-                //will target function called "main" by default. Maybe add customization in future?
-                match package {
-                    Decl::Module(name, map) => {
-                       println!("{:?}",&map)
-                    },
-                    _ => panic!("Top level declaration must be a module!")
-                }
-                 
+                 println!("{:?}", res)
             },
             Err(diagnostics) => {
                 let src = &self.source.as_ref().simple_file;

@@ -1,4 +1,3 @@
-use smol_str::SmolStr;
 
 use crate::compiler::tokens::Token;
 
@@ -9,9 +8,9 @@ pub enum Stmt {
     //an expression, but has semicolon at end
     ExprStatement(Expr),
     //Mut or const //ident  //typ //expr stmt
-    Mut(SmolStr, Option<Token>, Expr),
+    Mut(Token, Expr),
 
-    Let(SmolStr, Option<Token>, Expr),
+    Let(Token, Expr),
 
     While(Expr, Vec<Stmt>),
 

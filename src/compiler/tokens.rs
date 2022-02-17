@@ -36,8 +36,6 @@ pub enum Token {
     Stop,
     #[token("continue")]
     Continue,
-    #[token("Package")]
-    Package,
     #[token("expose")]
     Expose,
     #[token("return")]
@@ -75,6 +73,8 @@ pub enum Token {
     Bang,
     #[token("+")]
     Plus,
+    #[token(".")]
+    Period,
     #[token("-")]
     Minus,
     #[token("?")]

@@ -1,4 +1,3 @@
-use crate::compiler::nodes::path::{PackagePath, Path};
 use crate::compiler::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
 use crate::compiler::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
 use crate::{
@@ -52,13 +51,6 @@ impl<'source> Parser<'source> {
     fn span(&mut self) -> Range<usize> {
         self.start..self.end
     }
-    fn check_uniq_module(module: &fnv::FnvHashMap<SmolStr, Decl>, key: &SmolStr) -> bool {
-        if let Some(_) = module.get(key) {
-            false
-        } else {
-            true
-        }
-    }
 }
 
 /// Basic recursive descent parsing
@@ -74,65 +66,23 @@ impl<'source> Parser<'source> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Decl, Vec<Diagnostic<()>>> {
+    pub fn parse(&mut self) -> Result<Vec<Decl>, Vec<Diagnostic<()>>> {
         let mut diagnostic_vec = Vec::new();
+        let mut decls = Vec::new();
         let mut had_parse_err = false;
-        if self.is_at_end() {
-            return Err(diagnostic_vec);
-        }
-        let get_name = match self.peek().unwrap() {
-            &Token::Package => {
-                self.next().unwrap();
-                self.get_name().map_err(|error| {
-                    had_parse_err = true;
-                    self.synchronize();
-                    diagnostic_vec.push(error)
-                })
-            }
-            _ => Err({
-                had_parse_err = true;
-                diagnostic_vec.push(self.new_span(
-                    Error(FileNotAModule),
-                    "This file is not registered as a module",
-                ));
-            }),
-        };
-
-        if let Ok(_) = get_name {
-            let _ = self.expect_token(&Token::Semi).map_err(|e| {
-                had_parse_err = true;
-                diagnostic_vec.push(e)
-            });
-            self.start = self.end;
-        }
-        // getting the file's modules if there is no semicolon after attempting to get the name of the package
-        let mut modules = fnv::FnvHashMap::<SmolStr, Decl>::default();
         loop {
             if self.is_at_end() {
                 if had_parse_err {
                     break Err(diagnostic_vec);
                 }
-                break Ok(Decl::Module(get_name.unwrap(), modules));
+                break Ok(decls);
             }
             match self.top_level() {
                 Ok(decl) => match &decl {
-                    Decl::Function(nombre, ..)
-                    | Decl::ExposedFn(nombre, ..)
-                    | Decl::Record(nombre, ..)
-                    | Decl::ExposedRec(nombre, ..) => {
-                        if Parser::check_uniq_module(&modules, nombre) {
-                            modules.insert(nombre.clone(), decl);
-                        } else {
-                            had_parse_err = true;
-                            diagnostic_vec.push(
-                                self.new_span(Error(DeclarationAlreadyFound(nombre.clone())), ""),
-                            );
-                            self.synchronize();
-                        }
-                    }
-                    Decl::Module(..) | Decl::ExposedModule(..) => (),
-                    Decl::Get(..) => {
-                        modules.insert(decl.get_name().clone(), decl);
+                    Decl::Function(..)
+                    | Decl::Use(..) 
+                    | Decl::ExposedFn(..) =>{ 
+                        decls.push(decl)
                     }
                 },
                 Err(e) => {
@@ -147,7 +97,7 @@ impl<'source> Parser<'source> {
     fn synchronize(&mut self) {
         while let Some(token) = self.peek() {
             match token {
-                &Token::Function | &Token::Record | &Token::Package => break,
+                &Token::Function => break,
                 _ => {
                     let is_semi = self.next().and_then(|t| Ok(t == Token::Semi)).unwrap();
                     if is_semi {
@@ -168,70 +118,26 @@ impl<'source> Parser<'source> {
                     self.next().unwrap();
                     match self.peek() {
                         Some(tok) if tok == &Token::Function => self.parse_fn(true),
-                        Some(tok) if tok == &Token::Record => self.parse_rec(true),
-                        Some(tok) if tok == &Token::Get => self.parse_get(),
                         _ => {
                             let other = self.next()?;
                             Err(self.new_span(
                                 Error(UnexpectedToken(other)),
-                                "Expected `fun` or `record` after visibility modifier",
+                                "Expected token(`fn`) after visibility modifier",
                             ))
                         }
                     }
                 }
                 &Token::Function => self.parse_fn(false),
-                &Token::Record => self.parse_rec(false),
-                &Token::Package => {
-                    let name = self.next().and_then(|_| Ok(self.get_name()?))?;
-                    Err(self.new_span(
-                        Error(MultiplePackageDeclInFile(name)),
-                        "Remove one of the package declarations",
-                    ))
-                }
-                &Token::Get => self.parse_get(),
+                &Token::Use => self.parse_get(),
                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), "")),
             },
         }
     }
 
     fn parse_get(&mut self) -> Result<Decl, Diagnostic<()>> {
-        let mut vec_path = Vec::new();
-        self.next().and_then(|_| {
-            while let Some(tok) = match_adv!(&mut self, &Token::Identifier(..) | &Token::Squiggly) {
-                match tok {
-                    Token::Identifier(s) => vec_path.push(Path::Ident(s)),
-                    Token::Squiggly => vec_path.push(Path::All),
-                    other => {
-                        return Err(self.new_span(
-                            Error(UnexpectedToken(other)),
-                            "Failed to parse a `get` declaration",
-                        ))
-                    }
-                };
-                if let Some(_) = match_adv!(&mut self, Token::Semi) {
-                    break;
-                } else {
-                    self.expect_token(&Token::Colon)?;
-                    match self.peek() {
-                        Some(tok) if matches!(tok, &Token::Identifier(_) | &Token::Squiggly) => {
-                            continue
-                        }
-                        None => {
-                            return Err(self.new_span(
-                                Error(UnexpectedEndOfParsing),
-                                "Reached end of parsing while trying to parse get declaration",
-                            ))
-                        }
-                        Some(_) => {
-                            return self.next().and_then(|tok| {
-                                Err(self.new_span(Error(UnexpectedToken(tok)), ""))
-                            })
-                        }
-                    }
-                }
-            }
-            Ok(Decl::Get(PackagePath::from(vec_path)))
-        })
+        let expr = self.next().and_then(|_| Ok(self.expr()?));
+        self.expect_token(&Token::Semi)?;
+        Ok(Decl::Use(expr?))
     }
 
     fn statements(&mut self) -> Result<Stmt, Diagnostic<()>> {
@@ -273,17 +179,13 @@ impl<'source> Parser<'source> {
     fn var_decl(&mut self) -> Result<Stmt, Diagnostic<()>> {
         let mut_state = self.next()?;
         let name = self.get_name()?;
-        let typ_tok = if let Some(_) = match_adv!(&mut self, &Token::Colon) {
-            Some(self.get_type()?)
-        } else {
-            None
-        };
+
         self.expect_token(&Token::Assign)?;
         let var_val = self.expr().and_then(|e| {self.expect_token(&Token::Semi)?; Ok(e)});
         if mut_state == Token::Mut {
-            self.resolve_node(Stmt::Mut(name, typ_tok, var_val?))
+            self.resolve_node(Stmt::Mut(name, var_val?))
         } else {
-            self.resolve_node(Stmt::Let(name, typ_tok, var_val?))
+            self.resolve_node(Stmt::Let(name, var_val?))
         }
     }
 
@@ -449,8 +351,6 @@ impl<'source> Parser<'source> {
                 Token::Identifier(s) => self.resolve_node(Expr::Val(s)),
                 Token::Integer(val) => self.resolve_node(Expr::Integer(val)),
                 Token::String(val) => self.resolve_node(Expr::String(val)),
-                Token::Char(c) => self.resolve_node(Expr::Char(c)),
-                Token::Unit => self.resolve_node(Expr::Unit),
                 Token::Error => {
                     let unknown_token = self.tokens.slice();
                     Err(self.new_span(Error(UnknownToken(unknown_token)), "unknown token"))
@@ -474,35 +374,19 @@ impl<'source> Parser<'source> {
         Ok(stmts_block)
     }
 
-    fn get_type(&mut self) -> Result<Token, Diagnostic<()>> {
-        let typ = self.next()?;
-        match typ {
-            Token::Identifier(_) => Ok(Token::Type(self.tokens.slice())),
-            Token::Type(_) => Ok(typ),
-            other => Err(self.new_span(
-                Error(UnknownType(other)),
-                "Found a token that cannot be qualified as a type",
-            )),
-        }
-    }
 
     fn parse_fn(&mut self, exposed: bool) -> Result<Decl, Diagnostic<()>> {
         let name = self.next().and_then(|_| self.get_name())?;
         let args = self.parse_args()?;
-        let fn_ret_type = if let Some(_) = match_adv!(&mut self, &Token::Assign) {
-            self.get_type()?
-        } else {
-            Token::Unit
-        };
         let block = self.block();
         if exposed {
-            Ok(Decl::ExposedFn(name, args, fn_ret_type, block?))
+            Ok(Decl::ExposedFn(name, args, block?))
         } else {
-            Ok(Decl::Function(name, args, fn_ret_type, block?))
+            Ok(Decl::Function(name, args, block?))
         }
     }
 
-    fn parse_args(&mut self) -> Result<Option<Vec<(SmolStr, Token)>>, Diagnostic<()>> {
+    fn parse_args(&mut self) -> Result<Option<Vec<Token>>, Diagnostic<()>> {
         let mut fn_args = Vec::new();
         if let Some(_) = match_adv!(&mut self, &Token::LeftBrack) {
             if self.check_peek(&Token::RightBrack) {
@@ -524,40 +408,15 @@ impl<'source> Parser<'source> {
         }
     }
 
-    fn parse_single_arg(&mut self) -> Result<(SmolStr, Token), Diagnostic<()>> {
+    fn parse_single_arg(&mut self) -> Result<Token, Diagnostic<()>> {
         let name = self.get_name()?;
         self.expect_token(&Token::Colon)?;
-        let typ = self.get_type()?;
-        Ok((name, typ))
+        Ok(name)
     }
 
-    fn parse_rec(&mut self, exposed: bool) -> Result<Decl, Diagnostic<()>> {
-        let name = self.next().and_then(|_| self.get_name())?;
-        self.expect_token(&Token::LeftBrace)?;
-        let args = {
-            let mut fields = Vec::new();
-            while !self.check_peek(&Token::RightBrace) {
-                fields.push(self.parse_single_arg()?);
-                if self.check_peek(&Token::Comma) {
-                    self.expect_token(&Token::Comma).unwrap();
-                    continue;
-                } else {
-                    break;
-                }
-            }
-            self.expect_token(&Token::RightBrace)?;
-            fields
-        };
-        if exposed {
-            Ok(Decl::ExposedRec(name, args))
-        } else {
-            Ok(Decl::Record(name, args))
-        }
-    }
-
-    fn get_name(&mut self) -> Result<SmolStr, Diagnostic<()>> {
+    fn get_name(&mut self) -> Result<Token, Diagnostic<()>> {
         match self.peek().unwrap() {
-            &Token::Identifier(_) => self.next().and_then(|_| Ok(self.tokens.slice())),
+            &Token::Identifier(_) => self.next().and_then(|t| Ok(t)),
             _ => self.next().and_then(|next| {
                 Err(self.new_span(
                     Error(UnexpectedToken(next)),

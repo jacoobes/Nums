@@ -63,7 +63,6 @@ mod lexer {
         assert_eq!(Some(Or), tokens.next());
         assert_eq!(Some(While), tokens.next());
         assert_eq!(Some(Identifier(SmolStr::from("cont"))), tokens.next());
-        assert_eq!(Some(Package), tokens.next());
     }
 
     #[test]
