@@ -23,7 +23,7 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&self, base_pkg: SmolStr) {
+    pub fn compile(&self, _base_pkg: SmolStr) {
         let source = &self.source.source;
         let tokenizer = Token::lexer(source);
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
