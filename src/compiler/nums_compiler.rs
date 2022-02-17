@@ -1,10 +1,8 @@
 use std::rc::Rc;
-use crate::compiler::nodes::{decl::Decl, path::PackagePath};
-use crate::compiler::nodes::path::Path;
-use codespan_reporting::{term::{
+use codespan_reporting::term::{
     self,
     termcolor::{ColorChoice, StandardStream},
-}, diagnostic::Diagnostic};
+};
 use logos::Logos;
 use smol_str::SmolStr;
 
