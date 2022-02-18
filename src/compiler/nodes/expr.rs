@@ -27,10 +27,7 @@ pub enum Expr {
     Double(f32),
     Integer(isize),
     String(SmolStr),
-    //    F64(f64), maybe add float64 and i64 literals in the future?
-    //    I64(i64),
     Bool(bool),
-    Char(char),
     Val(SmolStr),
     Call(Box<Expr>, Vec<Expr>),
     Get(Box<Expr>, Token)
