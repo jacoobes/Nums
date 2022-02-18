@@ -80,7 +80,8 @@ impl<'source> Parser<'source> {
             match self.top_level() {
                 Ok(decl) => match &decl {
                     Decl::Function(..)
-                    | Decl::Use(..) 
+                    | Decl::Use(..)
+                    | Decl::Program(..) 
                     | Decl::ExposedFn(..) =>{ 
                         decls.push(decl)
                     }
@@ -127,6 +128,7 @@ impl<'source> Parser<'source> {
                         }
                     }
                 }
+                &Token::Start => self.parse_main(),
                 &Token::Function => self.parse_fn(false),
                 &Token::Use => self.parse_get(),
                 _ => Err(self.new_span(Error(NoTopLevelDeclaration), "")),
@@ -385,6 +387,16 @@ impl<'source> Parser<'source> {
             Ok(Decl::Function(name, args, block?))
         }
     }
+
+    fn parse_main(&mut self) -> Result<Decl, Diagnostic<()>> {
+        self.next()?;
+        let mut li = Vec::new();
+        while !self.check_peek(&Token::End) {
+            li.push(self.statements()?);
+        }
+        self.expect_token(&Token::End)?;
+        Ok(Decl::Program(li))
+    } 
 
     fn parse_args(&mut self) -> Result<Option<Vec<Token>>, Diagnostic<()>> {
         let mut fn_args = Vec::new();

@@ -1,5 +1,4 @@
 use smol_str::SmolStr;
-
 use crate::compiler::tokens::Token;
 
 #[derive(Debug, Clone, PartialEq)]

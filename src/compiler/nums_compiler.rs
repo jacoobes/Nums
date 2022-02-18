@@ -4,7 +4,6 @@ use codespan_reporting::term::{
     termcolor::{ColorChoice, StandardStream},
 };
 use logos::Logos;
-use smol_str::SmolStr;
 
 use super::{
     parser::parse::Parser,
@@ -23,7 +22,7 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&self, _base_pkg: SmolStr) {
+    pub fn compile(&self) {
         let source = &self.source.source;
         let tokenizer = Token::lexer(source);
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));

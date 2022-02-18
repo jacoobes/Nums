@@ -1,10 +1,9 @@
 #[cfg(test)]
 mod ast {
     use std::rc::Rc;
-
+    use crate::compiler::{tokens::Token, parser::parse, nodes::decl::Decl, source::Source};
     use codespan_reporting::diagnostic::Diagnostic;
     use logos::Logos;
-    use crate::compiler::{parser::parse, tokens::Token, source::Source, nodes::decl::Decl};
 
     fn create_tree<'a>(text: &'a str) -> Result<Vec<Decl>, Vec<Diagnostic<()>>> {
         let iterator = Token::lexer(text);

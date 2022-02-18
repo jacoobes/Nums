@@ -1,6 +1,7 @@
-use crate::compiler::tokens::Token;
 use logos::{Lexer, Logos};
 use smol_str::SmolStr;
+
+use crate::compiler::tokens::Token;
 
 pub struct Peekable<'source> {
     lexer: Lexer<'source ,Token>,
