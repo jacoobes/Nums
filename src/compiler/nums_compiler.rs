@@ -27,8 +27,8 @@ impl Compiler {
         let tokenizer = Token::lexer(source);
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
-            Ok(res) => {
-                 println!("{:?}", res)
+            Ok(ast) => {
+                 println!("{:?}", ast)
             },
             Err(diagnostics) => {
                 let src = &self.source.as_ref().simple_file;

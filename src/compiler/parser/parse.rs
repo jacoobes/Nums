@@ -4,9 +4,9 @@ use crate::{
     compiler::source::Source,
     error_handling::faults::{ErrTyp::*, Faults::*, *},
 };
-use crate::{create_binexpr, match_adv};
+use crate::{create_expr, match_adv};
 use codespan_reporting::diagnostic::Diagnostic;
-use logos::{Lexer, Span};
+use logos::{Lexer};
 use std::ops::Range;
 use std::rc::Rc;
 pub struct Parser<'source> {
@@ -26,14 +26,14 @@ impl<'source> Parser<'source> {
             None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
         }
     }
-    fn peek(&mut self) -> Option<&(Token, Span)> {
-        self.tokens.peek().take()
+    fn peek(&mut self) -> Option<&Token> {
+        self.tokens.peek().map(|s| &s.0)
     }
 
     fn next(&mut self) -> Result<Token, Diagnostic<()>> {
-        self.end = self.tokens.token_span();
         self.tokens
             .next()
+            .map(|s|s.0)
             .ok_or(self.new_span(Error(UnexpectedEndOfParsing), ""))
     }
     fn resolve_node<T>(&mut self, node: T) -> Result<T, Diagnostic<()>> {
@@ -58,7 +58,7 @@ impl<'source> Parser<'source> {
 impl<'source> Parser<'source> {
     pub fn new(tokens: Lexer<'source, Token>, source: Rc<Source>) -> Self {
         Self {
-            tokens,
+            tokens: PeekerWrap::new(tokens),
             source,
             start: 0,
             end: 0,
@@ -226,11 +226,7 @@ impl<'source> Parser<'source> {
         let mut left = self.and();
         while let Some(operator) = match_adv!(&mut self, &Token::Or) {
             let right = self.and();
-            left = self.resolve_node(Expr::Logical {
-                operator,
-                left: Box::new(left?),
-                right: Box::new(right?),
-            })
+            left = create_expr!(&mut self, logical: operator, left, right)
         }
         left
     }
@@ -239,11 +235,7 @@ impl<'source> Parser<'source> {
         let mut left = self.equality();
         while let Some(operator) = match_adv!(&mut self, &Token::And) {
             let right = self.equality();
-            left = self.resolve_node(Expr::Logical {
-                operator,
-                left: Box::new(left?),
-                right: Box::new(right?),
-            })
+            left = create_expr!(&mut self, logical: operator, left, right)
         }
         left
     }
@@ -252,7 +244,7 @@ impl<'source> Parser<'source> {
         let mut left = self.compare();
         while let Some(operator) = match_adv!(&mut self, &Token::Eq | &Token::NotEq) {
             let right = self.compare();
-            left = create_binexpr!(&mut self, operator, left, right);
+            left = create_expr!(&mut self, binary: operator, left, right);
         }
         left
     }
@@ -264,7 +256,7 @@ impl<'source> Parser<'source> {
             &Token::LessEq | &Token::GreaterEq | &Token::LeftArr | &Token::RightArr
         ) {
             let right = self.term();
-            left = create_binexpr!(&mut self, operator, left, right);
+            left = create_expr!(&mut self, binary: operator, left, right);
         }
         left
     }
@@ -273,7 +265,7 @@ impl<'source> Parser<'source> {
         let mut left = self.factor();
         while let Some(operator) = match_adv!(&mut self, &Token::Minus | &Token::Plus) {
             let right = self.factor();
-            left = create_binexpr!(&mut self, operator, left, right);
+            left = create_expr!(&mut self, binary: operator, left, right);
         }
         left
     }
@@ -282,7 +274,7 @@ impl<'source> Parser<'source> {
         let mut left = self.power();
         while let Some(operator) = match_adv!(&mut self, &Token::Star | &Token::FowardSlash) {
             let right = self.power();
-            left = create_binexpr!(&mut self, operator, left, right);
+            left = create_expr!(&mut self, binary: operator, left, right);
         }
         left
     }
@@ -291,7 +283,7 @@ impl<'source> Parser<'source> {
         let left = self.unary();
         if let Some(operator) = match_adv!(&mut self, &Token::Caret) {
             let right = self.power();
-            create_binexpr!(&mut self, operator, left, right)
+            create_expr!(&mut self, binary: operator, left, right)
         } else {
             left
         }
@@ -300,10 +292,7 @@ impl<'source> Parser<'source> {
     fn unary(&mut self) -> Result<Expr, Diagnostic<()>> {
         if let Some(operator) = match_adv!(&mut self, &Token::Bang | &Token::Minus | &Token::Plus) {
             let expr = self.unary();
-            Ok(Expr::Unary {
-                operator,
-                expr: Box::new(expr?),
-            })
+            create_expr!(&mut self, unary: operator, expr)
         } else {
             self.callee()
         }

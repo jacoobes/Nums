@@ -20,6 +20,10 @@ impl<'source> Peekable<'source> {
         }
         self.peeked.as_ref().unwrap().as_ref()
     }
+
+    pub fn source(&self) {
+
+    }
 }
 
 impl<'source> Iterator for Peekable<'source> {
