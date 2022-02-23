@@ -1,1 +1,10 @@
-Use "a";
+use "a";
+
+fn a [a, b, c] {
+
+}
+
+start
+    
+
+end.

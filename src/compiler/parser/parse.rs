@@ -81,6 +81,8 @@ impl<'source> Parser<'source> {
                 Ok(decl) => match &decl {
                     Decl::Function(..)
                     | Decl::Use(..)
+                    | Decl::Task(..)
+                    | Decl::ExposedTask(..)
                     | Decl::Program(..) 
                     | Decl::ExposedFn(..) =>{ 
                         decls.push(decl)
@@ -315,7 +317,7 @@ impl<'source> Parser<'source> {
                 let call = self.finish_call(expr)?;
                 self.expect_token(&Token::RightBrack)?;
                 self.resolve_node(call)
-            } else if let Some(_) = match_adv!(&mut self, &Token::Period) {
+            } else if let Some(_) = match_adv!(&mut self, &Token::Colon) {
                 let name = self.get_name()?;
                 self.resolve_node(Expr::Get(Box::new(expr?), name))
             } else {
@@ -398,12 +400,12 @@ impl<'source> Parser<'source> {
         Ok(Decl::Program(li))
     } 
 
-    fn parse_args(&mut self) -> Result<Option<Vec<Token>>, Diagnostic<()>> {
+    fn parse_args(&mut self) -> Result<Vec<Token>, Diagnostic<()>> {
         let mut fn_args = Vec::new();
         if let Some(_) = match_adv!(&mut self, &Token::LeftBrack) {
             if self.check_peek(&Token::RightBrack) {
                 self.next().unwrap();
-                return Ok(None);
+                return Ok(fn_args);
             }
             let first_arg = self.parse_single_arg()?;
             fn_args.push(first_arg);
@@ -414,15 +416,18 @@ impl<'source> Parser<'source> {
                 fn_args.push(remaining_args);
             }
             self.expect_token(&Token::RightBrack)?;
-            Ok(Some(fn_args))
+            Ok(fn_args)
         } else {
-            Ok(None)
+            let next = self.next()?;
+            Err(self.new_span(
+             Error(Expected(Token::LeftBrack, next)), 
+             ""
+            ))
         }
     }
 
     fn parse_single_arg(&mut self) -> Result<Token, Diagnostic<()>> {
         let name = self.get_name()?;
-        self.expect_token(&Token::Colon)?;
         Ok(name)
     }
 

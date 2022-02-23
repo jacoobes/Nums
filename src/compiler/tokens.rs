@@ -30,7 +30,7 @@ pub enum Token {
     Let,
     #[token("mut")]
     Mut,
-    #[token("Use")]
+    #[token("use")]
     Use,
     #[token("stop")]
     Stop,
@@ -40,7 +40,7 @@ pub enum Token {
     Expose,
     #[token("return")]
     Return,
-    #[token("start:")]
+    #[token("start")]
     Start,
     #[token("end.")]
     End,
@@ -73,8 +73,6 @@ pub enum Token {
     Bang,
     #[token("+")]
     Plus,
-    #[token(".")]
-    Period,
     #[token("-")]
     Minus,
     #[token("?")]
