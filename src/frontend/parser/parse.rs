@@ -1,7 +1,7 @@
-use crate::compiler::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
-use crate::compiler::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
+use crate::frontend::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
+use crate::frontend::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
 use crate::{
-    compiler::source::Source,
+    frontend::source::Source,
     error_handling::faults::{ErrTyp::*, Faults::*, *},
 };
 use crate::{create_expr, match_adv};

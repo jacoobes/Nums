@@ -1,6 +1,6 @@
 
 
-use crate::compiler::{tokens::Token, nodes::expr::Expr};
+use crate::frontend::{tokens::Token, nodes::expr::Expr};
 use smol_str::SmolStr;
 pub enum Faults {
     Error(ErrTyp),

@@ -1,10 +1,10 @@
 use std::fs;
 
-use compiler::{nums_compiler::Compiler, source::Source};
+use frontend::{nums_compiler::Compiler, source::Source};
 extern crate nums_vm;
 pub mod tests;
 pub mod error_handling;
-pub mod compiler;
+pub mod frontend;
 
 
 pub fn main() {

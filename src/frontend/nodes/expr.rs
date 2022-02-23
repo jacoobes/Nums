@@ -1,5 +1,5 @@
 use smol_str::SmolStr;
-use crate::compiler::tokens::Token;
+use crate::frontend::tokens::Token;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {

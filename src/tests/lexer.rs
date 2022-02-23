@@ -3,7 +3,7 @@ mod lexer {
     use logos::Logos;
     use smol_str::SmolStr;
 
-    use crate::compiler::tokens::Token::{self, *};
+    use crate::frontend::tokens::Token::{self, *};
 
     #[test]
     fn test_single_keyword () {

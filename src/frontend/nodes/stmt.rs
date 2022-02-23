@@ -1,5 +1,5 @@
 
-use crate::compiler::tokens::Token;
+use crate::frontend::tokens::Token;
 
 use super::expr::Expr;
 

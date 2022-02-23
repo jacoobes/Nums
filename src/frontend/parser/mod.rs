@@ -15,14 +15,14 @@ macro_rules! match_adv {
 #[macro_export]
 macro_rules! create_expr {
     (&mut $self:ident, binary:  $token:expr, $left:expr, $right:expr) => {
-        $self.resolve_node($crate::compiler::nodes::expr::Expr::Binary {
+        $self.resolve_node($crate::frontend::nodes::expr::Expr::Binary {
             operator: $token,
             left: Box::new($left?),
             right: Box::new($right?),
         })
     };
     (&mut $self:ident, logical: $token:expr, $left:expr, $right:expr) => {
-        $self.resolve_node($crate::compiler::nodes::expr::Expr::Logical {
+        $self.resolve_node($crate::frontend::nodes::expr::Expr::Logical {
             operator: $token,
             left: Box::new($left?),
             right: Box::new($right?),
@@ -30,7 +30,7 @@ macro_rules! create_expr {
     };
 
     (&mut $self:ident, unary: $token:expr, $operand:expr) => {
-        $self.resolve_node($crate::compiler::nodes::expr::Expr::Unary {
+        $self.resolve_node($crate::frontend::nodes::expr::Expr::Unary {
             operator: $token,
             expr : Box::new($operand?)
         })

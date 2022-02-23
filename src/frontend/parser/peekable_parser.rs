@@ -1,6 +1,6 @@
 use logos::{Lexer, SpannedIter, Span};
 
-use crate::compiler::tokens::Token;
+use crate::frontend::tokens::Token;
 
 pub struct Peekable<'source> {
     lexer: SpannedIter<'source ,Token>,

@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod ast {
     use std::rc::Rc;
-    use crate::compiler::{tokens::Token, parser::parse, nodes::decl::Decl, source::Source};
+    use crate::frontend::{tokens::Token, parser::parse, nodes::decl::Decl, source::Source};
     use codespan_reporting::diagnostic::Diagnostic;
     use logos::Logos;
 

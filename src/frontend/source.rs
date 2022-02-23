@@ -1,11 +1,9 @@
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::files::SimpleFile;
-use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct Source {
     pub source: String,
-    pub path: PathBuf,
     pub simple_file: SimpleFile<String, String>,
 }
 
@@ -14,7 +12,6 @@ impl Source {
         let simple_file = SimpleFile::new(path.to_string(), source.clone());
         Self {
             source,
-            path: PathBuf::from(path),
             simple_file,
         }
     }

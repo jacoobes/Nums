@@ -8,8 +8,9 @@ use logos::Logos;
 use super::{
     parser::parse::Parser,
     source::Source,
-    tokens::Token,
+    tokens::Token
 };
+
 
 pub struct Compiler {
     source: Rc<Source>,
