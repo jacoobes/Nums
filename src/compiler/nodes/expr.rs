@@ -21,7 +21,7 @@ pub enum Expr {
         expr: Box<Expr>,
     },
     Assignment {
-        var : SmolStr,
+        var : Token,
         value: Box<Expr>
     },
     Double(f32),

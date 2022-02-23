@@ -6,8 +6,7 @@ use crate::{
 };
 use crate::{create_binexpr, match_adv};
 use codespan_reporting::diagnostic::Diagnostic;
-use logos::Lexer;
-use smol_str::SmolStr;
+use logos::{Lexer, Span};
 use std::ops::Range;
 use std::rc::Rc;
 pub struct Parser<'source> {
@@ -27,7 +26,7 @@ impl<'source> Parser<'source> {
             None => Err(self.new_span(Error(UnexpectedEndOfParsing), "")),
         }
     }
-    fn peek(&mut self) -> Option<&Token> {
+    fn peek(&mut self) -> Option<&(Token, Span)> {
         self.tokens.peek().take()
     }
 
@@ -59,7 +58,7 @@ impl<'source> Parser<'source> {
 impl<'source> Parser<'source> {
     pub fn new(tokens: Lexer<'source, Token>, source: Rc<Source>) -> Self {
         Self {
-            tokens: PeekerWrap::new(tokens.source()),
+            tokens,
             source,
             start: 0,
             end: 0,
@@ -210,7 +209,7 @@ impl<'source> Parser<'source> {
             let assignment = self.assignment();
             match asignee {
                 Ok(e) if matches!(e, Expr::Val(_)) => {
-                    let var = SmolStr::from(self.tokens.slice());
+                    let var = self.get_name()?;
                     self.resolve_node(Expr::Assignment {
                         var,
                         value: Box::new(assignment?),
@@ -356,8 +355,8 @@ impl<'source> Parser<'source> {
                 Token::Integer(val) => self.resolve_node(Expr::Integer(val)),
                 Token::String(val) => self.resolve_node(Expr::String(val)),
                 Token::Error => {
-                    let unknown_token = self.tokens.slice();
-                    Err(self.new_span(Error(UnknownToken(unknown_token)), "unknown token"))
+                    // todo!("Handle error with unknown token");
+                    Err(self.new_span(Error(UnexpectedEndOfParsing), "unknown token"))
                 }
                 other => Err(self.new_span(
                     Error(UnexpectedToken(other)),
@@ -428,6 +427,7 @@ impl<'source> Parser<'source> {
 
     fn parse_single_arg(&mut self) -> Result<Token, Diagnostic<()>> {
         let name = self.get_name()?;
+        self.expect_token(&Token::Colon)?;
         Ok(name)
     }
 

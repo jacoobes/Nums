@@ -1,6 +1,6 @@
 use "a";
 
-fn a [a, b, c] {
+fn a [a, b] {
 
 }
 
