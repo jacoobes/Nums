@@ -1,3 +1,4 @@
+use crate::frontend::ast::AST;
 use crate::frontend::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
 use crate::frontend::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
 use crate::{
@@ -6,7 +7,7 @@ use crate::{
 };
 use crate::{create_expr, match_adv};
 use codespan_reporting::diagnostic::Diagnostic;
-use logos::{Lexer};
+use logos::Lexer;
 use std::ops::Range;
 use std::rc::Rc;
 pub struct Parser<'source> {
@@ -65,7 +66,7 @@ impl<'source> Parser<'source> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Decl>, Vec<Diagnostic<()>>> {
+    pub fn parse(&mut self) -> Result<AST, Vec<Diagnostic<()>>> {
         let mut diagnostic_vec = Vec::new();
         let mut decls = Vec::new();
         let mut had_parse_err = false;
@@ -74,7 +75,7 @@ impl<'source> Parser<'source> {
                 if had_parse_err {
                     break Err(diagnostic_vec);
                 }
-                break Ok(decls);
+                break Ok(AST(decls));
             }
             match self.top_level() {
                 Ok(decl) => match &decl {

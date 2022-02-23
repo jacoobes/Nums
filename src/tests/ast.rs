@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod ast {
     use std::rc::Rc;
-    use crate::frontend::{tokens::Token, parser::parse, nodes::decl::Decl, source::Source};
+    use crate::frontend::{tokens::Token, parser::parse, source::Source, ast::AST};
     use codespan_reporting::diagnostic::Diagnostic;
     use logos::Logos;
 
-    fn create_tree<'a>(text: &'a str) -> Result<Vec<Decl>, Vec<Diagnostic<()>>> {
+    fn create_tree<'a>(text: &'a str) -> Result<AST, Vec<Diagnostic<()>>> {
         let iterator = Token::lexer(text);
         let mut parser = parse::Parser::new(iterator, Rc::new(Source::new(String::from(text), "text")));
         parser.parse()

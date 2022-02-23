@@ -29,7 +29,7 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(ast) => {
-                 println!("{:?}", ast)
+                 println!("{:?}", ast.0)
             },
             Err(diagnostics) => {
                 let src = &self.source.as_ref().simple_file;
