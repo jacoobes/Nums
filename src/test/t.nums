@@ -1,5 +1,10 @@
 use "a";
 
+fn t [a,b] {
+    let w = "a";
+    std:out["b"];
+
+}
 
 start
 

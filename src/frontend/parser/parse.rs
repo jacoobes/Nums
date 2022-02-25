@@ -417,7 +417,6 @@ impl<'source> Parser<'source> {
 
     fn parse_single_arg(&mut self) -> Result<Token, Diagnostic<()>> {
         let name = self.get_name()?;
-        self.expect_token(&Token::Colon)?;
         Ok(name)
     }
 
