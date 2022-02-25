@@ -1,6 +1,4 @@
 
-use std::fmt::{Debug};
-
 use crate::frontend::tokens::Token;
 
 use super::expr::Expr;
@@ -30,18 +28,18 @@ impl Decl {
     }
 }
 
-impl Debug for Decl {
+impl std::fmt::Debug for Decl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Decl::Function(na, args, block)
                 | Decl::ExposedFn(na, args, block)
                 | Decl::Task(na, args, block)
                 | Decl::ExposedTask(na, args, block) 
-                    => write!(f, " {} {:?} {:?} {{
+                    => write!(f, "[ {} {:?} {:?} {{
                           {:?}  
-                        }} ", self.ty_fn(), na, args, block),
-                Decl::Program(s) => write!(f, "{} {:?}", self.ty_fn(), s),
-                Decl::Use(path) => write!(f, "{}, {:?}", self.ty_fn(), &path),
+                        }} ]", self.ty_fn(), na, args, block),
+                Decl::Program(s) => write!(f, "[ {} {:?} ]", self.ty_fn(), s),
+                Decl::Use(path) => write!(f, "[ {}, {:?} ]", self.ty_fn(), &path),
         }
     }
 }
