@@ -1,18 +1,14 @@
 use codespan_reporting::diagnostic::{Diagnostic, Label};
-use codespan_reporting::files::SimpleFile;
 
 #[derive(Debug)]
 pub struct Source {
     pub source: String,
-    pub simple_file: SimpleFile<String, String>,
 }
 
 impl Source {
-    pub fn new(source: String, path: &str) -> Self {
-        let simple_file = SimpleFile::new(path.to_string(), source.clone());
+    pub fn new(source: String) -> Self {
         Self {
-            source,
-            simple_file,
+            source
         }
     }
 

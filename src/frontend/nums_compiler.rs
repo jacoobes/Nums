@@ -1,8 +1,8 @@
 use std::rc::Rc;
-use codespan_reporting::term::{
+use codespan_reporting::{term::{
     self,
     termcolor::{ColorChoice, StandardStream},
-};
+}, files::SimpleFile};
 use logos::Logos;
 
 use super::{
@@ -32,11 +32,11 @@ impl Compiler {
                  println!("{:?}", ast.0)
             },
             Err(diagnostics) => {
-                let src = &self.source.as_ref().simple_file;
+                let src = SimpleFile::new("test", source);
                 let writer = StandardStream::stderr(ColorChoice::Always);
                 let config = codespan_reporting::term::Config::default();
                 for error in diagnostics {
-                    term::emit(&mut writer.lock(), &config, src, &error)
+                    term::emit(&mut writer.lock(), &config, &src, &error)
                         .expect("Could not emit code_span");
                 }
             }
