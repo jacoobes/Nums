@@ -2,11 +2,11 @@ use "a";
 
 fn t [a,b] {
     let w = "a";
-    std:out["b"];
+    let b = std:out["b"];
 
 }
 
 start
-
+    t[1,2];
 end.
 
