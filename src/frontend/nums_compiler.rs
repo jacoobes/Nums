@@ -8,7 +8,8 @@ use logos::Logos;
 use super::{
     parser::parse::Parser,
     source::Source,
-    tokens::Token
+    tokens::Token,
+    walker::walker::Walker
 };
 
 
@@ -29,7 +30,7 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(ast) => {
-                 println!("{:?}", ast.0)
+                ast.walk()
             },
             Err(diagnostics) => {
                 let src = SimpleFile::new("test", source);

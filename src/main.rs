@@ -8,7 +8,7 @@ pub mod frontend;
 
 
 pub fn main() {
-    let source = Source::new(fs::read_to_string("test/t.nums").unwrap());
+    let source = Source::new(fs::read_to_string("src/test/t.nums").unwrap());
     let compiler = Compiler::new(source);
     compiler.compile();
 }

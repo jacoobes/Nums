@@ -35,7 +35,7 @@ impl std::fmt::Debug for Decl {
                 | Decl::ExposedFn(na, args,_ )
                 | Decl::Task(na, args,_ )
                 | Decl::ExposedTask(na, args,_ ) 
-                    => write!(f, "[ {} {:?} PARAMS {:?} ", self.ty_fn(), na, args, ),
+                    => write!(f, "[ {} {:?} {:?} ", self.ty_fn(), na, args, ),
                 Decl::Program(_) => write!(f, "[ {} ", self.ty_fn()),
                 Decl::Use(_) => write!(f, "[ {} ]", self.ty_fn()),
         }

@@ -1,9 +1,15 @@
 use "a";
 
 fn t [a,b] {
-    let w = "a";
-    let b = std:out["b"];
-
+    let a = "a";
+    let b = "b";
+    
+    if a == b {
+        std:out["b"];  
+    } else {
+        std:out["c"];
+    }
+    return a;
 }
 
 start

@@ -338,21 +338,24 @@ impl<'source> Parser<'source> {
 
     fn primary(&mut self) -> Result<Expr, Diagnostic<()>> {
         match self.peek().unwrap() {
-            _ => match self.next()? {
-                Token::Bool(val) => self.resolve_node(Expr::Bool(val)),
-                Token::Double(s) => self.resolve_node(Expr::Double(s)),
-                Token::Identifier(s) => self.resolve_node(Expr::Val(s)),
-                Token::Integer(val) => self.resolve_node(Expr::Integer(val)),
-                Token::String(val) => self.resolve_node(Expr::String(val)),
-                Token::Error => {
-                    // todo!("Handle error with unknown token");
-                    Err(self.new_span(Error(UnexpectedEndOfParsing), "unknown token"))
+            _ => {
+                let n = self.next()?;
+                return match n {
+                    Token::Bool(val) => self.resolve_node(Expr::Bool(val)),
+                    Token::Double(s) => self.resolve_node(Expr::Double(s)),
+                    Token::Identifier(_) => self.resolve_node(Expr::Val(n)),    
+                    Token::Integer(val) => self.resolve_node(Expr::Integer(val)),
+                    Token::String(val) => self.resolve_node(Expr::String(val)),
+                    Token::Error => {
+                        // todo!("Handle error with unknown token");
+                        Err(self.new_span(Error(UnexpectedEndOfParsing), "unknown token"))
+                    }
+                    other => Err(self.new_span(
+                        Error(UnexpectedToken(other)),
+                        "found an unexpected token out of place",
+                    )),
                 }
-                other => Err(self.new_span(
-                    Error(UnexpectedToken(other)),
-                    "found an unexpected token out of place",
-                )),
-            },
+           }
         }
     }
 
