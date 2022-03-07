@@ -33,14 +33,14 @@ impl<'source> Parser<'source> {
 
     fn next(&mut self) -> Result<Token, Diagnostic<()>> {
         {
-            let this = self.tokens
-                .next()
-                .map(|s|s.0);
-            let err = self.new_span(Error(UnexpectedEndOfParsing), "");
-            match this {
-                Some(v) => Ok(v),
-                None => Err(err),
-            }
+            let this = self.tokens
+                .next()
+                .map(|s|s.0);
+            let err = self.new_span(Error(UnexpectedEndOfParsing), "");
+            match this {
+                Some(v) => Ok(v),
+                None => Err(err),
+            }
         }
     }
     fn resolve_node<T>(&mut self, node: T) -> Result<T, Diagnostic<()>> {
