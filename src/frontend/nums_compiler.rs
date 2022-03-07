@@ -9,7 +9,7 @@ use super::{
     parser::parse::Parser,
     source::Source,
     tokens::Token,
-    walker::walker::Walker
+    visitor::walker::Walker
 };
 
 
@@ -30,7 +30,7 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(ast) => {
-                ast.walk()
+                println!("{}", ast.walk());
             },
             Err(diagnostics) => {
                 let src = SimpleFile::new("test", source);

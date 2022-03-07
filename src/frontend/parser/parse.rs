@@ -32,10 +32,16 @@ impl<'source> Parser<'source> {
     }
 
     fn next(&mut self) -> Result<Token, Diagnostic<()>> {
-        self.tokens
-            .next()
-            .map(|s|s.0)
-            .ok_or(self.new_span(Error(UnexpectedEndOfParsing), ""))
+        {
+            let this = self.tokens
+                .next()
+                .map(|s|s.0);
+            let err = self.new_span(Error(UnexpectedEndOfParsing), "");
+            match this {
+                Some(v) => Ok(v),
+                None => Err(err),
+            }
+        }
     }
     fn resolve_node<T>(&mut self, node: T) -> Result<T, Diagnostic<()>> {
         self.start = self.end;
@@ -102,7 +108,7 @@ impl<'source> Parser<'source> {
             match token {
                 &Token::Function => break,
                 _ => {
-                    let is_semi = self.next().and_then(|t| Ok(t == Token::Semi)).unwrap();
+                    let is_semi = self.next().map(|t| t == Token::Semi).unwrap();
                     if is_semi {
                         break;
                     } else {
@@ -115,31 +121,30 @@ impl<'source> Parser<'source> {
 
     /// top level declarations. If it finds anything that
     fn top_level(&mut self) -> Result<Decl, Diagnostic<()>> {
-        match self.peek().unwrap() {
-            tok => match tok {
-                &Token::Expose => {
-                    self.next().unwrap();
-                    match self.peek() {
-                        Some(tok) if tok == &Token::Function => self.parse_fn(true),
-                        _ => {
-                            let other = self.next()?;
-                            Err(self.new_span(
-                                Error(UnexpectedToken(other)),
-                                "Expected token(`fn`) after visibility modifier",
-                            ))
-                        }
+        let tok = self.peek().unwrap();
+        match &tok {
+            Token::Expose => {
+                self.next().unwrap();
+                match self.peek() {
+                    Some(tok) if tok == &Token::Function => self.parse_fn(true),
+                    _ => {
+                        let other = self.next()?;
+                        Err(self.new_span(
+                            Error(UnexpectedToken(other)),
+                            "Expected token(`fn`) after visibility modifier",
+                        ))
                     }
                 }
-                &Token::Start => self.parse_main(),
-                &Token::Function => self.parse_fn(false),
-                &Token::Use => self.parse_get(),
-                _ => Err(self.new_span(Error(NoTopLevelDeclaration), "")),
-            },
+            }
+            Token::Start => self.parse_main(),
+            Token::Function => self.parse_fn(false),
+            Token::Use => self.parse_get(),
+            _ => Err(self.new_span(Error(NoTopLevelDeclaration), "")),
         }
     }
 
     fn parse_get(&mut self) -> Result<Decl, Diagnostic<()>> {
-        let expr = self.next().and_then(|_| Ok(self.expr()?));
+        let expr = self.next().and_then(|_| self.expr());
         self.expect_token(&Token::Semi)?;
         Ok(Decl::Use(expr?))
     }
@@ -166,7 +171,7 @@ impl<'source> Parser<'source> {
     fn if_else(&mut self) -> Result<Stmt, Diagnostic<()>> {
         let condition = self.next().and_then(|_| self.expr())?;
         let block = self.block()?;
-        let else_block = if let Some(_) = match_adv!(&mut self, &Token::Else) {
+        let else_block = if (match_adv!(&mut self, &Token::Else)).is_some() {
             Some(self.block()?)
         } else {
             None
@@ -206,7 +211,7 @@ impl<'source> Parser<'source> {
 
     fn assignment(&mut self) -> Result<Expr, Diagnostic<()>> {
         let asignee = self.or();
-        if let Some(_) = match_adv!(&mut self, &Token::Assign) {
+        if (match_adv!(&mut self, &Token::Assign)).is_some() {
             let assignment = self.assignment();
             match asignee {
                 Ok(e) if matches!(e, Expr::Val(_)) => {
@@ -216,7 +221,7 @@ impl<'source> Parser<'source> {
                         value: Box::new(assignment?),
                     })
                 }
-                other => return Err(self.new_span(Error(InvalidAssignmentTarget(other?)), "")),
+                other => Err(self.new_span(Error(InvalidAssignmentTarget(other?)), "")),
             }
         } else {
             asignee
@@ -302,11 +307,11 @@ impl<'source> Parser<'source> {
     fn callee(&mut self) -> Result<Expr, Diagnostic<()>> {
         let mut expr = self.grouping();
         loop {
-            expr = if let Some(_) = match_adv!(&mut self, &Token::LeftBrack) {
+            expr = if (match_adv!(&mut self, &Token::LeftBrack)).is_some() {
                 let call = self.finish_call(expr)?;
                 self.expect_token(&Token::RightBrack)?;
                 self.resolve_node(call)
-            } else if let Some(_) = match_adv!(&mut self, &Token::Colon) {
+            } else if (match_adv!(&mut self, &Token::Colon)).is_some() {
                 let name = self.get_name()?;
                 self.resolve_node(Expr::Get(Box::new(expr?), name))
             } else {
@@ -325,7 +330,7 @@ impl<'source> Parser<'source> {
     }
 
     fn grouping(&mut self) -> Result<Expr, Diagnostic<()>> {
-        if let Some(_) = match_adv!(&mut self, &Token::LeftParen) {
+        if (match_adv!(&mut self, &Token::LeftParen)).is_some() {
             let expr = self.expr()?;
             self.expect_token(&Token::RightParen)?;
             Ok(Expr::Group {
@@ -337,25 +342,24 @@ impl<'source> Parser<'source> {
     }
 
     fn primary(&mut self) -> Result<Expr, Diagnostic<()>> {
-        match self.peek().unwrap() {
-            _ => {
-                let n = self.next()?;
-                return match n {
-                    Token::Bool(val) => self.resolve_node(Expr::Bool(val)),
-                    Token::Double(s) => self.resolve_node(Expr::Double(s)),
-                    Token::Identifier(_) => self.resolve_node(Expr::Val(n)),    
-                    Token::Integer(val) => self.resolve_node(Expr::Integer(val)),
-                    Token::String(val) => self.resolve_node(Expr::String(val)),
-                    Token::Error => {
-                        // todo!("Handle error with unknown token");
-                        Err(self.new_span(Error(UnexpectedEndOfParsing), "unknown token"))
-                    }
-                    other => Err(self.new_span(
-                        Error(UnexpectedToken(other)),
-                        "found an unexpected token out of place",
-                    )),
-                }
-           }
+        self.peek().unwrap();
+        {
+             let n = self.next()?;
+             match n {
+                 Token::Bool(val) => self.resolve_node(Expr::Bool(val)),
+                 Token::Double(s) => self.resolve_node(Expr::Double(s)),
+                 Token::Identifier(_) => self.resolve_node(Expr::Val(n)),    
+                 Token::Integer(val) => self.resolve_node(Expr::Integer(val)),
+                 Token::String(val) => self.resolve_node(Expr::String(val)),
+                 Token::Error => {
+                     // todo!("Handle error with unknown token");
+                     Err(self.new_span(Error(UnexpectedEndOfParsing), "unknown token"))
+                 }
+                 other => Err(self.new_span(
+                     Error(UnexpectedToken(other)),
+                     "found an unexpected token out of place",
+                 )),
+             }
         }
     }
 
@@ -394,7 +398,7 @@ impl<'source> Parser<'source> {
 
     fn parse_args(&mut self) -> Result<Vec<Token>, Diagnostic<()>> {
         let mut fn_args = Vec::new();
-        if let Some(_) = match_adv!(&mut self, &Token::LeftBrack) {
+        if (match_adv!(&mut self, &Token::LeftBrack)).is_some() {
             if self.check_peek(&Token::RightBrack) {
                 self.next().unwrap();
                 return Ok(fn_args);
@@ -425,7 +429,7 @@ impl<'source> Parser<'source> {
 
     fn get_name(&mut self) -> Result<Token, Diagnostic<()>> {
         match self.peek().unwrap() {
-            &Token::Identifier(_) => self.next().and_then(|t| Ok(t)),
+            &Token::Identifier(_) => self.next(),
             _ => self.next().and_then(|next| {
                 Err(self.new_span(
                     Error(UnexpectedToken(next)),
