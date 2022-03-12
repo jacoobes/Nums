@@ -322,10 +322,12 @@ impl<'source> Parser<'source> {
 
     fn finish_call(&mut self, expr: Result<Expr, Diagnostic<()>>) -> Result<Expr, Diagnostic<()>> {
         let mut list_of_args = Vec::new();
-        while !self.check_peek(&Token::RightBrack) {
+        loop {
+            if self.check_peek(&Token::RightBrack){ break };
             list_of_args.push(self.expr()?);
-            match_adv!(&mut self, Token::Comma);
+            if match_adv!(&mut self, &Token::Comma).is_none() { break } 
         }
+
         Ok(Expr::Call(Box::new(expr?), list_of_args))
     }
 
@@ -397,30 +399,18 @@ impl<'source> Parser<'source> {
     } 
 
     fn parse_args(&mut self) -> Result<Vec<Token>, Diagnostic<()>> {
+        self.expect_token(&Token::LeftBrack)?;
         let mut fn_args = Vec::new();
-        if (match_adv!(&mut self, &Token::LeftBrack)).is_some() {
-            if self.check_peek(&Token::RightBrack) {
-                self.next().unwrap();
-                return Ok(fn_args);
-            }
-            let first_arg = self.parse_single_arg()?;
-            fn_args.push(first_arg);
+        loop {
+            if self.check_peek(&Token::RightBrack) { break }
+            fn_args.push(self.parse_single_arg()?);
+            if match_adv!(&mut self, &Token::Comma).is_none() { break }
 
-            while !self.check_peek(&Token::RightBrack) {
-                self.expect_token(&Token::Comma)?;
-                let remaining_args = self.parse_single_arg()?;
-                fn_args.push(remaining_args);
-            }
-            self.expect_token(&Token::RightBrack)?;
-            Ok(fn_args)
-        } else {
-            let next = self.next()?;
-            Err(self.new_span(
-             Error(Expected(Token::LeftBrack, next)), 
-             ""
-            ))
         }
+        self.expect_token(&Token::RightBrack)?;
+        Ok(fn_args)
     }
+
 
     fn parse_single_arg(&mut self) -> Result<Token, Diagnostic<()>> {
         let name = self.get_name()?;

@@ -5,7 +5,7 @@ fn t [a,b] {
     let b = "b";
     
     if a == b {
-        std:out["b"];  
+        std:out["b", a, c, "e", bvdfs,];  
     } else {
         std:out["c"];
     }
