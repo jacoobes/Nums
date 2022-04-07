@@ -16,11 +16,11 @@ impl Spanner {
         Range { start: self.cur.start, end: self.cur.end }        
     }
 
-    pub fn next(&self, last_tok : &Range<usize>) {
+    pub fn next(&mut self, last_tok : &Range<usize>) {
         self.cur.end = last_tok.end;     
     }
 
-    pub fn converge(&self) {
+    pub fn converge(&mut self) {
         self.cur.start = self.cur.end
     }
 

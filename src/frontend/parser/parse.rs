@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use logos::Lexer;
 use crate::frontend::ast::AST;
 use crate::frontend::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
@@ -22,8 +24,13 @@ impl<'source> Parser<'source> {
     fn expect_token(&mut self, token: &Token) -> Result<Token, ParseError> {
         match self.peek() {
             Some(tok) if tok == token => Ok(self.next().unwrap()),
-            Some(_) => self.next().and_then(|tok|  ),
-            None => Err(ParseError::new(UnexpectedEndOfParsing), ""),
+            Some(_) => { 
+                Err(self
+               .next()
+               .map(|tok| ParseError::new( UnexpectedToken(tok),None,None))
+               .unwrap_err())
+            },
+            None => Err(ParseError::new(UnexpectedEndOfParsing,None,None))
         }
     }
     fn peek(&mut self) -> Option<&Token> {
@@ -63,7 +70,7 @@ impl<'source> Parser<'source> {
     pub fn new(tokens: Lexer<'source, Token>, source: std::rc::Rc<Source>) -> Self {
         Self {
             tokens: PeekerWrap::new(tokens),
-            source,
+            source: source.clone(),
             spanner : Spanner::new(source)
         }
     }
@@ -119,7 +126,8 @@ impl<'source> Parser<'source> {
                         let other = self.next()?;
                         Err(ParseError::new(
                             UnexpectedToken(other),
-                            "Expected token(`fn`) after visibility modifier",
+                            None,
+                            None,
                         ))
                     }
                 }
@@ -127,7 +135,7 @@ impl<'source> Parser<'source> {
             Token::Start => self.parse_main(),
             Token::Function => self.parse_fn(false),
             Token::Use => self.parse_get(),
-            _ => Err(ParseError::new(NoTopLevelDeclaration), "")
+            _ => Err(ParseError::new(UnexpectedEndOfParsing,None, None))
         }
     }
 
@@ -152,7 +160,7 @@ impl<'source> Parser<'source> {
                     .and_then(|it| self.resolve_node(Stmt::Block(it))),
                 _ => self.stmt_expr(),
             },
-            None => Err(ParseError(UnexpectedEndOfParsing), "")
+            None => Err(ParseError::new(UnexpectedEndOfParsing,None, None))
         }
     }
 
@@ -209,7 +217,7 @@ impl<'source> Parser<'source> {
                         value: Box::new(assignment?),
                     })
                 }
-                other => Err(ParseError(InvalidAssignmentTarget(other?)), "")
+                other => Err(ParseError::new(InvalidAssignmentTarget(other?),None, None))
             }
         } else {
             asignee
@@ -343,11 +351,12 @@ impl<'source> Parser<'source> {
                  Token::String(val) => self.resolve_node(Expr::String(val)),
                  Token::Error => {
                      // todo!("Handle error with unknown token");
-                     Err(ParseError(UnexpectedEndOfParsing), "unknown token")
+                     Err(ParseError::new(UnexpectedEndOfParsing, None, None))
                  }
                  other => Err(ParseError::new(
                      UnexpectedToken(other),
-                     "found an unexpected token out of place",
+                     None,
+                     None
                  )),
              }
         }
@@ -360,7 +369,7 @@ impl<'source> Parser<'source> {
             stmts_block.push(self.statements()?)
         }
         self.expect_token(&Token::RightBrace)
-            .map_err(|_| ParseError::new(UnclosedDelimiter, "Check closing brace `}` "))?;
+            .map_err(|_| ParseError::new(UnclosedDelimiter, None, None))?;
         Ok(stmts_block)
     }
 
@@ -411,7 +420,8 @@ impl<'source> Parser<'source> {
             _ => self.next().and_then(|next| {
                 Err(ParseError::new(
                     UnexpectedToken(next),
-                    "note : Try to use an identifier",
+                    Some(0..0),
+                    None
                 ))
             })
         }

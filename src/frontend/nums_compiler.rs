@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, alloc::System};
 use codespan_reporting::{term::{
     self,
     termcolor::{ColorChoice, StandardStream},
@@ -33,14 +33,13 @@ impl Compiler {
                 println!("{}", ast.walk());
             },
             Err(diagnostics) => {
-                let src = SimpleFile::new("test", source);
-                let writer = StandardStream::stderr(ColorChoice::Always);
-                let config = codespan_reporting::term::Config::default();
-                for error in diagnostics {
-                    term::emit(&mut writer.lock(), &config, &src, &error)
-                        .expect("Could not emit code_span");
+                let _src = SimpleFile::new("test", source);
+                let _writer = StandardStream::stderr(ColorChoice::Always);
+                let _config = codespan_reporting::term::Config::default();
+                for di in diagnostics {
+                    println!("{:?}",&di);
                 }
-            }
+           }
         }
     }
 }
