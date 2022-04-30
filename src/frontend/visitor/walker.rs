@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::borrow::Cow;
 
 use crate::frontend::nodes::{ decl::Decl, expr::Expr, stmt::Stmt} ;
 use crate::frontend::ast::AST;
@@ -83,7 +83,7 @@ impl<'a> Walker<Cow<'a, str>> for AST {
                 
             },
             Stmt::While(_, blok) => {
-                let mut body_to_str = String::from(format!("{:?}\n", &s));
+                let mut body_to_str = format!("{:?}\n", &s);
                   for stmt in blok{
                       body_to_str.push_str("     ");
                       body_to_str.push_str(self.visit_stmt(stmt).as_ref());

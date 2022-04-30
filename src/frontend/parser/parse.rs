@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::alloc::System;
 
 use logos::Lexer;
 use crate::frontend::ast::AST;
@@ -65,7 +65,6 @@ impl<'source> Parser<'source> {
 
 /// Basic recursive descent parsing
 /// Errors are made using Spans, which will pretty print the error and its possible (not tested if accurate) location
-/// First pass of the parser can detect basic unknown token errors, expected tokens, etc
 impl<'source> Parser<'source> {
     pub fn new(tokens: Lexer<'source, Token>, source: std::rc::Rc<Source>) -> Self {
         Self {
@@ -286,7 +285,7 @@ impl<'source> Parser<'source> {
         if let Some(operator) = match_adv!(&mut self, &Token::Caret) {
             let right = self.power();
             create_expr!(&mut self, binary: operator, left, right)
-        } else {
+       } else {
             left
         }
     }
@@ -396,15 +395,13 @@ impl<'source> Parser<'source> {
     } 
 
     fn parse_args(&mut self) -> Result<Vec<Token>, ParseError> {
-        self.expect_token(&Token::LeftBrack)?;
+        self.expect_token(&Token::Colon)?;
         let mut fn_args = Vec::new();
         loop {
-            if self.check_peek(&Token::RightBrack) { break }
+            if self.check_peek(&Token::LeftBrace) { break }
             fn_args.push(self.parse_single_arg()?);
             if match_adv!(&mut self, &Token::Comma).is_none() { break }
-
         }
-        self.expect_token(&Token::RightBrack)?;
         Ok(fn_args)
     }
 

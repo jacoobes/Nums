@@ -1,15 +1,7 @@
 use "a";
 
-fn t [a,b] {
-    let a = "a";
-    let b = "b";
-    
-    if a == b {
-        std:out["b", a, c, "e", bvdfs,];  
-    } else {
-        std:out["c"];
-    }
-    return a;
+fn t : a,b {
+
 }
 
 start
