@@ -1,15 +1,13 @@
-use std::{rc::Rc, alloc::System};
-use codespan_reporting::{term::{
-    self,
+use std::rc::Rc;
+use codespan_reporting::{term::
     termcolor::{ColorChoice, StandardStream},
-}, files::SimpleFile};
+    files::SimpleFile};
 use logos::Logos;
 
 use super::{
     parser::parse::Parser,
     source::Source,
     tokens::Token,
-    visitor::walker::Walker
 };
 
 
@@ -30,7 +28,7 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(ast) => {
-                println!("{}", ast.walk());
+                println!("{:?}", ast);
             },
             Err(diagnostics) => {
                 let _src = SimpleFile::new("test", source);

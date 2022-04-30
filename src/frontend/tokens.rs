@@ -23,8 +23,6 @@ pub enum Token {
     And,
     #[token("or")]
     Or,
-    #[token("task")]
-    Task,
     #[token("fn")]
     Function,
     #[token("let")]
@@ -43,7 +41,7 @@ pub enum Token {
     Return,
     #[token("start")]
     Start,
-    #[token("end.")]
+    #[token("end")]
     End,
     #[token("<")]
     LeftArr,

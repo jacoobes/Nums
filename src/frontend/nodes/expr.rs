@@ -30,7 +30,8 @@ pub enum Expr {
     Bool(bool),
     Val(Token),
     Call(Box<Expr>, Vec<Expr>),
-    Get(Box<Expr>, Token)
+    Get(Box<Expr>, Token),
+    CSE(Vec<Expr>)
 }
 
 impl std::fmt::Debug for Expr {
@@ -49,7 +50,8 @@ impl std::fmt::Debug for Expr {
            Expr::String(s) => write!(f, "( '{s}' ) "),
            Expr::Val(t) => write!(f, "( VARIABLE {:?} ) ", t),
            Expr::Get(expr, tok) => write!(f, "( {:?}:{:?} )", *expr, tok),
-           Expr::Call(expr, args) => write!(f,"CALL ({:?} WITH {:?})", *expr, args)
+           Expr::Call(expr, args) => write!(f,"CALL ({:?} WITH {:?})", *expr, args),
+           Expr::CSE(v) => write!(f, "{v:?}"),
         }
 
     }

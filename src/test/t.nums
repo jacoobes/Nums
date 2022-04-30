@@ -1,10 +1,9 @@
-use "a";
 
-fn t : a,b {
+fn fib: n {
+    let a = [ [], 2, 3 ]; 
 
 }
 
 start
-    t[1,2];
-end.
+end
 

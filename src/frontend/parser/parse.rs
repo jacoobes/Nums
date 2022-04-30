@@ -1,5 +1,3 @@
-use std::alloc::System;
-
 use logos::Lexer;
 use crate::frontend::ast::AST;
 use crate::frontend::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
@@ -222,6 +220,7 @@ impl<'source> Parser<'source> {
             asignee
         }
     }
+    
 
     fn or(&mut self) -> Result<Expr, ParseError> {
         let mut left = self.and();
@@ -299,12 +298,14 @@ impl<'source> Parser<'source> {
         }
     }
 
+    
+
     fn callee(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.grouping();
         loop {
-            expr = if (match_adv!(&mut self, &Token::LeftBrack)).is_some() {
+            expr = if (match_adv!(&mut self, &Token::LeftParen)).is_some() {
                 let call = self.finish_call(expr)?;
-                self.expect_token(&Token::RightBrack)?;
+                self.expect_token(&Token::RightParen)?;
                 self.resolve_node(call)
             } else if (match_adv!(&mut self, &Token::Colon)).is_some() {
                 let name = self.get_name()?;
@@ -318,7 +319,7 @@ impl<'source> Parser<'source> {
     fn finish_call(&mut self, expr: Result<Expr, ParseError>) -> Result<Expr, ParseError> {
         let mut list_of_args = Vec::new();
         loop {
-            if self.check_peek(&Token::RightBrack){ break };
+            if self.check_peek(&Token::RightParen){ break };
             list_of_args.push(self.expr()?);
             if match_adv!(&mut self, &Token::Comma).is_none() { break } 
         }
@@ -338,11 +339,23 @@ impl<'source> Parser<'source> {
         }
     }
 
+    
+
     fn primary(&mut self) -> Result<Expr, ParseError> {
         self.peek().unwrap();
         {
              let n = self.next()?;
              match n {
+                 Token::LeftBrack => {
+                    let mut vals = Vec::new();
+                    loop {
+                        if self.check_peek(&Token::RightBrack){ break }
+                        vals.push(self.expr()?);
+                        if match_adv!(&mut self, &Token::Comma).is_none() { break }
+                     }
+                    self.expect_token(&Token::RightBrack)?;
+                    Ok(Expr::CSE(vals))
+                 },
                  Token::Bool(val) => self.resolve_node(Expr::Bool(val)),
                  Token::Double(s) => self.resolve_node(Expr::Double(s)),
                  Token::Identifier(_) => self.resolve_node(Expr::Val(n)),    

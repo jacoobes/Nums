@@ -10,7 +10,7 @@ path = "src/main.rs"
 
 
 [dependencies]
-nums_vm = {path = "../numsVM"}
+numsc = {path = "../numsc"}
 logos = "0.12.0"
 smol_str = "0.1.21"
 codespan-reporting = "0.11.1"

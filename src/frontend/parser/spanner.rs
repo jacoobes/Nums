@@ -1,4 +1,3 @@
-
 use std::ops::Range;
 use crate::frontend::source::Source;
 
@@ -23,10 +22,6 @@ impl Spanner {
     pub fn converge(&mut self) {
         self.cur.start = self.cur.end
     }
-
-    
-    
-
 }
 
 
