@@ -354,6 +354,7 @@ impl<'source> Parser<'source> {
                         if match_adv!(&mut self, &Token::Comma).is_none() { break }
                      }
                     self.expect_token(&Token::RightBrack)?;
+                     //Comma separated expression
                     Ok(Expr::CSE(vals))
                  },
                  Token::Bool(val) => self.resolve_node(Expr::Bool(val)),
