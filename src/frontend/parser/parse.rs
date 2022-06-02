@@ -359,9 +359,8 @@ impl<'source> Parser<'source> {
                     Ok(Expr::CSE(vals))
                  },
                  Token::Bool(val) => self.resolve_node(Expr::Bool(val)),
-                 Token::Double(s) => self.resolve_node(Expr::Double(s)),
+                 Token::Number(s) => self.resolve_node(Expr::Number(s)),
                  Token::Identifier(_) => self.resolve_node(Expr::Val(n)),    
-                 Token::Integer(val) => self.resolve_node(Expr::Integer(val)),
                  Token::String(val) => self.resolve_node(Expr::String(val)),
                  Token::Error => {
                      // todo!("Handle error with unknown token");

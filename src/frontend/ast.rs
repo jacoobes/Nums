@@ -1,8 +1,12 @@
+use core::panicking::panic;
 use std::ops::Deref;
+use std::rc::Rc;
 use numsc::structures::frame::Frame;
 use numsc::structures::frame_builder::FrameBuilder;
+use numsc::structures::opcode::OpCode;
 
 use numsc::structures::stack::Stack;
+use numsc::structures::value::Value;
 use numsc::vm::numsc::NumsC;
 use smol_str::SmolStr;
 use crate::frontend::tokens::Token;
@@ -74,16 +78,36 @@ impl AST {
                 todo!()
             }
             Expr::Binary { left,right,operator } => {}
-            Expr::Unary { expr,operator } => {}
-            Expr::Group { expr } => {}
-            Expr::Assignment { var, value  } => {}
-            Expr::Double(val) => {
+            Expr::Unary { expr,operator } => {
+                match operator {
+                    Token::Bang => {
+                        self.walk_expr(*expr);
+                        self.bc_emitter.push_opcode(OpCode::Not)
+                    },
+                    Token::Minus => {
+                        self.walk_expr(*expr);
+                        self.bc_emitter.push_opcode(OpCode::Negate)
+                    },
+                    Token::Plus => {
+                        //no use yet but it exists
+                        self.walk_expr(*expr);
+                    },
+                    _ => panic("aaaaaa not a valid operator for unary")
+                }
             }
-            Expr::Integer(val) => {
-
+            Expr::Group { expr } => {
+                self.walk_expr(*expr)
             }
-            Expr::String(val) => {}
-            Expr::Bool(val) => {}
+            Expr::Assignment { var, value  } => todo!(),
+            Expr::Number(val) => {
+                self.bc_emitter.push_const(Rc::new(Value::Number(val)))
+            }
+            Expr::String(val) => {
+                self.bc_emitter.push_const(Rc::new(Value::Str(val)))
+            }
+            Expr::Bool(val) => {
+                self.bc_emitter.push_const(Rc::new(Value::Boolean(val)))
+            }
             Expr::Val(lit) => {}
             Expr::Call(expr, arguments) => {}
             Expr::Get(expr, name) => {}

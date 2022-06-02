@@ -50,14 +50,11 @@ pub enum Token {
     #[token("/")]
     FowardSlash,
 
-    /// double must have a number before the '.' faulty: .12123, correct: 0.12123
-    /// can also come in form of a percent!
-    #[regex(r"\d+(?:\.\d+)+", parse_dub)]
-    #[regex(r"\d+(?:\.\d+)?%", percent_float)]
-    Double(f32),
     /// standard 4 byte numbers
     #[regex(r"(?&int)", parse_num)]
-    Integer(isize),
+    #[regex(r"\d+(?:\.\d+)+", parse_dub)]
+    #[regex(r"\d+(?:\.\d+)?%", percent_float)]
+    Number(f64),
     ///only ascii!
     ///smolstr is heap allocated if 23 bytes + ofc
     #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, make_str)]
@@ -119,13 +116,13 @@ pub enum Token {
     Error,
 }
 
-fn parse_num(lex: &mut Lexer<Token>) -> Option<isize> {
+fn parse_num(lex: &mut Lexer<Token>) -> Option<f64> {
     let slice = lex.slice();
     let n = slice.parse().ok()?;
     Some(n)
 }
 
-fn parse_dub(lex: &mut Lexer<Token>) -> Option<f32> {
+fn parse_dub(lex: &mut Lexer<Token>) -> Option<f64> {
     let slice = lex.slice();
     slice.parse().ok()
 }
@@ -135,10 +132,10 @@ fn make_str(lex: &mut Lexer<Token>) -> Option<SmolStr> {
     Some(SmolStr::new(&slice[1..slice.len() - 1]))
 }
 
-fn percent_float(lex: &mut Lexer<Token>) -> Option<f32> {
+fn percent_float(lex: &mut Lexer<Token>) -> Option<f64> {
     let slice = lex.slice();
     let n: f32 = slice[..slice.len() - 1].parse().ok()?;
-    Some(n / 100.)
+    Some((n / 100.) as f64)
 }
 fn parse_bool(lex: &mut Lexer<Token>) -> Option<bool> {
     let slice = lex.slice();

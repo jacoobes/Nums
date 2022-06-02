@@ -24,8 +24,7 @@ pub enum Expr {
         var : Token,
         value: Box<Expr>
     },
-    Double(f32),
-    Integer(isize),
+    Number(f64),
     String(SmolStr),
     Bool(bool),
     Val(Token),
