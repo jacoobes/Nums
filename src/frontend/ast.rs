@@ -1,25 +1,50 @@
 use std::ops::Deref;
+use numsc::structures::frame::Frame;
+use numsc::structures::frame_builder::FrameBuilder;
 
 use numsc::structures::stack::Stack;
+use numsc::vm::numsc::NumsC;
+use smol_str::SmolStr;
+use crate::frontend::tokens::Token;
 use super::nodes::{decl::Decl, stmt::Stmt, expr::Expr};
 
-pub struct AST(pub Vec<Decl>);
+pub struct AST {
+    pub tree: Vec<Decl>,
+    bc_emitter: FrameBuilder
+}
 
+fn extract(n: Token) -> SmolStr {
+    if let Token::Identifier(s) = n {
+      return s
+    }
+    panic!("Incorrectly bound a non identifier token to a name");
+}
 
 impl AST {
-    pub fn walk_decl(&self) {
+    pub fn new(tree : Vec<Decl>) -> Self {
+        AST { tree, bc_emitter : FrameBuilder::new("expressions".into()) }
+    }
+    pub fn walk(self) {
         match self {
-            Decl::ExposedFn(..) | Decl::Function(..) => {},
+            Decl::ExposedFn(name, args_name, block)
+            | Decl::Function(name, args_name, block) => {
+                FrameBuilder::new(extract(name));
+                for stmt in block {
+                    self.walk_stmt(stmt)
+                }
+            },
             Decl::Program( stmts) => {
                 for stmt in stmts {
                     self.walk_stmt(stmt)
                 }
             },
-            Decl::Use(..) => {},
+            Decl::Use(..) => {
+                todo!()
+            },
         }
         
     }
-    pub fn walk_stmt(&self, stmt: &Stmt) {
+    pub fn walk_stmt(self, stmt: Stmt) {
         match stmt {
             Stmt::ExprStatement(expr) => self.walk_expr(expr),
             Stmt::Mut(name, expr)
@@ -43,17 +68,20 @@ impl AST {
         }
     }
 
-    pub fn walk_expr(&self, expr: &Expr) {
+    pub fn walk_expr(self, expr: Expr) {
         match expr {
             Expr::Logical { left,right,operator } => {
-
+                todo!()
             }
             Expr::Binary { left,right,operator } => {}
             Expr::Unary { expr,operator } => {}
             Expr::Group { expr } => {}
             Expr::Assignment { var, value  } => {}
-            Expr::Double(val) => {}
-            Expr::Integer(val) => {}
+            Expr::Double(val) => {
+            }
+            Expr::Integer(val) => {
+
+            }
             Expr::String(val) => {}
             Expr::Bool(val) => {}
             Expr::Val(lit) => {}
@@ -70,7 +98,7 @@ impl Deref for AST {
     type Target = Vec<Decl>;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.tree
     }
 }
 

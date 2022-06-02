@@ -1,4 +1,5 @@
 use logos::Lexer;
+use numsc::structures::frame_builder::FrameBuilder;
 use crate::frontend::ast::AST;
 use crate::frontend::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
 use crate::frontend::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
@@ -74,14 +75,14 @@ impl<'source> Parser<'source> {
 
     pub fn parse(&mut self) -> Result<AST, Vec<ParseError>> {
         let mut diagnostic_vec = Vec::new();
-        let mut decls = Vec::new();
+        let mut tree = Vec::new();
         let mut had_parse_err = false;
         loop {
             if self.is_at_end() {
                 if had_parse_err {
                     break Err(diagnostic_vec);
                 }
-                break Ok(AST(decls));
+                break Ok(AST::new(tree));
             }
             match self.top_level() {
                 Ok(decl) => decls.push(decl),
@@ -354,7 +355,7 @@ impl<'source> Parser<'source> {
                         if match_adv!(&mut self, &Token::Comma).is_none() { break }
                      }
                     self.expect_token(&Token::RightBrack)?;
-                     //Comma separated expression
+                    //Comma separated expression
                     Ok(Expr::CSE(vals))
                  },
                  Token::Bool(val) => self.resolve_node(Expr::Bool(val)),

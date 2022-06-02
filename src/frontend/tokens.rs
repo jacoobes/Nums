@@ -142,5 +142,5 @@ fn percent_float(lex: &mut Lexer<Token>) -> Option<f32> {
 }
 fn parse_bool(lex: &mut Lexer<Token>) -> Option<bool> {
     let slice = lex.slice();
-    slice.parse::<bool>().ok()
+    slice.parse().ok()
 }
