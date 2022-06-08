@@ -43,14 +43,13 @@ impl std::fmt::Debug for Expr {
            Expr::Unary { operator, expr } => write!(f, "({:?} {:?})", operator, *expr),
            Expr::Group { expr } => write!(f, "( {:?} )", *expr),
            Expr::Assignment { var, value } => write!(f, "( ASSIGN {:?} = {:?}", var, *value),
-           Expr::Double(n) => write!(f, "( {:?} ) ", n),
            Expr::Bool(b) => write!(f, "( {:?} ) ", b),
-           Expr::Integer(i) => write!(f, "( {i} )"),
            Expr::String(s) => write!(f, "( '{s}' ) "),
            Expr::Val(t) => write!(f, "( VARIABLE {:?} ) ", t),
            Expr::Get(expr, tok) => write!(f, "( {:?}:{:?} )", *expr, tok),
            Expr::Call(expr, args) => write!(f,"CALL ({:?} WITH {:?})", *expr, args),
            Expr::CSE(v) => write!(f, "{v:?}"),
+           Expr::Number(c) => write!(f, "{c:?}")
         }
 
     }

@@ -28,7 +28,8 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(ast) => {
-                println!("{:?}", ast);
+                println!("{ast:?}");
+                ast.walk()
             },
             Err(diagnostics) => {
                 let _src = SimpleFile::new("test", source);

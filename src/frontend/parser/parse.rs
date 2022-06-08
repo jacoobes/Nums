@@ -85,7 +85,7 @@ impl<'source> Parser<'source> {
                 break Ok(AST::new(tree));
             }
             match self.top_level() {
-                Ok(decl) => decls.push(decl),
+                Ok(decl) => tree.push(decl),
                 Err(e) => {
                     had_parse_err = true;
                     diagnostic_vec.push(e);
