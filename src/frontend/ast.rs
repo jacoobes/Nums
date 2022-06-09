@@ -1,4 +1,4 @@
-use core::panicking::panic;
+use std::borrow::Borrow;
 use std::ops::Deref;
 use std::rc::Rc;
 use numsc::structures::frame::Frame;
@@ -14,65 +14,71 @@ use super::nodes::{decl::Decl, stmt::Stmt, expr::Expr};
 
 pub struct AST {
     pub tree: Vec<Decl>,
-    bc_emitter: FrameBuilder
+    frames: Vec<Frame>
 }
 
 fn extract(n: Token) -> SmolStr {
     if let Token::Identifier(s) = n {
-      return s
+      return s;
     }
     panic!("Incorrectly bound a non identifier token to a name");
 }
 
 impl AST {
     pub fn new(tree : Vec<Decl>) -> Self {
-        AST { tree, bc_emitter : FrameBuilder::new("expressions".into()) }
+        AST { tree, frames : Vec::new()  }
     }
-    pub fn walk(self) {
-        match self {
-            Decl::ExposedFn(name, args_name, block)
-            | Decl::Function(name, args_name, block) => {
-                FrameBuilder::new(extract(name));
-                for stmt in block {
-                    self.walk_stmt(stmt)
-                }
-            },
-            Decl::Program( stmts) => {
-                for stmt in stmts {
-                    self.walk_stmt(stmt)
-                }
-            },
-            Decl::Use(..) => {
-                todo!()
-            },
+    pub fn walk(mut self) {
+        for node in self.tree {
+            match node {
+                Decl::ExposedFn(name, args_name, block)
+                | Decl::Function(name, args_name, block) => {
+                    let mut builder = FrameBuilder::new(extract(name));
+                    for stmt in block {
+                        AST::walk_stmt(stmt, &mut builder);
+                    }
+                    self.frames.push(builder.build());
+                },
+                Decl::Program( stmts) => {
+                    let mut builder = FrameBuilder::new("Start".into());
+                    for stmt in stmts {
+                         AST::walk_stmt(stmt, &mut builder);
+                    }
+                    self.frames.push(builder.build());
+                },
+                Decl::Use(..) => {
+                    todo!()
+                },
+            }
         }
+
         
     }
-    pub fn walk_stmt(self, stmt: Stmt) {
+    pub fn walk_stmt(stmt: Stmt, builder: &mut FrameBuilder) {
         match stmt {
-            Stmt::ExprStatement(expr) => self.walk_expr(expr),
+            Stmt::ExprStatement(expr) => AST::walk_expr(expr, builder ),
             Stmt::Mut(name, expr)
-            | Stmt::Let(name, expr)=> self.walk_expr(expr),
+            | Stmt::Let(name, expr)=> AST::walk_expr(expr, builder ),
             Stmt::While(condition, stmts) => {
                 for stmt in stmts {
-                    self.walk_stmt(stmt)
+                    AST::walk_stmt(stmt, builder)
                 }
             }
             Stmt::Block(stmts) => {
                 for stmt in stmts {
-                    self.walk_stmt(stmt)
+                    AST::walk_stmt(stmt, builder)
                 }
             }
             Stmt::IfElse(condition, true_stmts, false_stmts) => {
                 todo!()
             }
             Stmt::Return(expr) => {
-                self.walk_expr(expr)
+                AST::walk_expr(expr, builder)
             }
         }
     }
 
-    pub fn walk_expr(self, expr: Expr) {
+    pub fn walk_expr(expr: Expr, builder: &mut FrameBuilder) {
         match expr {
             Expr::Logical { left,right,operator } => {
                 todo!()
@@ -81,32 +87,32 @@ impl AST {
             Expr::Unary { expr,operator } => {
                 match operator {
                     Token::Bang => {
-                        self.walk_expr(*expr);
-                        self.bc_emitter.push_opcode(OpCode::Not)
+                        AST::walk_expr(*expr, builder);
+                        builder.with_opcode(OpCode::Not);
                     },
                     Token::Minus => {
-                        self.walk_expr(*expr);
-                        self.bc_emitter.push_opcode(OpCode::Negate)
+                        AST::walk_expr(*expr, builder);
+                        builder.with_opcode(OpCode::Negate);
                     },
                     Token::Plus => {
                         //no use yet but it exists
-                        self.walk_expr(*expr);
+                        AST::walk_expr(*expr, builder);
                     },
-                    _ => panic("aaaaaa not a valid operator for unary")
+                    _ => panic!("aaaaaa not a valid operator for unary")
                 }
             }
             Expr::Group { expr } => {
-                self.walk_expr(*expr)
+               AST::walk_expr(*expr, builder)
             }
             Expr::Assignment { var, value  } => todo!(),
             Expr::Number(val) => {
-                self.bc_emitter.push_const(Rc::new(Value::Number(val)))
+                builder.with_const(Rc::new(Value::Number(val)));
             }
             Expr::String(val) => {
-                self.bc_emitter.push_const(Rc::new(Value::Str(val)))
+                builder.with_const(Rc::new(Value::Str(val /*clone!!!!!*/)));
             }
             Expr::Bool(val) => {
-                self.bc_emitter.push_const(Rc::new(Value::Boolean(val)))
+                builder.with_const(Rc::new(Value::Boolean(val)));
             }
             Expr::Val(lit) => {}
             Expr::Call(expr, arguments) => {}
@@ -128,7 +134,7 @@ impl Deref for AST {
 
 impl std::fmt::Debug for AST {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-       write!(f,"{:?}", self.0)
+       write!(f,"{:?}", self.tree)
     }
 }
 

@@ -27,7 +27,7 @@ impl Compiler {
         let tokenizer = Token::lexer(source);
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
-            Ok(ast) => {
+            Ok(mut ast) => {
                 println!("{ast:?}");
                 ast.walk()
             },
