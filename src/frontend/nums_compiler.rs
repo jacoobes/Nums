@@ -1,3 +1,4 @@
+use std::alloc::System;
 use std::rc::Rc;
 use codespan_reporting::{term::
     termcolor::{ColorChoice, StandardStream},
@@ -29,7 +30,8 @@ impl Compiler {
         match parser.parse() {
             Ok(mut ast) => {
                 println!("{ast:?}");
-                ast.walk()
+                let vec = ast.walk_and_transform();
+                println!("{vec:?}")
             },
             Err(diagnostics) => {
                 let _src = SimpleFile::new("test", source);

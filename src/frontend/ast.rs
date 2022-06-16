@@ -14,7 +14,6 @@ use super::nodes::{decl::Decl, stmt::Stmt, expr::Expr};
 
 pub struct AST {
     pub tree: Vec<Decl>,
-    frames: Vec<Frame>
 }
 
 fn extract(n: Token) -> SmolStr {
@@ -26,9 +25,10 @@ fn extract(n: Token) -> SmolStr {
 
 impl AST {
     pub fn new(tree : Vec<Decl>) -> Self {
-        AST { tree, frames : Vec::new()  }
+        AST { tree }
     }
-    pub fn walk(mut self) {
+    pub fn walk_and_transform(mut self) -> Vec<Frame> {
+        let mut frames = Vec::new();
         for node in self.tree {
             match node {
                 Decl::ExposedFn(name, args_name, block)
@@ -37,22 +37,21 @@ impl AST {
                     for stmt in block {
                         AST::walk_stmt(stmt, &mut builder);
                     }
-                    self.frames.push(builder.build());
+                    frames.push(builder.build());
                 },
                 Decl::Program( stmts) => {
                     let mut builder = FrameBuilder::new("Start".into());
                     for stmt in stmts {
                          AST::walk_stmt(stmt, &mut builder);
                     }
-                    self.frames.push(builder.build());
+                    frames.push(builder.build());
                 },
                 Decl::Use(..) => {
                     todo!()
                 },
             }
         }
-
-        
+        frames
     }
     pub fn walk_stmt(stmt: Stmt, builder: &mut FrameBuilder) {
         match stmt {
@@ -81,9 +80,47 @@ impl AST {
     pub fn walk_expr(expr: Expr, builder: &mut FrameBuilder) {
         match expr {
             Expr::Logical { left,right,operator } => {
-                todo!()
+                AST::walk_expr(*left, builder);
+                AST::walk_expr(*right, builder);
+                match operator {
+                    Token::And => {},
+                    Token::Or => {},
+                    _ => panic!("aaaaaa not a valid operator for binary")
+                }
             }
-            Expr::Binary { left,right,operator } => {}
+            Expr::Binary { left,right,operator } => {
+                AST::walk_expr(*left, builder);
+                AST::walk_expr(*right, builder);
+                match operator {
+                    Token::Plus => {
+                        builder.with_opcode(OpCode::Add);
+                    },
+                    Token::Minus => {
+                        builder.with_opcode(OpCode::Sub);
+                    },
+                    Token::RightArr => {
+                        builder.with_opcode(OpCode::IfGreater);
+                    },
+                    Token::LeftArr => {
+                        builder.with_opcode(OpCode::IfLess);
+                    },
+                    Token::Eq => { builder.with_opcode(OpCode::IfEqual); },
+                    Token::NotEq => {
+                        builder.with_opcode(OpCode::Not);
+                        builder.with_opcode(OpCode::IfEqual);
+                    },
+                    Token::LessEq => {
+                        builder.with_opcode(OpCode::Not);
+                        builder.with_opcode(OpCode::IfGreater);
+                    },
+                    Token::GreaterEq => {
+                        builder.with_opcode(OpCode::Not);
+                        builder.with_opcode(OpCode::IfLess);
+                    },
+                    _ => panic!("aaaaaa not a valid operator for binary")
+                }
+
+            }
             Expr::Unary { expr,operator } => {
                 match operator {
                     Token::Bang => {
@@ -109,7 +146,7 @@ impl AST {
                 builder.with_const(Rc::new(Value::Number(val)));
             }
             Expr::String(val) => {
-                builder.with_const(Rc::new(Value::Str(val /*clone!!!!!*/)));
+                builder.with_const(Rc::new(Value::Str(val)));
             }
             Expr::Bool(val) => {
                 builder.with_const(Rc::new(Value::Boolean(val)));
