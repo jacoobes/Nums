@@ -4,6 +4,7 @@ use std::rc::Rc;
 use numsc::structures::frame::Frame;
 use numsc::structures::frame_builder::FrameBuilder;
 use numsc::structures::opcode::OpCode;
+use numsc::structures::opcode::OpCode::Or;
 
 use numsc::structures::stack::Stack;
 use numsc::structures::value::Value;
@@ -22,12 +23,13 @@ fn extract(n: Token) -> SmolStr {
     }
     panic!("Incorrectly bound a non identifier token to a name");
 }
-
 impl AST {
     pub fn new(tree : Vec<Decl>) -> Self {
         AST { tree }
     }
-    pub fn walk_and_transform(mut self) -> Vec<Frame> {
+}
+impl AST {
+    pub(crate) fn walk(mut self) -> Vec<Frame> {
         let mut frames = Vec::new();
         for node in self.tree {
             match node {
@@ -37,13 +39,15 @@ impl AST {
                     for stmt in block {
                         AST::walk_stmt(stmt, &mut builder);
                     }
+                    builder.with_opcode(OpCode::Halt);
                     frames.push(builder.build());
                 },
                 Decl::Program( stmts) => {
-                    let mut builder = FrameBuilder::new("Start".into());
+                    let mut builder = FrameBuilder::new("__Program__".into());
                     for stmt in stmts {
                          AST::walk_stmt(stmt, &mut builder);
                     }
+                    builder.with_opcode(OpCode::Halt);
                     frames.push(builder.build());
                 },
                 Decl::Use(..) => {
@@ -53,7 +57,7 @@ impl AST {
         }
         frames
     }
-    pub fn walk_stmt(stmt: Stmt, builder: &mut FrameBuilder) {
+    fn walk_stmt(stmt: Stmt, builder: &mut FrameBuilder) {
         match stmt {
             Stmt::ExprStatement(expr) => AST::walk_expr(expr, builder ),
             Stmt::Mut(name, expr)
@@ -77,14 +81,18 @@ impl AST {
         }
     }
 
-    pub fn walk_expr(expr: Expr, builder: &mut FrameBuilder) {
+    fn walk_expr(expr: Expr, builder: &mut FrameBuilder) {
         match expr {
             Expr::Logical { left,right,operator } => {
                 AST::walk_expr(*left, builder);
                 AST::walk_expr(*right, builder);
                 match operator {
-                    Token::And => {},
-                    Token::Or => {},
+                    Token::And => {
+                        builder.with_opcode(OpCode::And);
+                    },
+                    Token::Or => {
+                        builder.with_opcode(OpCode::Or);
+                    },
                     _ => panic!("aaaaaa not a valid operator for binary")
                 }
             }

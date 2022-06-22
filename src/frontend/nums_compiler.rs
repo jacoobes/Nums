@@ -4,6 +4,8 @@ use codespan_reporting::{term::
     termcolor::{ColorChoice, StandardStream},
     files::SimpleFile};
 use logos::Logos;
+use numsc::structures::disassembler::Disassembler;
+use numsc::vm::frame_reader;
 
 use super::{
     parser::parse::Parser,
@@ -29,9 +31,18 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(mut ast) => {
-                println!("{ast:?}");
-                let vec = ast.walk_and_transform();
-                println!("{vec:?}")
+                println!("{:?}", &ast);
+                let vec = ast.walk();
+                println!("{:?}", &vec);
+                for frame in vec {
+                    Disassembler::disassemble(frame)
+                    // let value = frame_reader::read_frame(frame);
+                    // if let Ok( v ) = value {
+                    //     println!("{v:?}")
+                    // } else {
+                    //     println!("{:?}", value.err())
+                    // }
+                }
             },
             Err(diagnostics) => {
                 let _src = SimpleFile::new("test", source);
