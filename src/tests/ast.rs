@@ -5,7 +5,7 @@ mod ast {
     use codespan_reporting::diagnostic::Diagnostic;
     use logos::Logos;
 
-    fn create_tree<'a>(text: &'a str) -> Result<AST, Vec<Diagnostic<()>>> {
+    fn create_tree(text: &str) -> Result<AST, Vec<Diagnostic<()>>> {
         let iterator = Token::lexer(text);
         let mut parser = parse::Parser::new(iterator, Rc::new(Source::new(String::from(text), "text")));
         parser.parse()

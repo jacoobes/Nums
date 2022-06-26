@@ -1,18 +1,16 @@
-use logos::Lexer;
-use numsc::structures::frame_builder::FrameBuilder;
+use numsc::Lexer;
 use crate::frontend::ast::AST;
 use crate::frontend::nodes::{decl::Decl, expr::Expr, stmt::Stmt};
-use crate::frontend::{parser::peekable_parser::Peekable as PeekerWrap, tokens::Token};
 use crate::{
     frontend::source::Source,
     error_handling::faults::{ErrTyp::*, ParseError},
 };
-
+use numsc::structures::{peekable_parser::Peekable, tokens::Token};
 use crate::{create_expr, match_adv};
 use super::spanner::Spanner;
 
 pub struct Parser<'source> {
-    tokens: PeekerWrap<'source>,
+    tokens: Peekable<'source>,
     source: std::rc::Rc<Source>,
     spanner : Spanner
 }
@@ -67,7 +65,7 @@ impl<'source> Parser<'source> {
 impl<'source> Parser<'source> {
     pub fn new(tokens: Lexer<'source, Token>, source: std::rc::Rc<Source>) -> Self {
         Self {
-            tokens: PeekerWrap::new(tokens),
+            tokens: Peekable::new(tokens),
             source: source.clone(),
             spanner : Spanner::new(source)
         }

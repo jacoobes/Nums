@@ -1,16 +1,11 @@
-use std::borrow::Borrow;
 use std::ops::Deref;
 use std::rc::Rc;
 use numsc::structures::frame::Frame;
 use numsc::structures::frame_builder::FrameBuilder;
 use numsc::structures::opcode::OpCode;
-use numsc::structures::opcode::OpCode::Or;
 
-use numsc::structures::stack::Stack;
-use numsc::structures::value::Value;
-use numsc::vm::numsc::NumsC;
+use numsc::structures::{ value::Value, tokens::Token };
 use smol_str::SmolStr;
-use crate::frontend::tokens::Token;
 use super::nodes::{decl::Decl, stmt::Stmt, expr::Expr};
 
 pub struct AST {
@@ -29,7 +24,7 @@ impl AST {
     }
 }
 impl AST {
-    pub(crate) fn walk(mut self) -> Vec<Frame> {
+    pub(crate) fn walk(self) -> Vec<Frame> {
         let mut frames = Vec::new();
         for node in self.tree {
             match node {

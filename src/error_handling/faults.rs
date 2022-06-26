@@ -1,5 +1,6 @@
 use std::ops::Range;
-use crate::frontend::{tokens::Token, nodes::expr::Expr};
+use crate::frontend::nodes::expr::Expr;
+use numsc::structures::tokens::Token;
 use smol_str::SmolStr;
 
 #[derive(Debug)]

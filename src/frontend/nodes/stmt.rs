@@ -1,5 +1,5 @@
-use crate::frontend::tokens::Token;
 
+use numsc::structures::tokens::Token;
 use super::expr::Expr;
 
 #[derive( Clone, PartialEq)]

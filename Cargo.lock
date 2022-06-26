@@ -74,7 +74,6 @@ version = "0.1.0"
 dependencies = [
  "codespan-reporting",
  "fnv",
- "logos",
  "numsc",
  "smol_str",
 ]
@@ -83,6 +82,7 @@ dependencies = [
 name = "numsc"
 version = "0.1.0"
 dependencies = [
+ "logos",
  "num_enum",
  "smol_str",
 ]
