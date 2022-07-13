@@ -2,6 +2,8 @@ use std::ops::Deref;
 use std::rc::Rc;
 use numsc::structures::frame::Frame;
 use numsc::structures::frame_builder::FrameBuilder;
+use numsc::structures::locals::Local;
+
 use numsc::structures::opcode::OpCode;
 
 use numsc::structures::{ value::Value, tokens::Token };
@@ -54,21 +56,29 @@ impl AST {
     }
     fn walk_stmt(stmt: Stmt, builder: &mut FrameBuilder) {
         match stmt {
-            Stmt::ExprStatement(expr) => AST::walk_expr(expr, builder ),
+            Stmt::ExprStatement(expr) => AST::walk_expr(expr, builder),
+
             Stmt::Mut(name, expr)
-            | Stmt::Let(name, expr)=> AST::walk_expr(expr, builder ),
+            | Stmt::Let(name, expr) => {
+                builder.with_local(name);
+                AST::walk_expr(expr, builder)
+            }
+
             Stmt::While(condition, stmts) => {
                 for stmt in stmts {
                     AST::walk_stmt(stmt, builder)
                 }
             }
             Stmt::Block(stmts) => {
+                builder.new_scope();
                 for stmt in stmts {
                     AST::walk_stmt(stmt, builder)
                 }
+                builder.leave_scope();
+            
             }
             Stmt::IfElse(condition, true_stmts, false_stmts) => {
-                todo!()
+                
             }
             Stmt::Return(expr) => {
                 AST::walk_expr(expr, builder)
@@ -178,3 +188,10 @@ impl std::fmt::Debug for AST {
     }
 }
 
+
+fn is_assignable(stmt : &Stmt) -> bool {
+    match stmt {
+        Stmt::Let(..) => true,
+        _ => false,
+    }
+}

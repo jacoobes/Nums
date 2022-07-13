@@ -5,6 +5,7 @@ use codespan_reporting::{term::
     files::SimpleFile};
 use numsc::structures::disassembler::Disassembler;
 use numsc::structures::tokens::Token;
+use numsc::vm::frame_reader;
 use super::{
     parser::parse::Parser,
     source::Source,
@@ -28,11 +29,11 @@ impl Compiler {
         let mut parser = Parser::new(tokenizer, Rc::clone(&self.source));
         match parser.parse() {
             Ok(mut ast) => {
-                println!("{:?}", &ast);
+                //println!("{:?}", &ast);
                 let vec = ast.walk();
-                println!("{:?}", &vec);
+                //println!("{:?}", &vec);
                 for frame in vec {
-                    Disassembler::disassemble(frame)
+                    Disassembler::disassemble(frame);
                     // let value = frame_reader::read_frame(frame);
                     // if let Ok( v ) = value {
                     //     println!("{v:?}")

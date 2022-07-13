@@ -5,7 +5,8 @@ use crate::{
     frontend::source::Source,
     error_handling::faults::{ErrTyp::*, ParseError},
 };
-use numsc::structures::{peekable_parser::Peekable, tokens::Token};
+use numsc::structures::tokens::Token;
+use super::peekable_parser::Peekable;
 use crate::{create_expr, match_adv};
 use super::spanner::Spanner;
 

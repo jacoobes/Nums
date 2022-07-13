@@ -1,9 +1,15 @@
 
 fn fib: n {
-   1 + 1 - 10;
+
+   {
+      let l = 10;
+      let fd = 10;
+   }
 }
 
-start
 
-end
+:> start
+
+
+end <:
 
