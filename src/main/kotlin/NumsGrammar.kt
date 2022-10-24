@@ -7,6 +7,7 @@ import com.github.h0tk3y.betterParse.parser.Parser
 
 interface Node
 interface Expr : Node
+interface Statement: Node
 data class StringLiteral(val str: String) : Expr
 data class Number(val value: Int) : Expr
 data class Variable(val name: String) : Expr
@@ -18,20 +19,26 @@ data class Or(val left: Expr, val right: Expr) : Expr
 data class ArrayLiteral(val exprs : List<Expr>): Expr
 data class Bool(val bool: Boolean) : Expr
 
-class NumsGrammar: Grammar<List<Expr>>() {
+data class ExpressionStatement(val expr : Expr):  Statement
+data class Val(val token: Variable, val expr: Expr) : Statement
+
+data class Iif(val expr: Expr) : Statement
+class NumsGrammar: Grammar<List<Statement>>() {
     private val num by regexToken("\\d+")
+    private val semi by literalToken(";")
     private val ttrue by literalToken("T")
     private val ffalse by literalToken("F")
     private val and by literalToken("and")
     private val or by literalToken("or")
     private val not by literalToken("not")
+    private val vval by literalToken("val")
+    private val iif by literalToken("if")
     private val word by regexToken("[A-Za-z]+[1-9]*")
     private val ws by regexToken("\\s+", ignore = true)
     private val newline by regexToken("[\r\n]+", ignore = true)
     private val comma by literalToken(",")
     private val stringLit by regexToken("\".*?\"")
     private val assign by literalToken("=")
-    private val vval by literalToken("val")
     private val fn by literalToken("fn")
     private val lparen by literalToken("(")
     private val rparen by literalToken(")")
@@ -82,5 +89,10 @@ class NumsGrammar: Grammar<List<Expr>>() {
     }
     private val expr: Parser<Expr> by orChain
 
-    override val rootParser by oneOrMore(expr)
+    private val exprStatement by expr and -semi map { ExpressionStatement(it) }
+
+    private val valStmt by -vval and varParser and -assign and exprStatement map { Val(it.t1, it.t2.expr )}
+    private val iifStmt by -iif and expr map { Iif(it) }
+    private val block by -lcurly and zeroOrMore(iifStmt or valStmt) and -rcurly
+    override val rootParser by block
 }

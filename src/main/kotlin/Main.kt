@@ -1,4 +1,6 @@
-import com.github.h0tk3y.betterParse.grammar.parseToEnd
+import com.github.h0tk3y.betterParse.grammar.tryParseToEnd
+import com.github.h0tk3y.betterParse.parser.ErrorResult
+import com.github.h0tk3y.betterParse.parser.Parsed
 import kotlinx.cli.*
 import java.io.File
 
@@ -25,6 +27,12 @@ fun init(args: Array<String>) {
     val input by parser.option(ArgType.String, shortName = "i", description = "Main File").required()
     parser.parse(args)
     val fileString = File(input).readText()
-    val tokenizer = NumsGrammar().parseToEnd(fileString)
-    println(tokenizer)
+    when(val result = NumsGrammar().tryParseToEnd(fileString)) {
+        is ErrorResult -> {
+            println(result)
+        }
+        is Parsed -> {
+            println(result.value)
+        }
+    }
 }
