@@ -56,12 +56,18 @@ impl AST {
     }
     fn walk_stmt(stmt: Stmt, builder: &mut FrameBuilder) {
         match stmt {
-            Stmt::ExprStatement(expr) => AST::walk_expr(expr, builder),
+            Stmt::ExprStatement(expr) => {
+                println!("about to enter expression eval");
+                AST::walk_expr(expr, builder);
+                builder.with_opcode(OpCode::Pop);
+            },
 
             Stmt::Mut(name, expr)
             | Stmt::Let(name, expr) => {
-                builder.with_local(name);
-                AST::walk_expr(expr, builder)
+                AST::walk_expr(expr, builder);
+                let local_location = builder.with_def_local(name);
+                builder.with_byte(local_location);
+                println!("{}",local_location)
             }
 
             Stmt::While(condition, stmts) => {
@@ -164,7 +170,14 @@ impl AST {
             Expr::Bool(val) => {
                 builder.with_const(Rc::new(Value::Boolean(val)));
             }
-            Expr::Val(lit) => {}
+            Expr::Val(lit) => {
+                let resolved_local = builder.resolve_local(&lit);
+                let name = extract(lit);
+                builder
+                    .with_const(Rc::new(Value::Ident(name)))
+                    .with_opcode(OpCode::GetLocal)
+                    .with_byte(resolved_local);
+            }
             Expr::Call(expr, arguments) => {}
             Expr::Get(expr, name) => {}
             Expr::CSE(values) => {}

@@ -1,0 +1,17 @@
+
+fn fib: n {
+    let s = 12321;
+      {
+        let p = 1;
+        let a = 2;
+
+      }
+
+}
+
+
+:> start
+
+
+end <:
+

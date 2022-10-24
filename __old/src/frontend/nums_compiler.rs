@@ -33,13 +33,13 @@ impl Compiler {
                 let vec = ast.walk();
                 //println!("{:?}", &vec);
                 for frame in vec {
-                    Disassembler::disassemble(frame);
-                    // let value = frame_reader::read_frame(frame);
-                    // if let Ok( v ) = value {
-                    //     println!("{v:?}")
-                    // } else {
-                    //     println!("{:?}", value.err())
-                    // }
+                    Disassembler::disassemble(&frame);
+                    let value = frame_reader::read_frame(frame);
+                    if let Ok( v ) = value {
+                        println!("{v:?}")
+                    } else {
+                        println!("{:?}", value.err())
+                    }
                 }
             },
             Err(diagnostics) => {
