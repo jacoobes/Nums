@@ -15,14 +15,14 @@ data class Unary(val op: Token, val expr: Expr) : Expr
 data class Binary(val left : Expr, val right: Expr, val op: Token) : Expr
 data class And(val left: Expr, val right: Expr) : Expr
 data class Or(val left: Expr, val right: Expr) : Expr
-
 data class ArrayLiteral(val exprs : List<Expr>): Expr
 data class Bool(val bool: Boolean) : Expr
-
 data class ExpressionStatement(val expr : Expr):  Statement
 data class Val(val token: Variable, val expr: Expr) : Statement
+data class Block(val stmts: List<Statement>): Statement
+data class Iif(val condition: Expr, val statements: Statement, val other: List<Iif>, val last: Statement): Statement
+data class FFunction(val token: Variable, val args: List<Variable>, val block: Statement): Statement
 
-data class Iif(val expr: Expr) : Statement
 class NumsGrammar: Grammar<List<Statement>>() {
     private val num by regexToken("\\d+")
     private val semi by literalToken(";")
@@ -33,13 +33,13 @@ class NumsGrammar: Grammar<List<Statement>>() {
     private val not by literalToken("not")
     private val vval by literalToken("val")
     private val iif by literalToken("if")
+    private val fn by literalToken("fn")
     private val word by regexToken("[A-Za-z]+[1-9]*")
     private val ws by regexToken("\\s+", ignore = true)
     private val newline by regexToken("[\r\n]+", ignore = true)
     private val comma by literalToken(",")
     private val stringLit by regexToken("\".*?\"")
     private val assign by literalToken("=")
-    private val fn by literalToken("fn")
     private val lparen by literalToken("(")
     private val rparen by literalToken(")")
     private val lcurly by literalToken("{")
@@ -91,8 +91,14 @@ class NumsGrammar: Grammar<List<Statement>>() {
 
     private val exprStatement by expr and -semi map { ExpressionStatement(it) }
 
-    private val valStmt by -vval and varParser and -assign and exprStatement map { Val(it.t1, it.t2.expr )}
-    private val iifStmt by -iif and expr map { Iif(it) }
-    private val block by -lcurly and zeroOrMore(iifStmt or valStmt) and -rcurly
-    override val rootParser by block
+    private val valStmt by -vval * varParser * -assign * exprStatement use { Val(t1, t2.expr )}
+    private val iifStmt by -iif * expr map { object : Statement{} }
+    private val block by -lcurly * zeroOrMore(parser(this::statements)) and -rcurly map { Block(it) }
+    private val statements: Parser<Statement> by valStmt or iifStmt or block or exprStatement
+    private val fnDecl by (-fn * varParser * -lparen *  separatedTerms(
+        varParser,
+        separator = comma,
+        acceptZero = true
+    ) and -rparen and -lcurly * statements * -rcurly use { FFunction(t1, t2, t3 ) })
+    override val rootParser by oneOrMore(fnDecl)
 }
