@@ -1,6 +1,7 @@
 import com.github.h0tk3y.betterParse.grammar.tryParseToEnd
 import com.github.h0tk3y.betterParse.parser.ErrorResult
 import com.github.h0tk3y.betterParse.parser.Parsed
+import com.github.h0tk3y.betterParse.utils.Tuple2
 import kotlinx.cli.*
 import java.io.File
 
@@ -32,7 +33,8 @@ fun init(args: Array<String>) {
             println(result)
         }
         is Parsed -> {
-            println(result.value)
+
+            visitor(result.value, Tuple2(DefaultStatementVisitor, DefaultExprVisitor))
         }
     }
 }

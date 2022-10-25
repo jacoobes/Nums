@@ -27,7 +27,7 @@ data class Block(val stmts: List<Statement>) : Statement
 data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: Statement) : Statement
 data class Loop(val condition: Expr, val block: Statement) : Statement
 data class FFunction(val main: Boolean, val token: Variable, val args: List<Variable>, val block: Statement) : Statement
-class NumsGrammar : Grammar<List<Statement>>() {
+class NumsGrammar : Grammar<List<FFunction>>() {
     private val num by regexToken("\\d+")
     private val semi by literalToken(";")
     private val ttrue by literalToken("T")
