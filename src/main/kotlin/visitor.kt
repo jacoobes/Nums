@@ -31,6 +31,7 @@ fun visitor(tree: List<Statement>, visitStrategy: Pair<StatementVisitor, Express
         visitProgram(node,visitStrategy)
     }
 }
+//inorder traversal
 fun visitProgram(stmt: Statement, strats: Pair<StatementVisitor, ExpressionVisitor>) {
     val (sv, ev) = strats
     when (stmt) {
@@ -47,7 +48,7 @@ fun visitProgram(stmt: Statement, strats: Pair<StatementVisitor, ExpressionVisit
         is Val -> visit(stmt, sv::onVal).also { visitExpression(it.expr, ev) }
     }
 }
-
+//inorder traversal
 fun visitExpression(expr: Expr, strat: ExpressionVisitor) {
     when(expr) {
         is Number -> visit(expr, strat::onNumber)
