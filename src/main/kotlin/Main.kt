@@ -33,8 +33,7 @@ fun init(args: Array<String>) {
             println(result)
         }
         is Parsed -> {
-
-            visitor(result.value, Tuple2(DefaultStatementVisitor, DefaultExprVisitor))
+            visitor(result.value, DefaultStatementVisitor to DefaultExprVisitor)
         }
     }
 }

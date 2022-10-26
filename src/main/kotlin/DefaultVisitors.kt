@@ -2,39 +2,39 @@
 
 object DefaultExprVisitor : ExpressionVisitor {
     override fun onNumber(number: Number) {
-        TODO("Not yet implemented")
+        println(number)
     }
 
     override fun onStr(stringLiteral: StringLiteral) {
-        TODO("Not yet implemented")
+        println(stringLiteral)
     }
 
     override fun onBinary(binary: Binary) {
-        TODO("Not yet implemented")
+        println(binary)
     }
 
     override fun onUnary(unary: Unary) {
-        TODO("Not yet implemented")
+        println(unary)
     }
 
     override fun onBool(bool: Bool) {
-        TODO("Not yet implemented")
+        println(bool)
     }
 
     override fun onVariable(variable: Variable) {
-        TODO("Not yet implemented")
+        println(variable)
     }
 
     override fun onAnd(and: And) {
-        TODO("Not yet implemented")
+        println(and)
     }
 
     override fun onOr(or: Or) {
-        TODO("Not yet implemented")
+        println(or)
     }
 
     override fun onArrLiteral(arrayLiteral: ArrayLiteral) {
-        TODO("Not yet implemented")
+        println(arrayLiteral)
     }
 
 }
@@ -42,27 +42,27 @@ object DefaultExprVisitor : ExpressionVisitor {
 
 object DefaultStatementVisitor : StatementVisitor {
     override fun onFn(fn: FFunction) {
-        TODO("Not yet implemented")
+        println(fn)
     }
 
     override fun onIf(iif: Iif) {
-        TODO("Not yet implemented")
+        println(iif)
     }
 
     override fun onLoop(loop: Loop) {
-        TODO("Not yet implemented")
+        println(loop)
     }
 
     override fun onExprStmt(expressionStatement: ExpressionStatement) {
-        TODO("Not yet implemented")
+        println(expressionStatement)
     }
 
     override fun onBlock(block: Block) {
-        TODO("Not yet implemented")
+        println(block)
     }
 
     override fun onVal(valStmt: Val) {
-        TODO("Not yet implemented")
+        println(valStmt)
     }
 
 }
