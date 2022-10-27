@@ -6,9 +6,8 @@ KISS (keep it stupidly simple)
 - [ ] finish parsing
   - almost done
 - [x] create visitor / tree walker
-- [x] build qbe
-  - bruh this took forever
-- [ ] emit IL
+- [x] use minivm
+  - hopefull i know what im doing
 - [ ] create frontend executable jar
 - [ ] find out how to link libs
 
