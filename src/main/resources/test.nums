@@ -1,6 +1,4 @@
 fn main() {
-    if T { val s = 1; }
-    else if T { 2; }
-    else { 3; }
+    val t = 1 + 1;
 
 }

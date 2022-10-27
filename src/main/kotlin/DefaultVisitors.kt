@@ -30,17 +30,6 @@ class DefaultProgramVisitor(
         }
 
         override fun onIf(iif: Iif) {
-            f.writeln("# if ", semantics.scopeDepth)
-            expressionVisitor.visit(iif.condition)
-            val expr = semantics.topMostReg()
-            val iflabel = "@then${expr}"
-            val elselabel = "@else${expr}"
-            f.writeln("@then${expr}")
-
-            visit(iif.thenBody)
-
-            f.writeln("@else${expr}")
-            visit(iif.elseBody)
 
         }
 
@@ -64,9 +53,9 @@ class DefaultProgramVisitor(
         override fun onVal(valStmt: Val) {
             f.writeln("# val ${valStmt.token.name}", semantics.scopeDepth)
             expressionVisitor.visit(valStmt.expr)
-            val localReg = semantics.addRegister()
+            val localReg = semantics.topMostReg()
             semantics.addLocal(valStmt.token.name, localReg)
-            f.writeln("${reg(localReg)} <- reg ${reg(localReg - 1)}", semantics.scopeDepth)
+            println(semantics.registers)
         }
     }
 

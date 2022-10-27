@@ -5,7 +5,7 @@ data class Local(val name: String, val depth: Int, val registerVal: Int) {
 }
 class Semantics {
     private val locals = arrayListOf<Local>()
-    private val registers = HashSet<Int>()
+    val registers = HashSet<Int>()
     var scopeDepth = 0
     fun incDepth() = scopeDepth++
 
