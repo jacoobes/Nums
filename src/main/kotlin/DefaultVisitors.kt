@@ -39,15 +39,15 @@ class DefaultExprVisitor(f: BufferedWriter) : ExpressionVisitor {
 
     override fun visit(item: Expr) {
         when(item) {
-            is Number -> visit(item, this::onNumber)
-            is StringLiteral -> visit(item, this::onStr)
-            is Binary -> visit(item, this::onBinary)
-            is Unary -> visit(item, this::onUnary)
-            is Bool -> visit(item, this::onBool)
-            is ArrayLiteral -> visit(item, this::onArrLiteral)
-            is And -> visit(item, this::onAnd)
-            is Or -> visit(item, this::onOr)
-            is Variable -> visit(item, this::onVariable)
+            is Number -> visit(item, ::onNumber)
+            is StringLiteral -> visit(item, ::onStr)
+            is Binary -> visit(item, ::onBinary)
+            is Unary -> visit(item, ::onUnary)
+            is Bool -> visit(item, ::onBool)
+            is ArrayLiteral -> visit(item, ::onArrLiteral)
+            is And -> visit(item, ::onAnd)
+            is Or -> visit(item, ::onOr)
+            is Variable -> visit(item, ::onVariable)
         }
     }
 
