@@ -1,6 +1,7 @@
+import java.io.BufferedWriter
+import java.io.FileWriter
 
-
-object DefaultExprVisitor : ExpressionVisitor {
+class DefaultExprVisitor(f: BufferedWriter) : ExpressionVisitor {
     override fun onNumber(number: Number) {
         println(number)
     }
@@ -40,7 +41,7 @@ object DefaultExprVisitor : ExpressionVisitor {
 }
 
 
-object DefaultStatementVisitor : StatementVisitor {
+class DefaultStatementVisitor(f: BufferedWriter) : StatementVisitor {
     override fun onFn(fn: FFunction) {
         println(fn)
     }

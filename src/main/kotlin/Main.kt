@@ -3,7 +3,9 @@ import com.github.h0tk3y.betterParse.parser.ErrorResult
 import com.github.h0tk3y.betterParse.parser.Parsed
 import com.github.h0tk3y.betterParse.utils.Tuple2
 import kotlinx.cli.*
+import java.io.BufferedWriter
 import java.io.File
+import java.io.FileWriter
 
 fun main(args: Array<String>) {
     init(args)
@@ -26,6 +28,7 @@ fun init(args: Array<String>) {
     """)
     val parser = ArgParser("nums")
     val input by parser.option(ArgType.String, shortName = "i", description = "Main File").required()
+    val output by parser.option(ArgType.String, shortName = "o", description = "Output QBE SSA").required()
     parser.parse(args)
     val fileString = File(input).readText()
     when(val result = NumsGrammar().tryParseToEnd(fileString)) {
@@ -33,7 +36,11 @@ fun init(args: Array<String>) {
             println(result)
         }
         is Parsed -> {
-            visitor(result.value, DefaultStatementVisitor to DefaultExprVisitor)
+            val fr = FileWriter(output)
+            val br = BufferedWriter(fr)
+            br.use {
+                visitor(result.value, DefaultStatementVisitor(it) to DefaultExprVisitor(it))
+            }
         }
     }
 }

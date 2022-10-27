@@ -1,0 +1,8 @@
+@__entry
+    r0 <- call main
+    exit
+func main
+    r0 <- int 4985
+    putchar r0
+   exit
+end;
