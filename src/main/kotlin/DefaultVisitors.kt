@@ -1,12 +1,12 @@
 import java.io.BufferedWriter
 
-class DefaultExprVisitor(f: BufferedWriter) : ExpressionVisitor {
+class DefaultExprVisitor(val f: BufferedWriter) : ExpressionVisitor {
     override fun onNumber(number: Number) {
-        println(number)
+        f.write("int ${number.value}")
     }
 
     override fun onStr(stringLiteral: StringLiteral) {
-        println(stringLiteral)
+        f.write("str :${stringLiteral.str}")
     }
 
     override fun onBinary(binary: Binary) {
@@ -14,7 +14,7 @@ class DefaultExprVisitor(f: BufferedWriter) : ExpressionVisitor {
     }
 
     override fun onUnary(unary: Unary) {
-        println(unary)
+        visit(unary.expr)
     }
 
     override fun onBool(bool: Bool) {
@@ -58,10 +58,11 @@ class DefaultExprVisitor(f: BufferedWriter) : ExpressionVisitor {
 class DefaultStatementVisitor(val f: BufferedWriter, val exprVisitor: DefaultExprVisitor) : StatementVisitor {
     override fun onFn(fn: FFunction) {
         if(fn.main) {
-            f.write("@__entry")
-        } else f.write("@__${fn.token.name}")
+            f.write("@__entry\n    r0 <- call main\n    exit\n")
+        }
+        f.write("func ${fn.token.name}\n")
         visit(fn.block)
-        f.write("exit")
+        f.write("end")
     }
 
     override fun onIf(iif: Iif) {

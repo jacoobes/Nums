@@ -13,7 +13,7 @@ interface Statement : Node
 
 object Skip : Statement
 data class StringLiteral(val str: String) : Expr
-data class Number(val value: Int) : Expr
+data class Number(val value: String) : Expr
 data class Variable(val name: String) : Expr
 data class Unary(val op: Token, val expr: Expr) : Expr
 data class Binary(val left: Expr, val right: Expr, val op: Token) : Expr
@@ -46,6 +46,7 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     private val multiLineComment by regexToken(":>[^<]*(?:[^<:]*)<:", ignore = true)
     private val singleLineComment by regexToken("~~[^\\n]*\\n", ignore = true)
     private val comma by literalToken(",")
+    //regex might need adjusting
     private val stringLit by regexToken("\".*?\"")
     private val assign by literalToken("=")
     private val lparen by literalToken("(")
@@ -65,7 +66,8 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     private val lt by literalToken("<")
     private val gt by literalToken(">")
     private val stringLiteral by stringLit use { StringLiteral(text.removeSurrounding("\"", "\"")) }
-    private val numParser by num use { Number(text.toInt()) }
+    //only supports int right now
+    private val numParser by num use { Number(text) }
     private val varParser by word use { Variable(text) }
     private val truthParser by ttrue asJust Bool(true)
     private val falseParser by ffalse asJust Bool(false)

@@ -40,6 +40,7 @@ fun init(args: Array<String>) {
             val br = BufferedWriter(fr)
             br.use {
                 val stmtVisitor = DefaultStatementVisitor(it, DefaultExprVisitor(it))
+                val registerTracker = RegisterTracker()
                 visitor(result.value, stmtVisitor)
             }
         }
