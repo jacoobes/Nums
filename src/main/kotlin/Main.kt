@@ -39,7 +39,8 @@ fun init(args: Array<String>) {
             val fr = FileWriter(output)
             val br = BufferedWriter(fr)
             br.use {
-                visitor(result.value, DefaultStatementVisitor(it) to DefaultExprVisitor(it))
+                val stmtVisitor = DefaultStatementVisitor(it, DefaultExprVisitor(it))
+                visitor(result.value, stmtVisitor)
             }
         }
     }
