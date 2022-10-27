@@ -8,6 +8,7 @@ KISS (keep it stupidly simple)
 - [x] create visitor / tree walker
 - [x] use minivm
   - hopefull i know what im doing
+- [ ] fold math and boolean expressions in parse stage?
 - [ ] create frontend executable jar
 - [ ] find out how to link libs
 
