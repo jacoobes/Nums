@@ -2,4 +2,17 @@
     r0 <- call main
     exit
 func main
+  # if 
+  r0 <- int 1
+@then0
+  # val s
+  r1 <- int 1
+  r2 <- reg r1
+@else0
+  # if 
+  r3 <- int 1
+@then3
+@else3
+
+exit
 end

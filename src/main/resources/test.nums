@@ -1,11 +1,6 @@
-
-fn main () {
-    if p {
-        sds;
-    } else if 1 {
-        sdfds;
-    } else {
-        sdfd;
-    }
+fn main() {
+    if T { val s = 1; }
+    else if T { 2; }
+    else { 3; }
 
 }

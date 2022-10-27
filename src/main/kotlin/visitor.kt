@@ -1,10 +1,11 @@
-import kotlin.reflect.KFunction1
+import java.io.BufferedWriter
+import java.lang.Error
 
 interface Visitor<T> {
     fun visit(item: T)
 }
 
-interface StatementVisitor : Visitor<Statement> {
+interface StatementVisitor: Visitor<Statement> {
     fun onFn(fn : FFunction)
     fun onIf(iif: Iif)
     fun onLoop(loop: Loop)
@@ -17,6 +18,7 @@ interface ExpressionVisitor : Visitor<Expr> {
     fun onNumber(number: Number)
     fun onStr(stringLiteral: StringLiteral)
     fun onBinary(binary: Binary)
+    fun onCmp(cmp: Comparison)
     fun onUnary(unary: Unary)
     fun onBool(bool: Bool)
     fun onVariable(variable: Variable)
@@ -30,12 +32,16 @@ fun <T: Node> visit(item : T, cb: (T) -> Unit): T {
     return item
 }
 
-fun visitor(tree: List<Statement>,visitStrategy: StatementVisitor) {
+fun visitor(tree: List<Statement>, bw: BufferedWriter) {
     for (node in tree) {
-        visitProgram(node,visitStrategy)
+        when(node) {
+            is FFunction -> visitProgram(node, bw)
+            else -> throw Error("Cannot have $node top level!")
+        }
     }
 }
 //inorder traversal
-fun visitProgram(stmt: Statement, strats: StatementVisitor) {
-    strats.visit(stmt)
+fun visitProgram(stmt: FFunction, bw: BufferedWriter) {
+    val defaultProgramVisitor = DefaultProgramVisitor(bw, Semantics())
+    defaultProgramVisitor.start(stmt)
 }

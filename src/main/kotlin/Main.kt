@@ -1,7 +1,6 @@
 import com.github.h0tk3y.betterParse.grammar.tryParseToEnd
 import com.github.h0tk3y.betterParse.parser.ErrorResult
 import com.github.h0tk3y.betterParse.parser.Parsed
-import com.github.h0tk3y.betterParse.utils.Tuple2
 import kotlinx.cli.*
 import java.io.BufferedWriter
 import java.io.File
@@ -39,9 +38,7 @@ fun init(args: Array<String>) {
             val fr = FileWriter(output)
             val br = BufferedWriter(fr)
             br.use {
-                val stmtVisitor = DefaultStatementVisitor(it, DefaultExprVisitor(it))
-                val registerTracker = RegisterTracker()
-                visitor(result.value, stmtVisitor)
+                visitor(result.value, it)
             }
         }
     }

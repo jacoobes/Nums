@@ -11,12 +11,23 @@ interface Node
 interface Expr : Node
 interface Statement : Node
 
+enum class ComparisonOps {
+    Lt,
+    Lte,
+    Gt,
+    Gte,
+    Eq,
+    Neq;
+}
+
 object Skip : Statement
 data class StringLiteral(val str: String) : Expr
 data class Number(val value: String) : Expr
 data class Variable(val name: String) : Expr
 data class Unary(val op: Token, val expr: Expr) : Expr
-data class Binary(val left: Expr, val right: Expr, val op: Token) : Expr
+data class Binary(val left: Expr, val right: Expr, val op: String) : Expr
+data class Call(val name: Variable) : Expr
+data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : Expr
 data class And(val left: Expr, val right: Expr) : Expr
 data class Or(val left: Expr, val right: Expr) : Expr
 data class ArrayLiteral(val exprs: List<Expr>) : Expr
@@ -40,9 +51,37 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     private val iif by literalToken("if")
     private val eels by literalToken("else")
     private val fn by literalToken("fn")
+    private val plus by literalToken("+")
+    private val minus by literalToken("-")
+    private val div by literalToken("/")
+    private val mod by literalToken("%")
+    private val timex by literalToken("*")
+    private val equal by literalToken("==")
+    private val nequal by literalToken("!=")
+    private val lessEqual by literalToken("<=")
+    private val greaterEqual by literalToken(">=")
+    private val lt by literalToken("<")
+    private val gt by literalToken(">")
     private val word by regexToken("[A-Za-z]+[1-9]*")
     private val ws by regexToken("\\s+", ignore = true)
     private val newline by regexToken("[\r\n]+", ignore = true)
+
+    private val compareToKind = mapOf(
+        lt to ComparisonOps.Lt,
+        gt to ComparisonOps.Gt,
+        greaterEqual to ComparisonOps.Gte,
+        lessEqual to ComparisonOps.Lte,
+        nequal to ComparisonOps.Neq,
+        equal to ComparisonOps.Eq
+    )
+
+    private val binOpToKind = mapOf(
+        plus to "add",
+        minus to "sub",
+        div to "div",
+        mod to "mod",
+        timex to "mul"
+    )
     private val multiLineComment by regexToken(":>[^<]*(?:[^<:]*)<:", ignore = true)
     private val singleLineComment by regexToken("~~[^\\n]*\\n", ignore = true)
     private val comma by literalToken(",")
@@ -54,17 +93,6 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     private val lcurly by literalToken("{")
     private val rcurly by literalToken("}")
     private val pipe by regexToken("\\|")
-    private val plus by regexToken("\\+")
-    private val minus by literalToken("-")
-    private val div by literalToken("/")
-    private val mod by literalToken("%")
-    private val timex by regexToken("\\*")
-    private val equal by literalToken("==")
-    private val nequal by literalToken("!=")
-    private val lessEqual by literalToken("<=")
-    private val greaterEqual by literalToken(">=")
-    private val lt by literalToken("<")
-    private val gt by literalToken(">")
     private val stringLiteral by stringLit use { StringLiteral(text.removeSurrounding("\"", "\"")) }
     //only supports int right now
     private val numParser by num use { Number(text) }
@@ -79,21 +107,18 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     private val grouped by -lparen and parser(this::expr) and -rparen
     private val unary by (not and parser(this::expr)) map { Unary(it.t1.type, it.t2) }
     private val primitiveExpr: Parser<Expr> by (numParser or varParser or truthParser or falseParser or stringLiteral or grouped or unary or arrayLit)
+
     private val multiplicationOperator by timex or div or mod
-    private val multiplicationOrTerm by leftAssociative(primitiveExpr, multiplicationOperator) { l, o, r ->
-        Binary(l, r, o.type)
-    }
+    private val multiplicationOrTerm by leftAssociative(primitiveExpr, multiplicationOperator) { l, o, r ->  Binary(l, r, binOpToKind[o.type]!!) }
     private val sumOperators by plus or minus
-    private val summationOrMul by leftAssociative(multiplicationOrTerm, sumOperators) { l, o, r ->
-        Binary(l, r, o.type)
-    }
+    private val summationOrMul by leftAssociative(multiplicationOrTerm, sumOperators) { l, o, r ->  Binary(l, r, binOpToKind[o.type]!!) }
     private val compareOps by lt or gt or greaterEqual or lessEqual
-    private val comparisonOrSummation by leftAssociative(summationOrMul, compareOps) { l, o, r ->
-        Binary(l, r, o.type)
+    private val comparisonOrSummation by (summationOrMul * optional(compareOps * summationOrMul)).map { (left, tail) ->
+        tail?.let { (op, r) -> Comparison(left, r, compareToKind[op.type]!! ) } ?: left
     }
     private val equalityOps by equal or nequal
     private val equality by leftAssociative(comparisonOrSummation, equalityOps) { l, o, r ->
-        Binary(l, r, o.type)
+        Comparison(l, r, compareToKind[o.type]!!)
     }
     private val andChain by leftAssociative(equality, and) { l, _, r ->
         And(l, r)
@@ -107,8 +132,8 @@ class NumsGrammar : Grammar<List<FFunction>>() {
 
     private val valStmt by -vval * varParser * -assign * exprStatement use { Val(t1, t2.expr) }
     private val iifStmt by (-iif * expr * -lcurly * parser(this::statements) * -rcurly
-            * zeroOrMore(-eels * -iif * expr * parser(this::statements)) *
-            (optional(-eels * parser(this::statements))).map { it ?: Skip }
+            * zeroOrMore(-eels * -iif * expr * -lcurly * parser(this::statements) * -rcurly) *
+            (optional(-eels * -lcurly * parser(this::statements) * -rcurly )).map { it ?: Skip }
             ).use {
             Iif(t1, t2, t3.foldRight(t4) { (elifC, elifB), el -> Iif(elifC, elifB, el) })
         }
@@ -125,7 +150,7 @@ class NumsGrammar : Grammar<List<FFunction>>() {
             t1.name == "main",
             t1,
             t2,
-            Block(t3)
+            Block(t3),
         )
     })
     override val rootParser by oneOrMore(fnDecl)
