@@ -16,6 +16,7 @@ class DefaultProgramVisitor(
                 is ExpressionStatement -> visit(item, ::onExprStmt)
                 is Block -> visit(item,::onBlock)
                 is Val -> visit(item, ::onVal)
+                else -> throw Error("Cannot have local functions")
             }
         }
 
@@ -45,9 +46,7 @@ class DefaultProgramVisitor(
         }
 
         override fun onExprStmt(expressionStatement: ExpressionStatement) {
-            when(expressionStatement.expr) {
-                is Call -> TODO()
-            }
+            if (expressionStatement.expr is Call) TODO()
         }
 
         override fun onBlock(block: Block) {
@@ -86,7 +85,16 @@ class DefaultProgramVisitor(
             visit(cmp.left)
             visit(cmp.right)
             val iReg = semantics.addRegister()
-            f.writeln("${reg(iReg)} <- ")
+            val eq = "eq.${cmp.hashCode()}"
+            val neq = "neq.${cmp.hashCode()}"
+            val exit = "exit.${cmp.hashCode()}"
+            f.writeln("beq ${reg(iReg - 2)} ${reg(iReg - 1)} $neq $eq", semantics.scopeDepth)
+            f.writeln("@$eq",semantics.scopeDepth)
+            f.writeln(" ${reg(iReg)} <- int 1", semantics.scopeDepth)
+            f.writeln("jump $exit", semantics.scopeDepth)
+            f.writeln("@$neq", semantics.scopeDepth)
+            f.writeln(" ${reg(iReg)} <- int 0", semantics.scopeDepth)
+            f.writeln("@$exit", semantics.scopeDepth)
         }
 
         override fun onUnary(unary: Unary) {
@@ -95,13 +103,13 @@ class DefaultProgramVisitor(
 
         override fun onBool(bool: Bool) {
             val ireg = semantics.addRegister()
-            f.writeln(reg(ireg) + " <- int ${if(bool.bool) "0" else "1"}", semantics.scopeDepth)
+            f.writeln(reg(ireg) + " <- int ${if(bool.bool) "1" else "0"}", semantics.scopeDepth)
         }
 
         override fun onVariable(variable: Variable) {
             val ireg = semantics.addRegister()
             val local = semantics.getLocal(variable)
-            f.writeln("${reg(ireg)} <- ${reg(local.registerVal)}", semantics.scopeDepth)
+            f.writeln("${reg(ireg)} <- reg ${reg(local.registerVal)}", semantics.scopeDepth)
         }
 
         override fun onAnd(and: And) {
@@ -130,6 +138,7 @@ class DefaultProgramVisitor(
                 is Or -> visit(item, ::onOr)
                 is Variable -> visit(item, ::onVariable)
                 is Comparison -> visit(item, ::onCmp)
+                else -> throw Error("no")
             }
         }
     }

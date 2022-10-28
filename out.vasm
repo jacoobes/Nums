@@ -1,0 +1,22 @@
+@__entry
+    r0 <- call main
+    exit
+func main
+  r0 <- int 1
+  r1 <- int 1
+  beq r0 r1 neq.66281861 eq.66281861
+  @eq.66281861
+   r2 <- int 1
+  jump exit.66281861
+  @neq.66281861
+   r2 <- int 0
+  @exit.66281861
+  bb r2 L2054740936 E2054740936
+  @L2054740936
+    # val f
+    r3 <- int 4
+  jump L2054740936
+  @E2054740936
+  # val p
+  r4 <- reg r3
+end
