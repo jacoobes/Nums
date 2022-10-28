@@ -28,10 +28,7 @@ class Semantics {
         registers.add(registers.size)
         return registers.size - 1
     }
-
-    fun topMostReg() : Int {
-        return registers.size - 1
-    }
+    fun topMostReg() = registers.size - 1
     fun getLocal(variable: Variable): Local {
         return locals.find { it.name == variable.name } ?: throw Error("Could not find a variable $variable")
     }
