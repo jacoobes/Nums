@@ -18,10 +18,7 @@ class Semantics {
         val newLocal = Local(local, scopeDepth, registerVal)
         if(localMatch(newLocal)) throw Error("Already have another variable $local in same scope")
         val idx = hasShadow(newLocal)
-        if(idx == -1) locals.add(newLocal) else {
-
-            locals[idx] = newLocal
-        }
+        if(idx == -1) locals.add(newLocal) else locals[idx] = newLocal
     }
 
     private fun hasShadow(local: Local) : Int {
