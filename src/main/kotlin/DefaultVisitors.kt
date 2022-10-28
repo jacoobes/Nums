@@ -34,7 +34,14 @@ class DefaultProgramVisitor(
         }
 
         override fun onLoop(loop: Loop) {
-            println(loop)
+            exprVisitor.visit(loop.condition)
+            val curReg = semantics.topMostReg()
+            val hash = loop.hashCode()
+            f.writeln("bb ${reg(curReg)} L$hash E$hash", semantics.scopeDepth)
+            f.writeln("@L$hash", semantics.scopeDepth)
+            visit(loop.block)
+            f.writeln("jump L$hash", semantics.scopeDepth)
+            f.writeln("@E$hash", semantics.scopeDepth)
         }
 
         override fun onExprStmt(expressionStatement: ExpressionStatement) {
@@ -47,7 +54,6 @@ class DefaultProgramVisitor(
         override fun onBlock(block: Block) {
             semantics.incDepth()
             block.stmts.forEach(::visit)
-            f.writeln("exit")
             semantics.decDepth()
         }
 
@@ -90,20 +96,23 @@ class DefaultProgramVisitor(
 
         override fun onBool(bool: Bool) {
             val ireg = semantics.addRegister()
-            f.writeln(reg(ireg) + " <- int ${if(bool.bool) "1" else "0"}", semantics.scopeDepth)
+            f.writeln(reg(ireg) + " <- int ${if(bool.bool) "0" else "1"}", semantics.scopeDepth)
         }
 
         override fun onVariable(variable: Variable) {
             val local = semantics.getLocal(variable)
+            //temp for displaying characters if i wanted
             f.writeln("putchar ${reg(local.registerVal)}", semantics.scopeDepth)
         }
 
         override fun onAnd(and: And) {
-            println(and)
+            visit(and.left)
+            visit(and.right)
         }
 
         override fun onOr(or: Or) {
-            println(or)
+            visit(or.left)
+            visit(or.right)
         }
 
         override fun onArrLiteral(arrayLiteral: ArrayLiteral) {

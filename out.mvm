@@ -2,41 +2,12 @@
     r0 <- call main
     exit
 func main
-  # val t
-  r0 <- int 1
-  r1 <- int 1
-  r2 <- add r0 r1
-  # val f
-  r3 <- int 1
-  r4 <- int 2
-  r5 <- add r3 r4
-    # val h
-    r6 <- int 72
-    # val e
-    r7 <- int 69
-    # val l
-    r8 <- int 76
-    # val o
-    r9 <- int 79
-    # val space
-    r10 <- int 32
-    # val w
-    r11 <- int 87
-    # val r
-    r12 <- int 82
-    # val d
-    r13 <- int 68
-    putchar r6
-    putchar r7
-    putchar r8
-    putchar r8
-    putchar r9
-    putchar r10
-    putchar r11
-    putchar r9
-    putchar r12
-    putchar r8
-    putchar r13
-exit
-exit
+  # val p
+  r0 <- int 73
+  r1 <- int 0
+  bb r1 L174 E174
+  @L174
+    putchar r0
+  jump L174
+  @E174
 end

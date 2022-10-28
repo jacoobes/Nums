@@ -17,11 +17,11 @@ class Semantics {
     fun addLocal(local: String, registerVal: Int) {
         val newLocal = Local(local, scopeDepth, registerVal)
         if(localMatch(newLocal)) throw Error("Already have another variable $local in same scope")
-        val idx = hasShadow(newLocal)
+        val idx = shadowedVariable(newLocal)
         if(idx == -1) locals.add(newLocal) else locals[idx] = newLocal
     }
 
-    private fun hasShadow(local: Local) : Int {
+    private fun shadowedVariable(local: Local) : Int {
         return locals.indexOfFirst { it.name.compareTo(local.name) == 0 && it.depth < local.depth  }
     }
     fun addRegister(): Int {
