@@ -1,6 +1,6 @@
 fn main() {
     val p = 73;
-    loop T {
-        p;
+    {
+        val p = p + 1;
     }
 }

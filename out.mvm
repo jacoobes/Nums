@@ -4,10 +4,8 @@
 func main
   # val p
   r0 <- int 73
-  r1 <- int 0
-  bb r1 L174 E174
-  @L174
-    putchar r0
-  jump L174
-  @E174
+    # val p
+    r1 <- r0
+    r2 <- int 1
+    r3 <- add r1 r2
 end

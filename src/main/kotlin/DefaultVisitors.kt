@@ -47,7 +47,6 @@ class DefaultProgramVisitor(
         override fun onExprStmt(expressionStatement: ExpressionStatement) {
             when(expressionStatement.expr) {
                 is Call -> TODO()
-                is Variable -> exprVisitor.visit(expressionStatement.expr)
             }
         }
 
@@ -100,9 +99,9 @@ class DefaultProgramVisitor(
         }
 
         override fun onVariable(variable: Variable) {
+            val ireg = semantics.addRegister()
             val local = semantics.getLocal(variable)
-            //temp for displaying characters if i wanted
-            f.writeln("putchar ${reg(local.registerVal)}", semantics.scopeDepth)
+            f.writeln("${reg(ireg)} <- ${reg(local.registerVal)}", semantics.scopeDepth)
         }
 
         override fun onAnd(and: And) {
