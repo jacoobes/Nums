@@ -40,26 +40,26 @@ class DefaultProgramVisitor(
         override fun onExprStmt(expressionStatement: ExpressionStatement) {
             when(expressionStatement.expr) {
                 is Call -> TODO()
+                is Variable -> exprVisitor.visit(expressionStatement.expr)
             }
         }
 
         override fun onBlock(block: Block) {
             semantics.incDepth()
             block.stmts.forEach(::visit)
-            f.writeln("\nexit")
+            f.writeln("exit")
             semantics.decDepth()
         }
 
         override fun onVal(valStmt: Val) {
             f.writeln("# val ${valStmt.token.name}", semantics.scopeDepth)
-            expressionVisitor.visit(valStmt.expr)
+            exprVisitor.visit(valStmt.expr)
             val localReg = semantics.topMostReg()
             semantics.addLocal(valStmt.token.name, localReg)
-            println(semantics.registers)
         }
     }
 
-    private val expressionVisitor = object : ExpressionVisitor {
+    private val exprVisitor = object : ExpressionVisitor {
         override fun onNumber(number: Number) {
             val ireg = semantics.addRegister()
             f.writeln("${reg(ireg)} <- int ${number.value}", semantics.scopeDepth)
@@ -94,7 +94,8 @@ class DefaultProgramVisitor(
         }
 
         override fun onVariable(variable: Variable) {
-            println(variable)
+            val local = semantics.getLocal(variable)
+            f.writeln("putchar ${reg(local.registerVal)}", semantics.scopeDepth)
         }
 
         override fun onAnd(and: And) {

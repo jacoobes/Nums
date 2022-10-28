@@ -1,4 +1,15 @@
 fn main() {
     val t = 1 + 1;
-
+    val f = 1 + 2;
+    {
+        val h = 72;
+        val e = 69;
+        val l = 76;
+        val o = 79;
+        val space = 32;
+        val w = 87;
+        val r = 82;
+        val d = 68;
+        h; e; l; l; o; space; w; o; r; l; d;
+    }
 }

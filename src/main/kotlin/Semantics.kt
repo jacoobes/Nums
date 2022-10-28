@@ -13,10 +13,19 @@ class Semantics {
         locals.retainAll { it.depth < scopeDepth }
         scopeDepth--
     }
+
     fun addLocal(local: String, registerVal: Int) {
         val newLocal = Local(local, scopeDepth, registerVal)
         if(localMatch(newLocal)) throw Error("Already have another variable $local in same scope")
-        locals.add(newLocal)
+        val idx = hasShadow(newLocal)
+        if(idx == -1) locals.add(newLocal) else {
+
+            locals[idx] = newLocal
+        }
+    }
+
+    private fun hasShadow(local: Local) : Int {
+        return locals.indexOfFirst { it.name.compareTo(local.name) == 0 && it.depth < local.depth  }
     }
     fun addRegister(): Int {
         registers.add(registers.size)
@@ -25,6 +34,9 @@ class Semantics {
 
     fun topMostReg() : Int {
         return registers.size - 1
+    }
+    fun getLocal(variable: Variable): Local {
+        return locals.find { it.name == variable.name } ?: throw Error("Could not find a variable $variable")
     }
 
     fun removeRegister(el: Int) {
