@@ -1,7 +1,3 @@
 fn main() {
-    val s = T;
-    {
-        val s = F;
-    }
-    s;
+    val p = a{-1};
 }

@@ -2,9 +2,5 @@
     r0 <- call main
     exit
 func main
-  # val s
-  r0 <- int 1
-    # val s
-    r1 <- int 0
-  r2 <- reg r0
+  # val p
 end

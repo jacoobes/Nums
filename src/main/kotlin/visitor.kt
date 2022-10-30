@@ -1,4 +1,3 @@
-import java.io.BufferedWriter
 import java.lang.Error
 
 interface Visitor<T> {
@@ -24,6 +23,7 @@ interface ExpressionVisitor : Visitor<Expr> {
     fun onVariable(variable: Variable)
     fun onAnd(and: And)
     fun onOr(or: Or)
+    fun onArrAccess(arrAccess: ArrAccess)
     fun onArrLiteral(arrayLiteral: ArrayLiteral)
 }
 
@@ -32,7 +32,7 @@ fun <T: Node> visit(item : T, cb: (T) -> Unit): T {
     return item
 }
 
-fun visitor(tree: List<Statement>, bw: BufferedWriter) {
+fun visitor(tree: List<Statement>, bw: NumsWriter) {
     for (node in tree) {
         when(node) {
             is FFunction -> visitProgram(node, bw)
@@ -41,7 +41,7 @@ fun visitor(tree: List<Statement>, bw: BufferedWriter) {
     }
 }
 //inorder traversal
-fun visitProgram(stmt: FFunction, bw: BufferedWriter) {
+fun visitProgram(stmt: FFunction, bw: NumsWriter) {
     val defaultProgramVisitor = DefaultProgramVisitor(bw, Semantics())
     defaultProgramVisitor.start(stmt)
 }

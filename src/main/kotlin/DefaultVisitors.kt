@@ -1,8 +1,6 @@
-import java.io.BufferedWriter
-
 
 class DefaultProgramVisitor(
-    private val f: BufferedWriter,
+    private val f: NumsWriter,
     private val semantics: Semantics,
     ) {
     fun start(fn: FFunction) {
@@ -146,6 +144,11 @@ class DefaultProgramVisitor(
             arrayLiteral.exprs.forEach(::visit)
         }
 
+
+        override fun onArrAccess(access: ArrAccess) {
+            println(access)
+        }
+
         override fun visit(item: Expr) {
             when(item) {
                 is Number -> visit(item, ::onNumber)
@@ -158,16 +161,11 @@ class DefaultProgramVisitor(
                 is Or -> visit(item, ::onOr)
                 is Variable -> visit(item, ::onVariable)
                 is Comparison -> visit(item, ::onCmp)
-                else -> throw Error("no")
+                is ArrAccess -> visit(item, ::onArrAccess)
+                is Call -> throw Error("not supported yet")
             }
         }
     }
-}
-fun BufferedWriter.write(string: String, depth:Int= 0) {
-    write("${"".padEnd(depth * 2)}$string")
-}
-fun BufferedWriter.writeln(string: String, depth:Int = 0) {
-    write("${"".padEnd(depth * 2)}$string\n")
 }
 
 fun r(int: Int): String = "r$int"

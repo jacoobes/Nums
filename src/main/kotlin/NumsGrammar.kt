@@ -36,6 +36,7 @@ data class Variable(val name: String) : Expr()
 data class Unary(val op: Token, val expr: Expr) : Expr()
 data class Binary(val left: Expr, val right: Expr, val op: String) : Expr()
 data class Call(val name: Variable) : Expr()
+data class ArrAccess(val arr: Variable, val idx: Expr) : Expr()
 data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : Expr()
 data class And(val left: Expr, val right: Expr) : Expr()
 data class Or(val left: Expr, val right: Expr) : Expr()
@@ -115,8 +116,16 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     ) and -rcurly) map { ArrayLiteral(it) }
     private val grouped by -lparen and parser(this::expr) and -rparen
     private val unary by (not and parser(this::expr)) map { Unary(it.t1.type, it.t2) }
-    private val primitiveExpr: Parser<Expr> by (numParser or varParser or truthParser or falseParser or stringLiteral or grouped or unary or arrayLit)
-
+    private val primitiveExpr: Parser<Expr> by (
+            numParser or
+            varParser or
+            truthParser or
+            falseParser or
+            stringLiteral or
+            grouped or
+            unary or
+            arrayLit
+            )
     private val multiplicationOperator by timex or div or mod
     private val multiplicationOrTerm by leftAssociative(primitiveExpr, multiplicationOperator) { l, o, r ->  Binary(l, r, binOpToKind[o.type]!!) }
     private val sumOperators by plus or minus
