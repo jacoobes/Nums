@@ -35,7 +35,9 @@ class Semantics {
     }
     fun topMostReg() = registers.size - 1
     fun getLocal(variable: Variable): Local {
-        return locals.find { it.name == variable.name } ?: throw Error("Could not find a variable $variable")
+        return locals.find {
+            it.name == variable.name && it.depth <= scopeDepth
+        } ?: throw Error("Could not find a $variable")
     }
 
     fun removeRegister(el: Int) {

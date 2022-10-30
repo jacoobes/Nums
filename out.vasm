@@ -5,18 +5,19 @@ func main
   # val true
   r0 <- int 1
   r1 <- int 1
-  beq r0 r1 neq.66281861 eq.66281861
-  @eq.66281861
+  beq r0 r1 neq.1286831840 eq.1286831840
+  @eq.1286831840
    r2 <- int 1
-  jump exit.66281861
-  @neq.66281861
+  jump exit.1286831840
+  @neq.1286831840
    r2 <- int 0
-  @exit.66281861
+  @exit.1286831840
   # val false
   r3 <- int 0
-  # val shouldbeFalse
-  r4 <- reg r3
-  r5 <- reg r2
-  r5 <- bor r5 r4
-  putchar r5
-end
+  r4 <- int 0
+  bb r4 head.2048333504 exit.2048333504
+  @loop.2048333504
+    # val poo
+    r5 <- str :1312312
+  jump loop.2048333504
+  @exit.2048333504

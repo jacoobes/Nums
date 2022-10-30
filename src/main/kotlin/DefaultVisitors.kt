@@ -31,6 +31,13 @@ class DefaultProgramVisitor(
         }
 
         override fun onIf(iif: Iif) {
+            exprVisitor.visit(iif.condition)
+            val eReg = semantics.topMostReg()
+            visit(iif.thenBody)
+            val thenLabel = "then.${iif.thenBody.hashCode()}"
+            visit(iif.elseBody)
+            val elseLabel = "else.${iif.elseBody.hashCode()}"
+
 
         }
 
@@ -47,6 +54,7 @@ class DefaultProgramVisitor(
 
         override fun onExprStmt(expressionStatement: ExpressionStatement) {
             if (expressionStatement.expr is Call) TODO()
+            if(expressionStatement.expr is Variable) exprVisitor.visit(expressionStatement.expr)
         }
 
         override fun onBlock(block: Block) {
@@ -124,14 +132,14 @@ class DefaultProgramVisitor(
             visit(and.left)
             visit(and.right)
             val i = semantics.topMostReg()
-            f.writeln("${r(i)} <- band ${r(i)} ${r(i-1)} ")
+            f.writeln("${r(i)} <- band ${r(i)} ${r(i-1)}",semantics.scopeDepth)
         }
 
         override fun onOr(or: Or) {
             visit(or.left)
             visit(or.right)
             val i = semantics.topMostReg()
-            f.writeln("${r(i)} <- bor ${r(i)} ${r(i-1)} ")
+            f.writeln("${r(i)} <- bor ${r(i)} ${r(i-1)}",semantics.scopeDepth)
         }
 
         override fun onArrLiteral(arrayLiteral: ArrayLiteral) {

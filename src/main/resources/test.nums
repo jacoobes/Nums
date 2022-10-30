@@ -1,5 +1,8 @@
 fn main() {
    val true = 1 == 1;
    val false = F;
-   val shouldbeFalse = false or true;
+   loop F {
+    val poo = "1312312";
+   }
+   poo;
 }
