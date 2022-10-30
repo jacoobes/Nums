@@ -11,7 +11,7 @@ class Semantics {
     //TODO: add proper way to dispose variables semantically and in the actual assembly
     // was thinking get all that were removed and reset register tracker to highest depth?
     fun decDepth() {
-        val removed = locals.filter { it.depth < scopeDepth }
+        val removed = locals.filter { it.depth >= scopeDepth }
         locals.removeAll(removed.toSet())
         scopeDepth--
     }
@@ -19,16 +19,9 @@ class Semantics {
     fun addLocal(local: String, registerVal: Int) {
         val newLocal = Local(local, scopeDepth, registerVal)
         if(localMatch(newLocal)) throw Error("Already have another variable $local in same scope")
-        val idx = shadowedVariable(newLocal)
-        if(idx == -1) locals.add(newLocal) else {
-            registers.remove(idx)
-            locals[idx] = newLocal
-        }
+        locals.add(newLocal)
     }
 
-    private fun shadowedVariable(local: Local) : Int {
-        return locals.indexOfFirst { it.name.compareTo(local.name) == 0 && it.depth < local.depth  }
-    }
     fun addRegister(): Int {
         registers.add(registers.size)
         return registers.size - 1

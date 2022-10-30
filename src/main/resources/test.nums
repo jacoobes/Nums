@@ -1,8 +1,7 @@
 fn main() {
-   val true = 1 == 1;
-   val false = F;
-   loop F {
-    val poo = "1312312";
-   }
-   poo;
+    val s = T;
+    {
+        val s = F;
+    }
+    s;
 }
