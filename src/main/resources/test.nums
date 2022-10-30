@@ -1,4 +1,5 @@
 fn main() {
-   val s = not T;
-
+   val true = 1 == 1;
+   val false = F;
+   val shouldbeFalse = false or true;
 }

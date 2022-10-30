@@ -38,7 +38,7 @@ class DefaultProgramVisitor(
             exprVisitor.visit(loop.condition)
             val curReg = semantics.topMostReg()
             val hash = loop.hashCode()
-            f.writeln("bb ${reg(curReg)} head.$hash exit.$hash", semantics.scopeDepth)
+            f.writeln("bb ${r(curReg)} head.$hash exit.$hash", semantics.scopeDepth)
             f.writeln("@loop.$hash", semantics.scopeDepth)
             visit(loop.block)
             f.writeln("jump loop.$hash", semantics.scopeDepth)
@@ -66,19 +66,19 @@ class DefaultProgramVisitor(
     private val exprVisitor = object : ExpressionVisitor {
         override fun onNumber(number: Number) {
             val ireg = semantics.addRegister()
-            f.writeln("${reg(ireg)} <- int ${number.value}", semantics.scopeDepth)
+            f.writeln("${r(ireg)} <- int ${number.value}", semantics.scopeDepth)
         }
 
         override fun onStr(stringLiteral: StringLiteral) {
             val ireg = semantics.addRegister()
-            f.writeln("${reg(ireg)} <- str :${stringLiteral.str}", semantics.scopeDepth)
+            f.writeln("${r(ireg)} <- str :${stringLiteral.str}", semantics.scopeDepth)
         }
 
         override fun onBinary(binary: Binary) {
             visit(binary.left)
             visit(binary.right)
-            val iReg = semantics.addRegister()
-            f.writeln("${reg(iReg)} <- ${binary.op} ${reg(iReg - 2)} ${reg(iReg - 1)}",semantics.scopeDepth)
+            val iReg = semantics.topMostReg()
+            f.writeln("${r(iReg)} <- ${binary.op} ${r(iReg)} ${r(iReg - 1)}",semantics.scopeDepth)
         }
 
         override fun onCmp(cmp: Comparison) {
@@ -88,12 +88,12 @@ class DefaultProgramVisitor(
             val eq = "eq.${cmp.hashCode()}"
             val neq = "neq.${cmp.hashCode()}"
             val exit = "exit.${cmp.hashCode()}"
-            f.writeln("beq ${reg(iReg - 2)} ${reg(iReg - 1)} $neq $eq", semantics.scopeDepth)
+            f.writeln("beq ${r(iReg - 2)} ${r(iReg - 1)} $neq $eq", semantics.scopeDepth)
             f.writeln("@$eq",semantics.scopeDepth)
-            f.writeln(" ${reg(iReg)} <- int 1", semantics.scopeDepth)
+            f.writeln(" ${r(iReg)} <- int 1", semantics.scopeDepth)
             f.writeln("jump $exit", semantics.scopeDepth)
             f.writeln("@$neq", semantics.scopeDepth)
-            f.writeln(" ${reg(iReg)} <- int 0", semantics.scopeDepth)
+            f.writeln(" ${r(iReg)} <- int 0", semantics.scopeDepth)
             f.writeln("@$exit", semantics.scopeDepth)
         }
 
@@ -103,31 +103,35 @@ class DefaultProgramVisitor(
             when(unary.op.name) {
                 "not" -> {
                     val newReg = semantics.addRegister()
-                    f.writeln("${reg(newReg)} <- int 1", semantics.scopeDepth)
-                    f.writeln("${reg(iReg)} <- bxor ${reg(newReg)} ${reg(iReg)}", semantics.scopeDepth)
+                    f.writeln("${r(newReg)} <- int 1", semantics.scopeDepth)
+                    f.writeln("${r(iReg)} <- bxor ${r(newReg)} ${r(iReg)}", semantics.scopeDepth)
                 }
             }
         }
 
         override fun onBool(bool: Bool) {
             val ireg = semantics.addRegister()
-            f.writeln(reg(ireg) + " <- int ${if(bool.bool) "1" else "0"}", semantics.scopeDepth)
+            f.writeln(r(ireg) + " <- int ${if(bool.bool) "1" else "0"}", semantics.scopeDepth)
         }
 
         override fun onVariable(variable: Variable) {
             val ireg = semantics.addRegister()
             val local = semantics.getLocal(variable)
-            f.writeln("${reg(ireg)} <- reg ${reg(local.registerVal)}", semantics.scopeDepth)
+            f.writeln("${r(ireg)} <- reg ${r(local.registerVal)}", semantics.scopeDepth)
         }
 
         override fun onAnd(and: And) {
             visit(and.left)
             visit(and.right)
+            val i = semantics.topMostReg()
+            f.writeln("${r(i)} <- band ${r(i)} ${r(i-1)} ")
         }
 
         override fun onOr(or: Or) {
             visit(or.left)
             visit(or.right)
+            val i = semantics.topMostReg()
+            f.writeln("${r(i)} <- bor ${r(i)} ${r(i-1)} ")
         }
 
         override fun onArrLiteral(arrayLiteral: ArrayLiteral) {
@@ -158,4 +162,4 @@ fun BufferedWriter.writeln(string: String, depth:Int = 0) {
     write("${"".padEnd(depth * 2)}$string\n")
 }
 
-fun reg(int: Int): String = "r$int"
+fun r(int: Int): String = "r$int"

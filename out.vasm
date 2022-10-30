@@ -2,9 +2,21 @@
     r0 <- call main
     exit
 func main
-  # val s
+  # val true
   r0 <- int 1
   r1 <- int 1
-  r0 <- bxor r1 r0
-  putchar r
+  beq r0 r1 neq.66281861 eq.66281861
+  @eq.66281861
+   r2 <- int 1
+  jump exit.66281861
+  @neq.66281861
+   r2 <- int 0
+  @exit.66281861
+  # val false
+  r3 <- int 0
+  # val shouldbeFalse
+  r4 <- reg r3
+  r5 <- reg r2
+  r5 <- bor r5 r4
+  putchar r5
 end
