@@ -38,11 +38,11 @@ class DefaultProgramVisitor(
             exprVisitor.visit(loop.condition)
             val curReg = semantics.topMostReg()
             val hash = loop.hashCode()
-            f.writeln("bb ${reg(curReg)} L$hash E$hash", semantics.scopeDepth)
-            f.writeln("@L$hash", semantics.scopeDepth)
+            f.writeln("bb ${reg(curReg)} head.$hash exit.$hash", semantics.scopeDepth)
+            f.writeln("@loop.$hash", semantics.scopeDepth)
             visit(loop.block)
-            f.writeln("jump L$hash", semantics.scopeDepth)
-            f.writeln("@E$hash", semantics.scopeDepth)
+            f.writeln("jump loop.$hash", semantics.scopeDepth)
+            f.writeln("@exit.$hash", semantics.scopeDepth)
         }
 
         override fun onExprStmt(expressionStatement: ExpressionStatement) {
@@ -99,6 +99,14 @@ class DefaultProgramVisitor(
 
         override fun onUnary(unary: Unary) {
             visit(unary.expr)
+            val iReg = semantics.topMostReg()
+            when(unary.op.name) {
+                "not" -> {
+                    val newReg = semantics.addRegister()
+                    f.writeln("${reg(newReg)} <- int 1", semantics.scopeDepth)
+                    f.writeln("${reg(iReg)} <- bxor ${reg(newReg)} ${reg(iReg)}", semantics.scopeDepth)
+                }
+            }
         }
 
         override fun onBool(bool: Bool) {

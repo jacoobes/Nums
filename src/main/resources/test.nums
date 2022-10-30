@@ -1,5 +1,4 @@
 fn main() {
-   loop 1 == 1 {
-       val f = 4;
-   }
+   val s = not T;
+
 }
