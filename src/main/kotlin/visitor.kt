@@ -23,7 +23,7 @@ interface ExpressionVisitor : Visitor<Expr> {
     fun onVariable(variable: Variable)
     fun onAnd(and: And)
     fun onOr(or: Or)
-    fun onArrAccess(arrAccess: ArrAccess)
+    fun onCall(call: Call)
     fun onArrLiteral(arrayLiteral: ArrayLiteral)
 }
 
@@ -33,15 +33,15 @@ fun <T: Node> visit(item : T, cb: (T) -> Unit): T {
 }
 
 fun visitor(tree: List<Statement>, bw: NumsWriter) {
-    for (node in tree) {
+    for(node in tree) {
         when(node) {
-            is FFunction -> visitProgram(node, bw)
+            is FFunction -> visitFns(node, bw)
             else -> throw Error("Cannot have $node top level!")
         }
     }
 }
 //inorder traversal
-fun visitProgram(stmt: FFunction, bw: NumsWriter) {
-    val defaultProgramVisitor = DefaultProgramVisitor(bw, Semantics())
-    defaultProgramVisitor.start(stmt)
+fun visitFns(stmt: FFunction, bw: NumsWriter) {
+    val defaultFnVisitor = DefaultFunctionVisitor(stmt, bw, Semantics())
+    defaultFnVisitor.start()
 }

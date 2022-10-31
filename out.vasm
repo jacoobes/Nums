@@ -3,4 +3,12 @@
     exit
 func main
   # val p
+  r0 <- int 1
+  r1 <- int 2
+  r2 <- int 213
+  r2 <- add r2 r1
+  r3 <- int 2
+  r4 <- call a [r0,r1,r2]
+end
+func a
 end

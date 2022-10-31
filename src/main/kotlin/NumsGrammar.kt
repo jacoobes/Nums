@@ -35,8 +35,7 @@ data class Number(val value: String) : Expr()
 data class Variable(val name: String) : Expr()
 data class Unary(val op: Token, val expr: Expr) : Expr()
 data class Binary(val left: Expr, val right: Expr, val op: String) : Expr()
-data class Call(val name: Variable) : Expr()
-data class ArrAccess(val arr: Variable, val idx: Expr) : Expr()
+data class Call(val callee: Variable, val args: List<Expr>) : Expr()
 data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : Expr()
 data class And(val left: Expr, val right: Expr) : Expr()
 data class Or(val left: Expr, val right: Expr) : Expr()
@@ -47,7 +46,11 @@ data class Val(val token: Variable, val expr: Expr) : Statement()
 data class Block(val stmts: List<Statement>) : Statement()
 data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: Statement) : Statement()
 data class Loop(val condition: Expr, val block: Statement) : Statement()
-data class FFunction(val main: Boolean, val token: Variable, val args: List<Variable>, val block: Statement) : Statement()
+data class FFunction(val main: Boolean, val token: Variable, val args: List<Variable>, val block: Statement) : Statement() {
+    fun arity(): Int {
+        return args.size
+    }
+}
 class NumsGrammar : Grammar<List<FFunction>>() {
     private val num by regexToken("\\d+")
     private val semi by literalToken(";")
@@ -109,6 +112,10 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     private val varParser by word use { Variable(text) }
     private val truthParser by ttrue asJust Bool(true)
     private val falseParser by ffalse asJust Bool(false)
+    //will support local functions in future
+    private val fnCall by varParser * -lparen * separatedTerms(parser(::expr), comma, acceptZero = true) * -rparen use {
+        Call(t1,t2)
+    }
     private val arrayLit by (-lcurly and separatedTerms(
         acceptZero = true,
         separator = comma,
@@ -118,6 +125,7 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     private val unary by (not and parser(this::expr)) map { Unary(it.t1.type, it.t2) }
     private val primitiveExpr: Parser<Expr> by (
             numParser or
+            fnCall or
             varParser or
             truthParser or
             falseParser or

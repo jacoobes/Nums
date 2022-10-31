@@ -1,9 +1,11 @@
+import kotlin.math.abs
 
-class DefaultProgramVisitor(
+class DefaultFunctionVisitor(
+    private val fn: FFunction,
     private val f: NumsWriter,
     private val semantics: Semantics,
     ) {
-    fun start(fn: FFunction) {
+    fun start() {
         stmtVisitor.onFn(fn)
     }
     private val stmtVisitor = object : StatementVisitor {
@@ -140,13 +142,17 @@ class DefaultProgramVisitor(
             f.writeln("${r(i)} <- bor ${r(i)} ${r(i-1)}",semantics.scopeDepth)
         }
 
-        override fun onArrLiteral(arrayLiteral: ArrayLiteral) {
-            arrayLiteral.exprs.forEach(::visit)
+        override fun onCall(call: Call) {
+            val sizeArgs = call.args.size
+            call.args.forEach(::visit)
+            val topReg = semantics.topMostReg() - sizeArgs
+            val regStr = if(sizeArgs != 0) "[${(List(call.args.size) { i -> r(i + topReg) }).joinToString(",")}]" else ""
+            val i = semantics.addRegister()
+            f.writeln("${r(i)} <- call ${call.callee.name} $regStr", semantics.scopeDepth)
         }
 
-
-        override fun onArrAccess(access: ArrAccess) {
-            println(access)
+        override fun onArrLiteral(arrayLiteral: ArrayLiteral) {
+            arrayLiteral.exprs.forEach(::visit)
         }
 
         override fun visit(item: Expr) {
@@ -161,8 +167,8 @@ class DefaultProgramVisitor(
                 is Or -> visit(item, ::onOr)
                 is Variable -> visit(item, ::onVariable)
                 is Comparison -> visit(item, ::onCmp)
-                is ArrAccess -> visit(item, ::onArrAccess)
-                is Call -> throw Error("not supported yet")
+                is Call -> visit(item, ::onCall)
+                else -> {}
             }
         }
     }
