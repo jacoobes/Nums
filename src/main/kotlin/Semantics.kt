@@ -5,14 +5,13 @@ data class Local(val name: String, val depth: Int, val registerVal: Int) {
 }
 class Semantics {
     private val locals = arrayListOf<Local>()
-    val registers = HashSet<Int>()
+    val registers = HashMap<Int, Int>()
     var scopeDepth = 0
     fun incDepth() = scopeDepth++
     //TODO: add proper way to dispose variables semantically and in the actual assembly
     // was thinking get all that were removed and reset register tracker to highest depth?
     fun decDepth() {
-        val removed = locals.filter { it.depth >= scopeDepth }
-        locals.removeAll(removed.toSet())
+        locals.retainAll { it.depth >= scopeDepth }
         scopeDepth--
     }
 
@@ -22,9 +21,13 @@ class Semantics {
         locals.add(newLocal)
     }
 
-    fun addRegister(): Int {
-        registers.add(registers.size)
+    fun addRegister(expr: Expr): Int {
+        registers[expr.hashCode()] = registers.size
         return registers.size - 1
+    }
+    fun overrideRegister(expr:Expr, expr2:Expr) : Int {
+        registers.remove(expr.hashCode())?.let { registers[expr2.hashCode()] = it;  }
+        return registers[expr2.hashCode()]!!
     }
     fun topMostReg() = registers.size - 1
     fun getLocal(variable: Variable): Local {

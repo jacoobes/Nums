@@ -3,5 +3,5 @@ fn main() {
 }
 
 fn a(a,b,c) {
-
+    val p = a;
 }

@@ -26,7 +26,7 @@ fun init(args: Array<String>) {
     """)
     val parser = ArgParser("nums")
     val input by parser.option(ArgType.String, shortName = "i", description = "Main File").required()
-    val output by parser.option(ArgType.String, shortName = "o", description = "Output mvm").required()
+    val output by parser.option(ArgType.String, shortName = "o", description = "Output vasm").required()
     parser.parse(args)
     val fileString = File(input).readText()
     when(val result = NumsGrammar().tryParseToEnd(fileString)) {

@@ -73,26 +73,26 @@ class DefaultFunctionVisitor(
 
     private val exprVisitor = object : ExpressionVisitor {
         override fun onNumber(number: Number) {
-            val ireg = semantics.addRegister()
+            val ireg = semantics.addRegister(number)
             f.writeln("${r(ireg)} <- int ${number.value}", semantics.scopeDepth)
         }
 
         override fun onStr(stringLiteral: StringLiteral) {
-            val ireg = semantics.addRegister()
+            val ireg = semantics.addRegister(stringLiteral)
             f.writeln("${r(ireg)} <- str :${stringLiteral.str}", semantics.scopeDepth)
         }
 
         override fun onBinary(binary: Binary) {
             visit(binary.left)
             visit(binary.right)
-            val iReg = semantics.topMostReg()
+            val iReg = semantics.overrideRegister(binary.left, binary)
             f.writeln("${r(iReg)} <- ${binary.op} ${r(iReg)} ${r(iReg - 1)}",semantics.scopeDepth)
         }
 
         override fun onCmp(cmp: Comparison) {
             visit(cmp.left)
             visit(cmp.right)
-            val iReg = semantics.addRegister()
+            val iReg = semantics.addRegister(cmp)
             val eq = "eq.${cmp.hashCode()}"
             val neq = "neq.${cmp.hashCode()}"
             val exit = "exit.${cmp.hashCode()}"
@@ -110,7 +110,7 @@ class DefaultFunctionVisitor(
             val iReg = semantics.topMostReg()
             when(unary.op.name) {
                 "not" -> {
-                    val newReg = semantics.addRegister()
+                    val newReg = semantics.addRegister(unary)
                     f.writeln("${r(newReg)} <- int 1", semantics.scopeDepth)
                     f.writeln("${r(iReg)} <- bxor ${r(newReg)} ${r(iReg)}", semantics.scopeDepth)
                 }
@@ -118,12 +118,12 @@ class DefaultFunctionVisitor(
         }
 
         override fun onBool(bool: Bool) {
-            val ireg = semantics.addRegister()
+            val ireg = semantics.addRegister(bool)
             f.writeln(r(ireg) + " <- int ${if(bool.bool) "1" else "0"}", semantics.scopeDepth)
         }
 
         override fun onVariable(variable: Variable) {
-            val ireg = semantics.addRegister()
+            val ireg = semantics.addRegister(variable)
             val local = semantics.getLocal(variable)
             f.writeln("${r(ireg)} <- reg ${r(local.registerVal)}", semantics.scopeDepth)
         }
@@ -143,11 +143,10 @@ class DefaultFunctionVisitor(
         }
 
         override fun onCall(call: Call) {
-            val sizeArgs = call.args.size
             call.args.forEach(::visit)
-            val topReg = semantics.topMostReg() - sizeArgs
-            val regStr = if(sizeArgs != 0) "[${(List(call.args.size) { i -> r(i + topReg) }).joinToString(",")}]" else ""
-            val i = semantics.addRegister()
+            val storedRegs = call.args.map { "r${semantics.registers[it.hashCode()]}" }
+            val regStr = storedRegs.joinToString(" ")
+            val i = semantics.addRegister(call)
             f.writeln("${r(i)} <- call ${call.callee.name} $regStr", semantics.scopeDepth)
         }
 
