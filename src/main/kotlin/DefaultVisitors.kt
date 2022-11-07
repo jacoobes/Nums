@@ -16,6 +16,7 @@ class DefaultFunctionVisitor(
                 is ExpressionStatement -> visit(item, ::onExprStmt)
                 is Block -> visit(item,::onBlock)
                 is Val -> visit(item, ::onVal)
+                is Return -> visit(item, ::onReturn)
                 else -> throw Error("Cannot have local functions")
             }
         }
@@ -25,6 +26,10 @@ class DefaultFunctionVisitor(
                 f.writeln("@__entry\n    r0 <- call main\n    exit")
             }
             f.writeln("func ${fn.token.name}")
+            fn.args.forEach {
+                val reg = semantics.addRegister(it)
+                semantics.addLocal(it.name, reg)
+            }
             visit(fn.block)
             semantics.clearRegisters()
             f.writeln("end")
@@ -69,6 +74,11 @@ class DefaultFunctionVisitor(
             val localReg = semantics.topMostReg()
             semantics.addLocal(valStmt.token.name, localReg)
         }
+
+        override fun onReturn(ret: Return) {
+            exprVisitor.visit(ret.expr)
+            f.writeln("ret ${r(semantics.topMostReg())}",semantics.topMostReg())
+        }
     }
 
     private val exprVisitor = object : ExpressionVisitor {
@@ -85,8 +95,8 @@ class DefaultFunctionVisitor(
         override fun onBinary(binary: Binary) {
             visit(binary.left)
             visit(binary.right)
-            val iReg = semantics.overrideRegister(binary.left, binary)
-            f.writeln("${r(iReg)} <- ${binary.op} ${r(iReg)} ${r(iReg - 1)}",semantics.scopeDepth)
+            val iReg = semantics.addRegister(binary)
+            f.writeln("${r(iReg)} <- ${binary.op} ${r(iReg - 2)} ${r(iReg - 1)}",semantics.scopeDepth)
         }
 
         override fun onCmp(cmp: Comparison) {
@@ -119,7 +129,7 @@ class DefaultFunctionVisitor(
 
         override fun onBool(bool: Bool) {
             val ireg = semantics.addRegister(bool)
-            f.writeln(r(ireg) + " <- int ${if(bool.bool) "1" else "0"}", semantics.scopeDepth)
+            f.writeln(r(ireg) + " <- int ${bool.bool}", semantics.scopeDepth)
         }
 
         override fun onVariable(variable: Variable) {

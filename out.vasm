@@ -3,12 +3,21 @@
     exit
 func main
   # val p
-  r0 <- int 1
-  r1 <- int 2
-  r2 <- int 213
-  r1 <- add r1 r0
-  r3 <- int 2
-  r4 <- call a r0 r1 r3
+  r1 <- int 128
+  r2 <- int 65
+  r3 <- call a r1 r2
 end
 func a
+  # val s
+  r3 <- reg r1
+  # val f
+  r4 <- int 123
   # val p
+  r5 <- reg r1
+  r6 <- reg r3
+  r7 <- add r5 r6
+  r8 <- reg r4
+  r9 <- add r7 r8
+  r10 <- int 1
+  ret r10
+end

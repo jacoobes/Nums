@@ -1,7 +1,10 @@
 fn main() {
-    val p = a(1,2 + 213, 2);
+    val p = a(128, 65);
 }
 
-fn a(a,b,c) {
-    val p = a;
+fn a(a,b) {
+    val s = a;
+    val f = 123;
+    val p = a + s + f;
+    return 1;
 }

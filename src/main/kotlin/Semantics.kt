@@ -7,6 +7,7 @@ class Semantics {
     private val locals = arrayListOf<Local>()
     val registers = HashMap<Int, Int>()
     var scopeDepth = 0
+    var registerCount = 0
     fun incDepth() = scopeDepth++
     //TODO: add proper way to dispose variables semantically and in the actual assembly
     // was thinking get all that were removed and reset register tracker to highest depth?
@@ -22,14 +23,15 @@ class Semantics {
     }
 
     fun addRegister(expr: Expr): Int {
-        registers[expr.hashCode()] = registers.size
-        return registers.size - 1
+        val added = ++registerCount
+        registers[expr.hashCode()] = added
+        return added
     }
     fun overrideRegister(expr:Expr, expr2:Expr) : Int {
         registers.remove(expr.hashCode())?.let { registers[expr2.hashCode()] = it;  }
-        return registers[expr2.hashCode()]!!
+        return registers.size
     }
-    fun topMostReg() = registers.size - 1
+    fun topMostReg() = registerCount
     fun getLocal(variable: Variable): Local {
         return locals.find {
             it.name == variable.name && it.depth <= scopeDepth

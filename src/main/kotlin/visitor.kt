@@ -11,6 +11,7 @@ interface StatementVisitor: Visitor<Statement> {
     fun onExprStmt(expressionStatement: ExpressionStatement)
     fun onBlock(block: Block)
     fun onVal(valStmt: Val)
+    fun onReturn(ret: Return)
 }
 
 interface ExpressionVisitor : Visitor<Expr> {

@@ -40,10 +40,11 @@ data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : 
 data class And(val left: Expr, val right: Expr) : Expr()
 data class Or(val left: Expr, val right: Expr) : Expr()
 data class ArrayLiteral(val exprs: List<Expr>) : Expr()
-data class Bool(val bool: Boolean) : Expr()
+data class Bool(val bool: String) : Expr()
 data class ExpressionStatement(val expr: Expr) : Statement()
 data class Val(val token: Variable, val expr: Expr) : Statement()
 data class Block(val stmts: List<Statement>) : Statement()
+data class Return(val expr: Expr) : Statement()
 data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: Statement) : Statement()
 data class Loop(val condition: Expr, val block: Statement) : Statement()
 data class FFunction(val main: Boolean, val token: Variable, val args: List<Variable>, val block: Statement) : Statement() {
@@ -58,6 +59,7 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     private val ffalse by literalToken("F")
     private val and by literalToken("and")
     private val or by literalToken("or")
+    private val rreturn by literalToken("return")
     private val loop by literalToken("loop")
     private val not by literalToken("not")
     private val vval by literalToken("val")
@@ -110,8 +112,8 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     //only supports int right now
     private val numParser by num use { Number(text) }
     private val varParser by word use { Variable(text) }
-    private val truthParser by ttrue asJust Bool(true)
-    private val falseParser by ffalse asJust Bool(false)
+    private val truthParser by ttrue asJust Bool("1")
+    private val falseParser by ffalse asJust Bool("0")
     //will support local functions in future
     private val fnCall by varParser * -lparen * separatedTerms(parser(::expr), comma, acceptZero = true) * -rparen use {
         Call(t1,t2)
@@ -166,7 +168,8 @@ class NumsGrammar : Grammar<List<FFunction>>() {
 
     private val loopCombine by -loop * expr * parser(this::statements) use { Loop(t1, t2) }
     private val block by -lcurly * zeroOrMore(parser(this::statements)) and -rcurly map { Block(it) }
-    private val statements: Parser<Statement> by valStmt or iifStmt or block or exprStatement or loopCombine
+    private val returnStmt by -rreturn * expr * -semi use { Return(this) }
+    private val statements: Parser<Statement> by valStmt or returnStmt or iifStmt or block or exprStatement or loopCombine
     private val fnDecl by (-fn * varParser * -lparen * separatedTerms(
         varParser,
         separator = comma,
