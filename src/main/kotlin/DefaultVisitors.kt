@@ -1,4 +1,3 @@
-import kotlin.math.abs
 
 class DefaultFunctionVisitor(
     private val fn: FFunction,
@@ -103,16 +102,18 @@ class DefaultFunctionVisitor(
             visit(cmp.left)
             visit(cmp.right)
             val iReg = semantics.addRegister(cmp)
-            val eq = "eq.${cmp.hashCode()}"
+            val eq = "cmp.${cmp.hashCode()}"
             val neq = "neq.${cmp.hashCode()}"
             val exit = "exit.${cmp.hashCode()}"
-            f.writeln("beq ${r(iReg - 2)} ${r(iReg - 1)} $neq $eq", semantics.scopeDepth)
-            f.writeln("@$eq",semantics.scopeDepth)
-            f.writeln(" ${r(iReg)} <- int 1", semantics.scopeDepth)
-            f.writeln("jump $exit", semantics.scopeDepth)
-            f.writeln("@$neq", semantics.scopeDepth)
-            f.writeln(" ${r(iReg)} <- int 0", semantics.scopeDepth)
-            f.writeln("@$exit", semantics.scopeDepth)
+            val cmpInstruction = when(cmp.op) {
+                ComparisonOps.Eq, ComparisonOps.Neq -> "beq ${r(iReg - 2)} ${r(iReg - 1)} $neq $eq"
+                ComparisonOps.Lt, ComparisonOps.Gte -> "blt ${r(iReg - 2)} ${r(iReg - 1)} $neq $eq"
+                else -> ""
+            }
+            arrayOf(cmpInstruction, "@$eq", "${r(iReg)} <- int 1", "jump $exit", "@$neq", "${r(iReg)} <- int 0", "@$exit" )
+                .forEach {
+                    f.writeln(it,semantics.scopeDepth)
+                }
         }
 
         override fun onUnary(unary: Unary) {

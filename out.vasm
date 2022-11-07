@@ -2,22 +2,15 @@
     r0 <- call main
     exit
 func main
-  # val p
-  r1 <- int 128
-  r2 <- int 65
-  r3 <- call a r1 r2
-end
-func a
   # val s
-  r3 <- reg r1
-  # val f
-  r4 <- int 123
-  # val p
-  r5 <- reg r1
-  r6 <- reg r3
-  r7 <- add r5 r6
-  r8 <- reg r4
-  r9 <- add r7 r8
-  r10 <- int 1
-  ret r10
+  r1 <- int 1
+  r2 <- int 1
+  blt r1 r2 neq.739547125 cmp.739547125
+  @cmp.739547125
+  r3 <- int 1
+  jump exit.739547125
+  @neq.739547125
+  r3 <- int 0
+  @exit.739547125
+  putchar r3
 end
