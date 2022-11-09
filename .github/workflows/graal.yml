@@ -1,5 +1,6 @@
 name: GraalVM Native Image builds
-on: [push, pull_request]
+on:
+  workflow_dispatch:
 jobs:
   build:
     name: Nums on ${{ matrix.os }}
