@@ -108,7 +108,7 @@ class DefaultFunctionVisitor(
             val cmpInstruction = when(cmp.op) {
                 ComparisonOps.Eq, ComparisonOps.Neq -> "beq ${r(iReg - 2)} ${r(iReg - 1)} $neq $eq"
                 ComparisonOps.Lt, ComparisonOps.Gte -> "blt ${r(iReg - 2)} ${r(iReg - 1)} $neq $eq"
-                else -> ""
+                ComparisonOps.Gt, ComparisonOps.Lte -> ""
             }
             arrayOf(cmpInstruction, "@$eq", "${r(iReg)} <- int 1", "jump $exit", "@$neq", "${r(iReg)} <- int 0", "@$exit" )
                 .forEach {
@@ -163,6 +163,23 @@ class DefaultFunctionVisitor(
 
         override fun onArrLiteral(arrayLiteral: ArrayLiteral) {
             arrayLiteral.exprs.forEach(::visit)
+            val loopCode = "set.${arrayLiteral.hashCode()}"
+            val exitCode = "tes.${arrayLiteral.hashCode()}"
+            val areg = semantics.addRegister(arrayLiteral)
+            //len of arr
+            f.writeln("${r(areg)} <- int ${arrayLiteral.exprs.size}", semantics.scopeDepth)
+            f.writeln(
+                "${r(areg+1)} <- arr ${r(areg)}",
+                semantics.scopeDepth
+            )
+            f.writeln("${r(areg+2)} <- int 0", semantics.scopeDepth)
+            f.writeln("blt ${r(areg+2)} ${r(areg)} $exitCode $loopCode", semantics.scopeDepth)
+            f.writeln("@$loopCode", semantics.scopeDepth)
+            f.writeln("${r(areg+3)} <- int 1", semantics.scopeDepth)
+            f.writeln("${r(areg+2)} <- add ${r(areg+3)} ${r(areg+2)}", semantics.scopeDepth)
+            f.writeln("jump $loopCode", semantics.scopeDepth)
+            f.writeln("@$exitCode", semantics.scopeDepth)
+
         }
 
         override fun visit(item: Expr) {

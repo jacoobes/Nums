@@ -6,17 +6,34 @@ plugins {
 }
 
 group = "org.example"
-version = "1.0-SNAPSHOT"
+version = "1.0"
 
 repositories {
     mavenCentral()
 }
 
+application {
+    mainClass.set("MainKt")
+}
 dependencies {
     implementation("com.github.h0tk3y.betterParse:better-parse:0.4.4")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
     testImplementation(kotlin("test"))
 }
+
+
+tasks.register<Jar>("toJar") {
+    dependsOn.addAll(listOf("compileJava", "compileKotlin", "processResources")) // We need this for Gradle optimization to work
+    archiveFileName.set("nums.jar")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest { attributes(mapOf("Main-Class" to application.mainClass)) } // Provided we set it up in the application plugin configuration
+    val sourcesMain = sourceSets.main.get()
+    val contents = configurations.runtimeClasspath.get()
+        .map { if (it.isDirectory) it else zipTree(it) } +
+            sourcesMain.output
+    from(contents)
+}
+
 
 tasks.test {
     useJUnitPlatform()
@@ -24,8 +41,4 @@ tasks.test {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
-}
-
-application {
-    mainClass.set("MainKt")
 }

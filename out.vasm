@@ -4,13 +4,16 @@
 func main
   # val s
   r1 <- int 1
-  r2 <- int 1
-  blt r1 r2 neq.739547125 cmp.739547125
-  @cmp.739547125
-  r3 <- int 1
-  jump exit.739547125
-  @neq.739547125
-  r3 <- int 0
-  @exit.739547125
-  putchar r3
+  r2 <- int 2
+  r3 <- int 3
+  r4 <- int 4
+  r5 <- int 4
+  r6 <- arr r5
+  r7 <- int 0
+  blt r7 r5 tes.2432963 set.2432963
+  @set.2432963
+      r8 <- int 1
+      r7 <- add r8 r7
+      blt r7 r5 tes.2432963 set.2432963
+  @tes.2432963
 end
