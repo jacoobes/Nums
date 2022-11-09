@@ -42,5 +42,5 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
-          name: helloworld-${{ matrix.os }}
-          path: helloworld*
+          name: nums-${{ matrix.os }}
+          path: nums*

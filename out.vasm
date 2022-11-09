@@ -12,8 +12,8 @@ func main
   r7 <- int 0
   blt r7 r5 tes.2432963 set.2432963
   @set.2432963
-      r8 <- int 1
-      r7 <- add r8 r7
-      blt r7 r5 tes.2432963 set.2432963
+  r8 <- int 1
+  r7 <- add r8 r7
+  jump set.2432963
   @tes.2432963
 end
