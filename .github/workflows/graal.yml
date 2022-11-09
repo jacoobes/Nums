@@ -23,8 +23,8 @@ jobs:
       - name: Execute Gradle build
         run: ./gradlew build
 
-      - name: Make gradle jar
-        run: ./gradlew :toJar
+      - name: Make gradle ktclass
+        run: ./gradlew :compileKotlin
 
       - uses: graalvm/setup-graalvm@v1
         with:
@@ -36,8 +36,7 @@ jobs:
 
       - name: Build and run nums.jar
         run: |
-          native-image -jar ./build/libs/nums.jar -H:Class=MainKt -H:Name=nums
-          ./nums
+          native-image ./build/classes/kotlin/main/MainKt -H:Name=nums
 
       - name: Upload binary
         uses: actions/upload-artifact@v2
