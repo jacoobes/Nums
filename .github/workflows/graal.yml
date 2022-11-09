@@ -38,7 +38,6 @@ jobs:
       - name: Build and run nums.jar
         run: |
           native-image -H:ReflectionConfigurationFiles=reflect.config.json -jar ./build/libs/nums.jar -H:Class=MainKt -H:Name=nums
-          ./nums
 
       - name: Upload binary
         uses: actions/upload-artifact@v2
