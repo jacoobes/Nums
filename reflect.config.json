@@ -1,0 +1,10 @@
+[
+  {
+    "name" : "kotlin.internal.PlatformImplementationsKt",
+    "allPublicConstructors" : true
+  },
+  {
+    "name" : "kotlin.internal.PlatformImplementations$ReflectThrowable",
+    "allPublicMethods" : true
+  }
+]
