@@ -16,6 +16,7 @@ class DefaultFunctionVisitor(
                 is Block -> visit(item,::onBlock)
                 is Val -> visit(item, ::onVal)
                 is Return -> visit(item, ::onReturn)
+                is Skip -> {}
                 else -> throw Error("Cannot have local functions")
             }
         }

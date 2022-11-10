@@ -5,18 +5,15 @@ func main
   # val s
   r1 <- int 1
   r2 <- int 4
-  beq r1 r2 neq.884506109 cmp.884506109
-  @cmp.884506109
+  beq r1 r2 neq.913239340 cmp.913239340
+  @cmp.913239340
   r3 <- int 1
-  jump exit.884506109
-  @neq.884506109
+  jump exit.913239340
+  @neq.913239340
   r3 <- int 0
-  @exit.884506109
+  @exit.913239340
   r4 <- reg r3
-  bb <- r4 else.3446753 then.3152346
-  @then.3152346
-    # val fsd
-    r5 <- int 1
-  jump @else.3446753
-    # val poo
-    r6 <- int 1
+  bb <- r4 else.1419810764 then.1419810764
+  @then.1419810764
+  jump @else.1419810764
+end

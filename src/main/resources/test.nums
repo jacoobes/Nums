@@ -1,8 +1,4 @@
 fn main() {
     val s = 1 == 4;
-    if s {
-        val fsd = 1;
-    } else {
-        val poo = 1;
-    }
+    if s {} else {}
 }

@@ -159,11 +159,11 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     private val exprStatement by expr and -semi map { ExpressionStatement(it) }
 
     private val valStmt by -vval * varParser * -assign * exprStatement use { Val(t1, t2.expr) }
-    private val iifStmt by (-iif * expr * -lcurly * parser(this::statements) * -rcurly
-            * zeroOrMore(-eels * -iif * expr * -lcurly * parser(this::statements) * -rcurly) *
-            (optional(-eels * -lcurly * parser(this::statements) * -rcurly )).map { it ?: Skip }
+    private val iifStmt by (-iif * expr * -lcurly * optional(parser(::statements)) * -rcurly
+            * zeroOrMore(-eels * -iif * expr * -lcurly * optional(parser(this::statements)) * -rcurly) *
+            (optional(-eels * -lcurly * optional(parser(this::statements)) * -rcurly )).map { it ?: Skip }
             ).use {
-            Iif(t1, t2, t3.foldRight(t4) { (elifC, elifB), el -> Iif(elifC, elifB, el) })
+            Iif(t1, t2 ?: Skip, t3.foldRight(t4) { (elifC, elifB), el -> Iif(elifC, elifB ?: Skip, el) })
         }
 
     private val loopCombine by -loop * expr * parser(this::statements) use { Loop(t1, t2) }
