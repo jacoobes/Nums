@@ -34,6 +34,11 @@ fun <T: Node> visit(item : T, cb: (T) -> Unit): T {
 }
 
 fun visitor(tree: List<Statement>, bw: NumsWriter) {
+    //for now, have minivm natives
+    bw.writeln(MiniVmNative.eq())
+    bw.writeln(MiniVmNative.lt())
+    bw.writeln(MiniVmNative.gt())
+    bw.writeln(MiniVmNative.not())
     for(node in tree) {
         when(node) {
             is FFunction -> visitFns(node, bw)

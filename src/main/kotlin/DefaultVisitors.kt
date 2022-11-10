@@ -108,18 +108,21 @@ class DefaultFunctionVisitor(
             visit(cmp.left)
             visit(cmp.right)
             val iReg = semantics.addRegister(cmp)
-            val eq = "cmp.${cmp.hashCode()}"
-            val neq = "neq.${cmp.hashCode()}"
-            val exit = "exit.${cmp.hashCode()}"
-            val cmpInstruction = when(cmp.op) {
-                ComparisonOps.Eq, ComparisonOps.Neq -> "beq ${r(iReg - 2)} ${r(iReg - 1)} $neq $eq"
-                ComparisonOps.Lt, ComparisonOps.Gte -> "blt ${r(iReg - 2)} ${r(iReg - 1)} $neq $eq"
-                ComparisonOps.Gt, ComparisonOps.Lte -> ""
+            val base = { op: String -> "<- call $op ${r(iReg - 2)} ${r(iReg - 1)}" }
+            val instr = { str: String, invert:Boolean ->
+                    "$str\n" + if(invert) "".padStart(semantics.scopeDepth*2) + "${r(iReg)} <- call not ${r(iReg)}" else ""
             }
-            arrayOf(cmpInstruction, "@$eq", "${r(iReg)} <- int 1", "jump $exit", "@$neq", "${r(iReg)} <- int 0", "@$exit" )
-                .forEach {
-                    f.writeln(it,semantics.scopeDepth)
-                }
+            val cmpInstruction = when(cmp.op) {
+                ComparisonOps.Eq -> instr(base("eq"), false)
+                ComparisonOps.Neq -> instr(base("eq"), true)
+
+                ComparisonOps.Lt -> instr(base("lt"), false)
+                ComparisonOps.Gte -> instr(base("lt"), true)
+
+                ComparisonOps.Gt -> instr(base("gt"), false)
+                ComparisonOps.Lte -> instr(base("gt"), true)
+            }
+            f.writeln("${r(iReg)} $cmpInstruction", semantics.scopeDepth)
         }
 
         override fun onUnary(unary: Unary) {
@@ -128,8 +131,7 @@ class DefaultFunctionVisitor(
             when(unary.op.name) {
                 "not" -> {
                     val newReg = semantics.addRegister(unary)
-                    f.writeln("${r(newReg)} <- int 1", semantics.scopeDepth)
-                    f.writeln("${r(iReg)} <- bxor ${r(newReg)} ${r(iReg)}", semantics.scopeDepth)
+                    f.writeln("${r(newReg)} <- call not ${r(iReg)}", semantics.scopeDepth)
                 }
             }
         }

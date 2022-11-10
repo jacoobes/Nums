@@ -1,19 +1,52 @@
+func eq 
+beq r1 r2 fals tru
+@tru
+  r0 <- int 1
+  ret r0
+exit
+@fals
+  r0 <- int 0
+  ret r0
+exit  
+end
+
+func lt 
+blt r1 r2 fals tru
+@tru
+  r0 <- int 1
+  ret r0
+  exit
+@fals
+  r0 <- int 0
+  ret r0
+  exit  
+end
+
+func gt 
+    r3 <- call lt r1 r2
+    r4 <- call eq r1 r2
+    r5 <- int 1
+    r6 <- bxor r3 r4
+    r6 <- bxor r5 r6            
+    ret r6   
+exit  
+end
+
+func not
+  r0 <- int 1
+  r1 <- bxor r0 r1
+  ret r1
+  exit
+end
+    
 @__entry
     r0 <- call main
     exit
 func main
   # val s
   r1 <- int 1
-  r2 <- int 4
-  beq r1 r2 neq.913239340 cmp.913239340
-  @cmp.913239340
-  r3 <- int 1
-  jump exit.913239340
-  @neq.913239340
-  r3 <- int 0
-  @exit.913239340
-  r4 <- reg r3
-  bb <- r4 else.1419810764 then.1419810764
-  @then.1419810764
-  jump @else.1419810764
+  r2 <- int 1
+  r3 <- call eq r1 r2
+  r3 <- call not r3
+  putchar r3
 end
