@@ -15,4 +15,3 @@ KISS (keep it stupidly simple)
 - [ ] add more compiler options, since minivm supports other targets, why not take advantage of that?
 - [ ] write tests for nums
 
-Ok I just learned how to build QBE on windows. Reading the win.txt in the qbe download, I had to install msys2 and all the dependencies shown with pacman. In addition, had to set to PATH in .bashrc the path of the compiler
