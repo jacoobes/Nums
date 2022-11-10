@@ -37,12 +37,17 @@ class DefaultFunctionVisitor(
         override fun onIf(iif: Iif) {
             exprVisitor.visit(iif.condition)
             val eReg = semantics.topMostReg()
-            visit(iif.thenBody)
             val thenLabel = "then.${iif.thenBody.hashCode()}"
-            visit(iif.elseBody)
             val elseLabel = "else.${iif.elseBody.hashCode()}"
-
-
+            f.writeln("bb <- ${r(eReg)} $elseLabel $thenLabel", semantics.scopeDepth)
+            f.writeln("@$thenLabel", semantics.scopeDepth)
+            semantics.incDepth()
+            visit(iif.thenBody)
+            semantics.decDepth()
+            f.writeln("jump @$elseLabel", semantics.scopeDepth)
+            semantics.incDepth()
+            visit(iif.elseBody)
+            semantics.decDepth()
         }
 
         override fun onLoop(loop: Loop) {
@@ -162,24 +167,17 @@ class DefaultFunctionVisitor(
         }
 
         override fun onArrLiteral(arrayLiteral: ArrayLiteral) {
-            arrayLiteral.exprs.forEach(::visit)
-            val loopCode = "set.${arrayLiteral.hashCode()}"
-            val exitCode = "tes.${arrayLiteral.hashCode()}"
-            val areg = semantics.addRegister(arrayLiteral)
-            //len of arr
-            f.writeln("${r(areg)} <- int ${arrayLiteral.exprs.size}", semantics.scopeDepth)
-            f.writeln(
-                "${r(areg+1)} <- arr ${r(areg)}",
-                semantics.scopeDepth
-            )
-            f.writeln("${r(areg+2)} <- int 0", semantics.scopeDepth)
-            f.writeln("blt ${r(areg+2)} ${r(areg)} $exitCode $loopCode", semantics.scopeDepth)
-            f.writeln("@$loopCode", semantics.scopeDepth)
-            f.writeln("${r(areg+3)} <- int 1", semantics.scopeDepth)
-            f.writeln("${r(areg+2)} <- add ${r(areg+3)} ${r(areg+2)}", semantics.scopeDepth)
-            f.writeln("jump $loopCode", semantics.scopeDepth)
-            f.writeln("@$exitCode", semantics.scopeDepth)
-
+            throw Error("No array literals yet")
+//            arrayLiteral.exprs.forEach(::visit)
+//            val loopCode = "set.${arrayLiteral.hashCode()}"
+//            val exitCode = "tes.${arrayLiteral.hashCode()}"
+//            val areg = semantics.addRegister(arrayLiteral)
+//            //len of arr
+//            f.writeln("${r(areg)} <- int ${arrayLiteral.exprs.size}", semantics.scopeDepth)
+//            f.writeln(
+//                "${r(areg+1)} <- arr ${r(areg)}",
+//                semantics.scopeDepth
+//            )
         }
 
         override fun visit(item: Expr) {
@@ -195,7 +193,6 @@ class DefaultFunctionVisitor(
                 is Variable -> visit(item, ::onVariable)
                 is Comparison -> visit(item, ::onCmp)
                 is Call -> visit(item, ::onCall)
-                else -> {}
             }
         }
     }
