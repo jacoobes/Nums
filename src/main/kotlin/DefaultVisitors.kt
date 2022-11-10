@@ -32,6 +32,7 @@ class DefaultFunctionVisitor(
             }
             visit(fn.block)
             semantics.clearRegisters()
+            f.writeln("exit")
             f.writeln("end")
         }
 

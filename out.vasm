@@ -43,10 +43,16 @@ end
     r0 <- call main
     exit
 func main
-  # val s
-  r1 <- int 1
-  r2 <- int 1
-  r3 <- call eq r1 r2
-  r3 <- call not r3
-  putchar r3
+  # val ten
+  r1 <- int 10
+  # val nine
+  r2 <- int 9
+  # val what
+  r3 <- reg r1
+  r4 <- reg r2
+  r5 <- sub r3 r4
+  r6 <- int 1
+  r7 <- call eq r5 r6
+  putchar r7
+exit
 end
