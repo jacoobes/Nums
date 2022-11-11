@@ -1,5 +1,9 @@
 
 interface Native {
+    fun core() : String {
+        val lib = listOf(eq(), lt(), gt(), not())
+        return lib.joinToString(" ")
+    }
     /**
      * A two parameter function, checking if two values are equal.
      * T = 1
@@ -56,12 +60,12 @@ object MiniVmNative : Native {
 
     override fun gt(): String {
         return """
-        func gt 
+        func gt
+            r0 <- int 1
             r3 <- call lt r1 r2
             r4 <- call eq r1 r2
-            r5 <- int 1
-            r6 <- bxor r3 r4
-            r6 <- bxor r5 r6            
+            r5 <- bxor r3 r4
+            r5 <- bxor r0 r5            
             ret r6   
         exit  
         end

@@ -12,6 +12,8 @@ interface StatementVisitor: Visitor<Statement> {
     fun onBlock(block: Block)
     fun onVal(valStmt: Val)
     fun onReturn(ret: Return)
+    fun onAssign(assign:Assign)
+
 }
 
 interface ExpressionVisitor : Visitor<Expr> {
@@ -26,6 +28,7 @@ interface ExpressionVisitor : Visitor<Expr> {
     fun onOr(or: Or)
     fun onCall(call: Call)
     fun onArrLiteral(arrayLiteral: ArrayLiteral)
+
 }
 
 fun <T: Node> visit(item : T, cb: (T) -> Unit): T {
@@ -35,10 +38,7 @@ fun <T: Node> visit(item : T, cb: (T) -> Unit): T {
 
 fun visitor(tree: List<Statement>, bw: NumsWriter) {
     //for now, have minivm natives
-    bw.writeln(MiniVmNative.eq())
-    bw.writeln(MiniVmNative.lt())
-    bw.writeln(MiniVmNative.gt())
-    bw.writeln(MiniVmNative.not())
+    bw.writeln(MiniVmNative.core())
     for(node in tree) {
         when(node) {
             is FFunction -> visitFns(node, bw)

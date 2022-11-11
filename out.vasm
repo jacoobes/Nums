@@ -9,8 +9,7 @@ exit
   ret r0
 exit  
 end
-
-func lt 
+ func lt 
 blt r1 r2 fals tru
 @tru
   r0 <- int 1
@@ -21,18 +20,16 @@ blt r1 r2 fals tru
   ret r0
   exit  
 end
-
-func gt 
+ func gt
+    r0 <- int 1
     r3 <- call lt r1 r2
     r4 <- call eq r1 r2
-    r5 <- int 1
-    r6 <- bxor r3 r4
-    r6 <- bxor r5 r6            
+    r5 <- bxor r3 r4
+    r5 <- bxor r0 r5            
     ret r6   
 exit  
 end
-
-func not
+ func not
   r0 <- int 1
   r1 <- bxor r0 r1
   ret r1
@@ -43,16 +40,6 @@ end
     r0 <- call main
     exit
 func main
-  # val ten
-  r1 <- int 10
-  # val nine
-  r2 <- int 9
-  # val what
-  r3 <- reg r1
-  r4 <- reg r2
-  r5 <- sub r3 r4
-  r6 <- int 1
-  r7 <- call eq r5 r6
-  putchar r7
-exit
-end
+  # val test
+  r1 <- int 1
+  r2 <- int 123

@@ -17,7 +17,8 @@ class DefaultFunctionVisitor(
                 is Val -> visit(item, ::onVal)
                 is Return -> visit(item, ::onReturn)
                 is Skip -> {}
-                else -> throw Error("Cannot have local functions")
+                is Assign -> visit(item, ::onAssign)
+                else -> {}
             }
         }
 
@@ -28,7 +29,7 @@ class DefaultFunctionVisitor(
             f.writeln("func ${fn.token.name}")
             fn.args.forEach {
                 val reg = semantics.addRegister(it)
-                semantics.addLocal(it.name, reg)
+                semantics.addLocal(it.name, reg, false)
             }
             visit(fn.block)
             semantics.clearRegisters()
@@ -78,12 +79,20 @@ class DefaultFunctionVisitor(
             f.writeln("# val ${valStmt.token.name}", semantics.scopeDepth)
             exprVisitor.visit(valStmt.expr)
             val localReg = semantics.topMostReg()
-            semantics.addLocal(valStmt.token.name, localReg)
+            semantics.addLocal(valStmt.token.name, localReg, valStmt.isAssignable)
         }
 
         override fun onReturn(ret: Return) {
             exprVisitor.visit(ret.expr)
             f.writeln("ret ${r(semantics.topMostReg())}",semantics.topMostReg())
+        }
+
+        override fun onAssign(assign: Assign) {
+            exprVisitor.visit(assign.newVal)
+            val tReg = semantics.topMostReg()
+            val local = semantics.getLocal(assign.tok)
+            if(!local.isAssignable) throw Error("Cannot assign to val")
+            f.writeln("${r(local.registerVal)} <- reg ${r(tReg)}", semantics.scopeDepth)
         }
     }
 
@@ -183,6 +192,7 @@ class DefaultFunctionVisitor(
 //                semantics.scopeDepth
 //            )
         }
+
 
         override fun visit(item: Expr) {
             when(item) {
