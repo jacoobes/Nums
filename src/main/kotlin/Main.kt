@@ -37,6 +37,7 @@ fun init(args: Array<String>) {
             val fr = FileWriter(output)
             val br = NumsWriter(fr)
             br.use {
+                it.writeln(MiniVmNative.core())
                 visitor(result.value, it)
             }
         }

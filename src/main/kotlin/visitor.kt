@@ -1,8 +1,9 @@
 import com.github.h0tk3y.betterParse.grammar.tryParseToEnd
-import java.io.BufferedReader
+import com.github.h0tk3y.betterParse.parser.ErrorResult
+import com.github.h0tk3y.betterParse.parser.Parsed
 import java.io.File
-import java.io.FileReader
 import java.lang.Error
+import java.util.*
 
 interface Visitor<T> {
     fun visit(item: T)
@@ -41,18 +42,31 @@ fun <T: Node> visit(item : T, cb: (T) -> Unit): T {
 }
 
 fun visitor(tree: List<Statement>, bw: NumsWriter) {
-    //for now, have minivm natives
-    bw.writeln(MiniVmNative.core())
     for(node in tree) {
         when(node) {
             is FFunction -> visitFns(node, bw)
             is Import -> {
+                if(node.processed) continue
                 val numsFile = File(node.path)
                 if(!numsFile.exists()) throw Error("File $numsFile does not exist")
                 if(numsFile.isDirectory) throw Error("No directories allowed")
                 if(numsFile.extension != "nums") throw Error("Only .nums files are allowed")
-                val importedGrammar = NumsGrammar().tryParseToEnd(numsFile.readText())
-                println(importedGrammar)
+                when(val result = NumsGrammar().tryParseToEnd(numsFile.readText())) {
+                    is Parsed -> {
+                        //fix cyclic dependency error and importing from main
+                        val ( functions, imports ) = result.value.partition { it is FFunction }
+                        val functionNames = TreeSet(functions.map { (it as FFunction).token.name })
+                        for(import in node.idents) {
+                            if(!functionNames.contains(import.name)) throw Error("""
+                                File $numsFile does not contain a valid import.
+                                All detected imports: $functionNames
+                                Tried importing ${node.idents}
+                            """.trimIndent())
+                        }
+                        visitor(imports, bw)
+                    }
+                    is ErrorResult -> println(result)
+                }
             }
             else -> throw Error("Cannot have $node top level!")
         }

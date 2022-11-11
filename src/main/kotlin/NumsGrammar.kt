@@ -5,6 +5,8 @@ import com.github.h0tk3y.betterParse.lexer.Token
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
+import java.util.*
+import kotlin.collections.HashSet
 import kotlin.math.abs
 
 
@@ -64,7 +66,7 @@ data class FFunction(val main: Boolean, val token: Variable, val args: List<Vari
         return args.size
     }
 }
-data class Import(val idents : List<Variable>, val path: String) : Statement()
+data class Import(val idents : List<Variable>, val path: String, var processed : Boolean = false) : Statement()
 
 class NumsGrammar : Grammar<List<Statement>>() {
     private val num by regexToken("\\d+")
@@ -197,6 +199,8 @@ class NumsGrammar : Grammar<List<Statement>>() {
             Block(t3),
         )
     })
-    private val import by  (separatedTerms(varParser, comma)) * -assign * stringLiteral map { (ids, path) -> Import(ids, path.str) }
+    private val import by  (separatedTerms(varParser, comma)) * -assign * stringLiteral map { (ids, path) ->
+
+        Import(ids, path.str) }
     override val rootParser by oneOrMore(fnDecl or import)
 }

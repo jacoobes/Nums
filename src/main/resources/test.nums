@@ -1,4 +1,4 @@
-test = "src/main/resources/abc.nums"
+test = "src/main/resources/bcd.nums"
 
 fn main() {
 
