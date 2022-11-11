@@ -40,6 +40,5 @@ end
     r0 <- call main
     exit
 func main
-  # val test
-  r1 <- int 1
-  r2 <- int 123
+exit
+end

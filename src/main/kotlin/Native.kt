@@ -5,20 +5,28 @@ interface Native {
         return lib.joinToString(" ")
     }
     /**
-     * A two parameter function, checking if two values are equal.
+     * Arity 2 function, checking if two values are equal.
      * T = 1
      * F = 0
      */
     fun eq() : String
     /**
-     * A two parameter function, checking if two values are lt or gte
+     * Arity 2 function, checking if two values are lt
      * T = 1
      * F = 0
      */
     fun lt() : String
-
+    /**
+     * Arity 2 function, checking if two values are gt
+     * T = 1
+     * F = 0
+     */
     fun gt() : String
-
+    /**
+     * Arity 1 function, implements xor on r1, flipping bit value
+     * T = 1
+     * F = 0
+     */
     fun not() : String
 }
 

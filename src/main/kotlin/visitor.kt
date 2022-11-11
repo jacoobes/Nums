@@ -1,3 +1,7 @@
+import com.github.h0tk3y.betterParse.grammar.tryParseToEnd
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileReader
 import java.lang.Error
 
 interface Visitor<T> {
@@ -42,6 +46,14 @@ fun visitor(tree: List<Statement>, bw: NumsWriter) {
     for(node in tree) {
         when(node) {
             is FFunction -> visitFns(node, bw)
+            is Import -> {
+                val numsFile = File(node.path)
+                if(!numsFile.exists()) throw Error("File $numsFile does not exist")
+                if(numsFile.isDirectory) throw Error("No directories allowed")
+                if(numsFile.extension != "nums") throw Error("Only .nums files are allowed")
+                val importedGrammar = NumsGrammar().tryParseToEnd(numsFile.readText())
+                println(importedGrammar)
+            }
             else -> throw Error("Cannot have $node top level!")
         }
     }

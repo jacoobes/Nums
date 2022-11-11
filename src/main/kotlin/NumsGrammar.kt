@@ -13,10 +13,21 @@ sealed class Expr : Node {
     override fun hashCode(): Int {
         return abs(super.hashCode())
     }
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        return true
+    }
 }
 sealed class Statement : Node {
     override fun hashCode(): Int {
         return abs(super.hashCode())
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        return true
     }
 }
 
@@ -29,7 +40,7 @@ enum class ComparisonOps {
     Neq;
 }
 
-object Skip : Statement()
+data class Skip(val n: Nothing? = null) : Statement()
 data class StringLiteral(val str: String) : Expr()
 data class Number(val value: String) : Expr()
 data class Variable(val name: String) : Expr()
@@ -53,7 +64,9 @@ data class FFunction(val main: Boolean, val token: Variable, val args: List<Vari
         return args.size
     }
 }
-class NumsGrammar : Grammar<List<FFunction>>() {
+data class Import(val idents : List<Variable>, val path: String) : Statement()
+
+class NumsGrammar : Grammar<List<Statement>>() {
     private val num by regexToken("\\d+")
     private val semi by literalToken(";")
     private val ttrue by literalToken("T")
@@ -163,9 +176,9 @@ class NumsGrammar : Grammar<List<FFunction>>() {
     private val valStmt by (vval or vvar) * varParser * -assign * exprStatement use {  Val(t1.text == "var", t2, t3.expr) }
     private val iifStmt by (-iif * expr * -lcurly * optional(parser(::statements)) * -rcurly
             * zeroOrMore(-eels * -iif * expr * -lcurly * optional(parser(this::statements)) * -rcurly) *
-            (optional(-eels * -lcurly * optional(parser(this::statements)) * -rcurly )).map { it ?: Skip }
+            (optional(-eels * -lcurly * optional(parser(this::statements)) * -rcurly )).map { it ?: Skip() }
             ).use {
-            Iif(t1, t2 ?: Skip, t3.foldRight(t4) { (elifC, elifB), el -> Iif(elifC, elifB ?: Skip, el) })
+            Iif(t1, t2 ?: Skip(), t3.foldRight(t4) { (elifC, elifB), el -> Iif(elifC, elifB ?: Skip(), el) })
         }
 
     private val loopCombine by -loop * expr * parser(this::statements) use { Loop(t1, t2) }
@@ -184,5 +197,6 @@ class NumsGrammar : Grammar<List<FFunction>>() {
             Block(t3),
         )
     })
-    override val rootParser by oneOrMore(fnDecl)
+    private val import by  (separatedTerms(varParser, comma)) * -assign * stringLiteral map { (ids, path) -> Import(ids, path.str) }
+    override val rootParser by oneOrMore(fnDecl or import)
 }

@@ -1,3 +1,5 @@
+test = "src/main/resources/abc.nums"
+
 fn main() {
-    val test = 1;
+
 }
