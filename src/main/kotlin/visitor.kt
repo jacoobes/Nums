@@ -46,24 +46,13 @@ fun visitor(tree: List<Statement>, bw: NumsWriter) {
         when(node) {
             is FFunction -> visitFns(node, bw)
             is Import -> {
-                if(node.processed) continue
                 val numsFile = File(node.path)
                 if(!numsFile.exists()) throw Error("File $numsFile does not exist")
                 if(numsFile.isDirectory) throw Error("No directories allowed")
                 if(numsFile.extension != "nums") throw Error("Only .nums files are allowed")
                 when(val result = NumsGrammar().tryParseToEnd(numsFile.readText())) {
                     is Parsed -> {
-                        //fix cyclic dependency error and importing from main
-                        val ( functions, imports ) = result.value.partition { it is FFunction }
-                        val functionNames = TreeSet(functions.map { (it as FFunction).token.name })
-                        for(import in node.idents) {
-                            if(!functionNames.contains(import.name)) throw Error("""
-                                File $numsFile does not contain a valid import.
-                                All detected imports: $functionNames
-                                Tried importing ${node.idents}
-                            """.trimIndent())
-                        }
-                        visitor(imports, bw)
+                        visitor(result.value, bw)
                     }
                     is ErrorResult -> println(result)
                 }

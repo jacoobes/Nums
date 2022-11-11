@@ -66,7 +66,7 @@ data class FFunction(val main: Boolean, val token: Variable, val args: List<Vari
         return args.size
     }
 }
-data class Import(val idents : List<Variable>, val path: String, var processed : Boolean = false) : Statement()
+data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean) : Statement()
 
 class NumsGrammar : Grammar<List<Statement>>() {
     private val num by regexToken("\\d+")
@@ -199,8 +199,10 @@ class NumsGrammar : Grammar<List<Statement>>() {
             Block(t3),
         )
     })
-    private val import by  (separatedTerms(varParser, comma)) * -assign * stringLiteral map { (ids, path) ->
-
-        Import(ids, path.str) }
+    private val import by  ( optional(timex) * separatedTerms(varParser, comma)) * -assign * stringLiteral map { (ns, ids, path) ->
+        ns?.let {
+            if(ids.size == 1) Import(ids,path.str, true) else throw Error("A file can only have one namespace")
+        } ?: Import(ids, path.str, false)
+    }
     override val rootParser by oneOrMore(fnDecl or import)
 }
