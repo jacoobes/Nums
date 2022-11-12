@@ -15,3 +15,4 @@ KISS (keep it stupidly simple)
 - [ ] add more compiler options, since minivm supports other targets, why not take advantage of that?
 - [ ] write tests for nums
 - [ ] switch to the minivm/new branch for C FFI!
+- [ ] add optimization flags in cli
