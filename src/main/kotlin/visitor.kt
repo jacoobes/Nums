@@ -1,9 +1,3 @@
-import com.github.h0tk3y.betterParse.grammar.tryParseToEnd
-import com.github.h0tk3y.betterParse.parser.ErrorResult
-import com.github.h0tk3y.betterParse.parser.Parsed
-import java.io.File
-import java.lang.Error
-import java.util.*
 
 interface Visitor<T> {
     fun visit(item: T)
@@ -33,6 +27,7 @@ interface ExpressionVisitor : Visitor<Expr> {
     fun onOr(or: Or)
     fun onCall(call: Call)
     fun onArrLiteral(arrayLiteral: ArrayLiteral)
+    fun onGet(get: Get)
 
 }
 
@@ -41,26 +36,28 @@ fun <T: Node> visit(item : T, cb: (T) -> Unit): T {
     return item
 }
 
-fun visitor(tree: List<Statement>, bw: NumsWriter) {
-    for(node in tree) {
+fun visitor(tree: NumsNode, bw: NumsWriter) {
+    val (fns, imports) = tree
+    createImportGraph(imports)
+    for(node in fns) {
         when(node) {
-            is FFunction -> visitFns(node, bw)
-            is Import -> {
-                val numsFile = File(node.path)
-                if(!numsFile.exists()) throw Error("File $numsFile does not exist")
-                if(numsFile.isDirectory) throw Error("No directories allowed")
-                if(numsFile.extension != "nums") throw Error("Only .nums files are allowed")
-                when(val result = NumsGrammar().tryParseToEnd(numsFile.readText())) {
-                    is Parsed -> {
-                        visitor(result.value, bw)
-                    }
-                    is ErrorResult -> println(result)
-                }
-            }
-            else -> throw Error("Cannot have $node top level!")
+            //            is Import -> {
+//                val numsFile = File(node.path)
+//                if(!numsFile.exists()) throw Error("File $numsFile does not exist")
+//                if(numsFile.isDirectory) throw Error("No directories allowed")
+//                if(numsFile.extension != "nums") throw Error("Only .nums files are allowed")
+//                when(val result = NumsGrammar().tryParseToEnd(numsFile.readText())) {
+//                    is Parsed -> {
+//                        println(result.value)
+//                    }
+//                    is ErrorResult -> println(result)
+//                }
+//            }
+            else -> visitFns(node, bw)
         }
     }
 }
+fun createImportGraph(alpha: List<Import>) {}
 //inorder traversal
 fun visitFns(stmt: FFunction, bw: NumsWriter) {
     val defaultFnVisitor = DefaultFunctionVisitor(stmt, bw, Semantics())

@@ -193,6 +193,9 @@ class DefaultFunctionVisitor(
 //            )
         }
 
+        override fun onGet(get: Get) {
+            println(get)
+        }
 
         override fun visit(item: Expr) {
             when(item) {
@@ -207,6 +210,7 @@ class DefaultFunctionVisitor(
                 is Variable -> visit(item, ::onVariable)
                 is Comparison -> visit(item, ::onCmp)
                 is Call -> visit(item, ::onCall)
+                is Get -> visit(item, ::onGet)
             }
         }
     }

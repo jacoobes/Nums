@@ -5,6 +5,7 @@ import com.github.h0tk3y.betterParse.lexer.Token
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
+import com.github.h0tk3y.betterParse.utils.Tuple2
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.math.abs
@@ -53,6 +54,7 @@ data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : 
 data class And(val left: Expr, val right: Expr) : Expr()
 data class Or(val left: Expr, val right: Expr) : Expr()
 data class ArrayLiteral(val exprs: List<Expr>) : Expr()
+data class Get(val chain: Expr, val tok: Expr) : Expr()
 data class Bool(val bool: String) : Expr()
 data class ExpressionStatement(val expr: Expr) : Statement()
 data class Assign(val tok : Variable, val newVal: Expr) : Statement()
@@ -68,7 +70,7 @@ data class FFunction(val main: Boolean, val token: Variable, val args: List<Vari
 }
 data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean) : Statement()
 
-class NumsGrammar : Grammar<List<Statement>>() {
+class NumsGrammar : Grammar<Pair<List<FFunction>, List<Import>>>() {
     private val num by regexToken("\\d+")
     private val semi by literalToken(";")
     private val ttrue by literalToken("T")
@@ -87,6 +89,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
     private val minus by literalToken("-")
     private val div by literalToken("/")
     private val mod by literalToken("%")
+    private val colon by literalToken(":")
     private val timex by literalToken("*")
     private val equal by literalToken("==")
     private val nequal by literalToken("!=")
@@ -124,7 +127,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
     private val rparen by literalToken(")")
     private val lcurly by literalToken("{")
     private val rcurly by literalToken("}")
-    private val pipe by regexToken("\\|")
+    private val pipe by literalToken("|")
     private val stringLiteral by stringLit use { StringLiteral(text.removeSurrounding("\"", "\"")) }
     //only supports int right now
     private val numParser by num use { Number(text) }
@@ -141,10 +144,12 @@ class NumsGrammar : Grammar<List<Statement>>() {
         term = parser(this::expr)
     ) and -rcurly) map { ArrayLiteral(it) }
     private val grouped by -lparen and parser(this::expr) and -rparen
+    private val getter by leftAssociative(fnCall or varParser, colon) { l,_,r -> Get(l, r) }
     private val unary by (not and parser(this::expr)) map { Unary(it.t1.type, it.t2) }
     private val primitiveExpr: Parser<Expr> by (
             numParser or
             fnCall or
+            getter or
             varParser or
             truthParser or
             falseParser or
@@ -199,10 +204,12 @@ class NumsGrammar : Grammar<List<Statement>>() {
             Block(t3),
         )
     })
-    private val import by  ( optional(timex) * separatedTerms(varParser, comma)) * -assign * stringLiteral map { (ns, ids, path) ->
+    private val import by  ( optional(plus) * separatedTerms(varParser, comma)) * -assign * stringLiteral map { (ns, ids, path) ->
         ns?.let {
             if(ids.size == 1) Import(ids,path.str, true) else throw Error("A file can only have one namespace")
         } ?: Import(ids, path.str, false)
     }
-    override val rootParser by oneOrMore(fnDecl or import)
+    override val rootParser by oneOrMore(fnDecl or import) map {
+        it.partition { s -> s is FFunction } as Pair<List<FFunction>, List<Import>>
+    }
 }
