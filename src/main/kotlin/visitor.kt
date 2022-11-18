@@ -36,28 +36,14 @@ fun <T: Node> visit(item : T, cb: (T) -> Unit): T {
     return item
 }
 
-fun visitor(tree: NumsNode, bw: NumsWriter) {
-    val (fns, imports) = tree
-    createImportGraph(imports)
-    for(node in fns) {
-        when(node) {
-            //            is Import -> {
-//                val numsFile = File(node.path)
-//                if(!numsFile.exists()) throw Error("File $numsFile does not exist")
-//                if(numsFile.isDirectory) throw Error("No directories allowed")
-//                if(numsFile.extension != "nums") throw Error("Only .nums files are allowed")
-//                when(val result = NumsGrammar().tryParseToEnd(numsFile.readText())) {
-//                    is Parsed -> {
-//                        println(result.value)
-//                    }
-//                    is ErrorResult -> println(result)
-//                }
-//            }
-            else -> visitFns(node, bw)
-        }
-    }
+fun visitor(tree: List<Statement>, bw: NumsWriter) {
+//    for(node in tree) {
+//        when(node) {
+//            is FFunction -> visitFns(node, bw)
+//            else -> {}
+//        }
+//    }
 }
-fun createImportGraph(alpha: List<Import>) {}
 //inorder traversal
 fun visitFns(stmt: FFunction, bw: NumsWriter) {
     val defaultFnVisitor = DefaultFunctionVisitor(stmt, bw, Semantics())

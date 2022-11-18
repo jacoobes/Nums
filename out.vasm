@@ -36,10 +36,3 @@ end
   exit
 end
     
-@__entry
-    r0 <- call main
-    exit
-func main
-  # val p
-exit
-end

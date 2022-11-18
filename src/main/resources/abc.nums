@@ -1,5 +1,4 @@
 test = "src/main/resources/bcd.nums"
-
 fn quan() {
 
 }

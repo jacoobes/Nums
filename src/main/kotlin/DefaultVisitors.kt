@@ -194,7 +194,7 @@ class DefaultFunctionVisitor(
         }
 
         override fun onGet(get: Get) {
-            println(get)
+
         }
 
         override fun visit(item: Expr) {

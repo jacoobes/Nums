@@ -63,14 +63,10 @@ data class Block(val stmts: List<Statement>) : Statement()
 data class Return(val expr: Expr) : Statement()
 data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: Statement) : Statement()
 data class Loop(val condition: Expr, val block: Statement) : Statement()
-data class FFunction(val main: Boolean, val token: Variable, val args: List<Variable>, val block: Statement) : Statement() {
-    fun arity(): Int {
-        return args.size
-    }
-}
+data class FFunction(val main: Boolean, val token: Variable, val args: List<Variable>, val block: Statement) : Statement()
 data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean) : Statement()
 
-class NumsGrammar : Grammar<Pair<List<FFunction>, List<Import>>>() {
+class NumsGrammar : Grammar<List<Statement>>() {
     private val num by regexToken("\\d+")
     private val semi by literalToken(";")
     private val ttrue by literalToken("T")
@@ -209,7 +205,5 @@ class NumsGrammar : Grammar<Pair<List<FFunction>, List<Import>>>() {
             if(ids.size == 1) Import(ids,path.str, true) else throw Error("A file can only have one namespace")
         } ?: Import(ids, path.str, false)
     }
-    override val rootParser by oneOrMore(fnDecl or import) map {
-        it.partition { s -> s is FFunction } as Pair<List<FFunction>, List<Import>>
-    }
+    override val rootParser by oneOrMore(fnDecl or import)
 }
