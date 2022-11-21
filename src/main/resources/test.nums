@@ -1,7 +1,9 @@
 + Name = "src/main/resources/bcd.nums"
 
 fn main() {
-    val p = Name:get:let:set():poo;
+
 }
 
+fn poo () {
 
+}

@@ -1,3 +1,4 @@
+poo = "src/main/resources/test.nums"
 test = "src/main/resources/bcd.nums"
 fn quan() {
 

@@ -46,7 +46,14 @@ enum class ComparisonOps {
 data class Skip(val n: Nothing? = null) : Statement()
 data class StringLiteral(val str: String) : Expr()
 data class Number(val value: String) : Expr()
-data class Variable(val name: String) : Expr()
+data class Variable(val name: String) : Expr() {
+    override fun equals(other: Any?): Boolean {
+        return other is Variable && name == other.name
+    }
+    override fun hashCode(): Int {
+        return name.hashCode()
+    }
+}
 data class Unary(val op: Token, val expr: Expr) : Expr()
 data class Binary(val left: Expr, val right: Expr, val op: String) : Expr()
 data class Call(val callee: Variable, val args: List<Expr>) : Expr()
@@ -63,7 +70,17 @@ data class Block(val stmts: List<Statement>) : Statement()
 data class Return(val expr: Expr) : Statement()
 data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: Statement) : Statement()
 data class Loop(val condition: Expr, val block: Statement) : Statement()
-data class FFunction(val main: Boolean, val token: Variable, val args: List<Variable>, val block: Statement) : Statement()
+data class FFunction(val main: Boolean, val token: Variable, val args: List<Variable>, val block: Statement) : Statement() {
+    override fun equals(other: Any?): Boolean {
+        return super.equals(other)
+    }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + token.hashCode()
+        return result
+    }
+}
 data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean) : Statement()
 
 class NumsGrammar : Grammar<List<Statement>>() {
