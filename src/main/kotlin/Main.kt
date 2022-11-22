@@ -19,7 +19,8 @@ fun init(args: Array<String>) {
             val fr = FileWriter(output)
             val br = NumsWriter(fr)
             val mr = ModuleResolver(file to result.value)
-            println(mr.depGraph)
+            mr.depGraph.edgeSet().also(::println)
+            //mr.depGraph.vertexSet().also(::println)
             br.use {
                 it.writeln(MiniVmNative.core())
                 visitor(result.value, it)
