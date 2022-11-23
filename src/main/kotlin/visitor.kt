@@ -27,7 +27,7 @@ interface ExpressionVisitor : Visitor<Expr> {
     fun onOr(or: Or)
     fun onCall(call: Call)
     fun onArrLiteral(arrayLiteral: ArrayLiteral)
-    fun onGet(get: Get)
+    fun onPath(path: Path)
 
 }
 

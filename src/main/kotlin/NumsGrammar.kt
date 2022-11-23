@@ -5,9 +5,6 @@ import com.github.h0tk3y.betterParse.lexer.Token
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
-import com.github.h0tk3y.betterParse.utils.Tuple2
-import java.util.*
-import kotlin.collections.HashSet
 import kotlin.math.abs
 
 
@@ -61,7 +58,7 @@ data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : 
 data class And(val left: Expr, val right: Expr) : Expr()
 data class Or(val left: Expr, val right: Expr) : Expr()
 data class ArrayLiteral(val exprs: List<Expr>) : Expr()
-data class Get(val chain: Expr, val tok: Expr) : Expr()
+data class Path(val chain: Expr, val tok: Expr) : Expr()
 data class Bool(val bool: String) : Expr()
 data class ExpressionStatement(val expr: Expr) : Statement()
 data class Assign(val tok : Variable, val newVal: Expr) : Statement()
@@ -81,12 +78,15 @@ data class FFunction(val main: Boolean, val token: Variable, val args: List<Vari
         return result
     }
 }
+data class Space(val name: Variable, val elements: List<Statement>) : Statement()
+
 data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean) : Statement()
 
 class NumsGrammar : Grammar<List<Statement>>() {
     private val num by regexToken("\\d+")
     private val semi by literalToken(";")
     private val ttrue by literalToken("T")
+    private val space by literalToken("space")
     private val ffalse by literalToken("F")
     private val and by literalToken("and")
     private val or by literalToken("or")
@@ -157,7 +157,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
         term = parser(this::expr)
     ) and -rcurly) map { ArrayLiteral(it) }
     private val grouped by -lparen and parser(this::expr) and -rparen
-    private val getter by leftAssociative(fnCall or varParser, colon) { l,_,r -> Get(l, r) }
+    private val getter by leftAssociative(fnCall or varParser, colon) { l,_,r -> Path(l, r) }
     private val unary by (not and parser(this::expr)) map { Unary(it.t1.type, it.t2) }
     private val primitiveExpr: Parser<Expr> by (
             numParser or
@@ -222,5 +222,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
             if(ids.size == 1) Import(ids,path.str, true) else throw Error("A file can only have one namespace")
         } ?: Import(ids, path.str, false)
     }
-    override val rootParser by oneOrMore(fnDecl or import)
+    private val spaceBlock by -space * varParser * -lcurly *  oneOrMore(parser(::topLevel)) * -rcurly map { (n, stmts) -> Space(n,stmts) }
+    private val topLevel : Parser<Statement> by fnDecl or import or spaceBlock
+    override val rootParser by oneOrMore(topLevel)
 }

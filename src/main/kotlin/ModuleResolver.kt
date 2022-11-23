@@ -62,7 +62,7 @@ class ModuleResolver(root: Pair<File,List<Statement>>) {
             return id
         }
     }
-
+    private inner class SVertex(val space: Space) : Vertex
     private fun generate(dependencies : List<Statement>) {
         for (node in dependencies) {
             when (node) {
@@ -88,7 +88,7 @@ class ModuleResolver(root: Pair<File,List<Statement>>) {
                             val importVertex = IVertex(node, hash)
 
                             if(node.isNamespace) {
-                                val nVertex = NVertex(node.idents[0], id=hash, path=node.path)
+                                val nVertex = NVertex(node.idents.first(), id=hash, path=node.path)
                                 depGraph.addVertex(nVertex)
 
                                 filesVisited[hash]!!
@@ -111,10 +111,11 @@ class ModuleResolver(root: Pair<File,List<Statement>>) {
                                         depGraph.addEdge(importVertex, fTex)
                                     }
                             }
-
-                            //TODO ensure functions exist when importing
                         }
                     }
+                }
+                is Space -> {
+                    depGraph.addVertex(SVertex(node))
                 }
                 else -> throw Error("Cannot have $node top level")
             }

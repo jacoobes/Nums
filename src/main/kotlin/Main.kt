@@ -4,9 +4,7 @@ import com.github.h0tk3y.betterParse.parser.Parsed
 import kotlinx.cli.*
 import java.io.File
 import java.io.FileWriter
-fun main(args: Array<String>) {
-    init(args)
-}
+fun main(args: Array<String>) = init(args)
 fun init(args: Array<String>) {
     val parser = ArgParser("nums")
     val input by parser.option(ArgType.String, shortName = "i", description = "Main File").required()
@@ -19,8 +17,6 @@ fun init(args: Array<String>) {
             val fr = FileWriter(output)
             val br = NumsWriter(fr)
             val mr = ModuleResolver(file to result.value)
-            mr.depGraph.edgeSet().also(::println)
-            //mr.depGraph.vertexSet().also(::println)
             br.use {
                 it.writeln(MiniVmNative.core())
                 visitor(result.value, it)

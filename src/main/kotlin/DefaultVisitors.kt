@@ -193,7 +193,7 @@ class DefaultFunctionVisitor(
 //            )
         }
 
-        override fun onGet(get: Get) {
+        override fun onPath(path: Path) {
 
         }
 
@@ -210,7 +210,7 @@ class DefaultFunctionVisitor(
                 is Variable -> visit(item, ::onVariable)
                 is Comparison -> visit(item, ::onCmp)
                 is Call -> visit(item, ::onCall)
-                is Get -> visit(item, ::onGet)
+                is Path -> visit(item, ::onPath)
             }
         }
     }
