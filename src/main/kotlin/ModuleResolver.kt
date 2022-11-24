@@ -1,21 +1,23 @@
-import com.github.h0tk3y.betterParse.grammar.tryParseToEnd
-import com.github.h0tk3y.betterParse.parser.ErrorResult
-import com.github.h0tk3y.betterParse.parser.Parsed
+import com.github.h0tk3y.betterParse.grammar.parseToEnd
+import nodes.*
 import org.jgrapht.graph.DefaultEdge
 import org.jgrapht.graph.DirectedAcyclicGraph
 import java.io.File
+import java.util.LinkedList
 
-class ModuleResolver(root: Pair<File,List<Statement>>) {
+class ModuleResolver(root: File) {
 
-    val filesVisited = HashMap<Int, List<Statement>>()
     val depGraph: DirectedAcyclicGraph<Vertex, DefaultEdge> = DirectedAcyclicGraph(DefaultEdge::class.java)
     init {
-        root.first.sanityCheck()
-        root.second.find { it is FFunction && it.main }
-            ?.let { depGraph.addVertex(FVertex(it as FFunction)) }
-            ?: throw Error("Could not find main entry")
-        filesVisited[root.first.hashCode()] = root.second
-        generate(root.second)
+        root.sanityCheck()
+        val filesGenerated = generateFiles(root)
+        println(filesGenerated)
+        //create and parse all files
+//        root.second.find { it is FFunction && it.main }
+//            ?.let { depGraph.addVertex(FVertex(it as FFunction)) }
+//            ?: throw Error("Could not find main entry")
+//        filesVisited[root.first] = root.second
+//        generateGraph(root.second)
     }
 
     private fun File.sanityCheck() {
@@ -38,7 +40,7 @@ class ModuleResolver(root: Pair<File,List<Statement>>) {
             return f.toString()
         }
     }
-    private inner class IVertex(val i:Import, val id:Int): Vertex {
+    private inner class IVertex(val i: Import, val id:Int): Vertex {
         override fun equals(other: Any?): Boolean {
             if (other !is IVertex) return false
             return id == other.id
@@ -63,62 +65,85 @@ class ModuleResolver(root: Pair<File,List<Statement>>) {
         }
     }
     private inner class SVertex(val space: Space) : Vertex
-    private fun generate(dependencies : List<Statement>) {
-        for (node in dependencies) {
-            when (node) {
-                is FFunction -> {
-                    depGraph.addVertex(FVertex(node))
-                }
-                is Import -> {
-                    val nf = File(node.path)
-                    nf.sanityCheck() //catches anything that may be wrong with the file being imported
-                    val hash = nf.hashCode()
-                    val iNode = IVertex(node, hash)
-                    if(!depGraph.containsVertex(iNode)) {
-                        depGraph.addVertex(iNode)
-                    }
-                    when(val res = NumsGrammar().tryParseToEnd(nf.readText())) {
-                        is ErrorResult -> println(res)
-                        is Parsed -> {
-                            //this makes filesVisited[hash] always not null!
-                            if(!filesVisited.contains(hash)) {
-                                filesVisited[hash] = res.value
-                                generate(res.value)
-                            }
-                            val importVertex = IVertex(node, hash)
 
-                            if(node.isNamespace) {
-                                val nVertex = NVertex(node.idents.first(), id=hash, path=node.path)
-                                depGraph.addVertex(nVertex)
+    private fun generateFiles(root: File): HashMap<File, List<Statement>> {
+        val files = HashMap<File, List<Statement>>()
+        val queue = LinkedList<File>()
+        val grammar = NumsGrammar()
+        queue.add(root)
 
-                                filesVisited[hash]!!
-                                    .asSequence()
-                                    .filterIsInstance<FFunction>()
-                                    .forEach {
-                                        val fTex = FVertex(it)
-                                        depGraph.addVertex(fTex)
-                                        depGraph.addEdge(nVertex, fTex)
-                                    }
-                            } else {
-                                val tokens = HashSet(node.idents)
-                                filesVisited[hash]!!
-                                    .asSequence()
-                                    .filterIsInstance<FFunction>()
-                                    .filter { tokens.contains(it.token) }
-                                    .forEach {
-                                        val fTex = FVertex(it)
-                                        depGraph.addVertex(fTex)
-                                        depGraph.addEdge(importVertex, fTex)
-                                    }
-                            }
+        while(queue.isNotEmpty()) {
+            val current = queue.poll()
+            val parsed = grammar.parseToEnd(current.readText())
+                for(node in parsed) {
+                    if(node is Import) {
+                        val nf = File(node.path)
+                        if(!files.contains(nf)) {
+                            nf.sanityCheck()
+                            queue.add(nf)
+                            files[nf] = parsed
                         }
                     }
                 }
-                is Space -> {
-                    depGraph.addVertex(SVertex(node))
-                }
-                else -> throw Error("Cannot have $node top level")
-            }
         }
+        return files
     }
+//    private fun generateGraph(dependencies : List<Statement>) {
+//        for (node in dependencies) {
+//            when (node) {
+//                is FFunction -> {
+//                    depGraph.addVertex(FVertex(node))
+//                }
+//                is Import -> {
+//                    val nf = File(node.path)
+//                    nf.sanityCheck() //catches anything that may be wrong with the file being imported
+//                    val hash = nf.hashCode()
+//                    val iNode = IVertex(node, hash)
+//                    if(!depGraph.containsVertex(iNode)) {
+//                        depGraph.addVertex(iNode)
+//                    }
+//                    when(val res = NumsGrammar().tryParseToEnd(nf.readText())) {
+//                        is ErrorResult -> println(res)
+//                        is Parsed -> {
+//                            //this makes filesVisited[hash] always not null!
+//                            if(!filesVisited.contains(hash)) {
+//                                filesVisited[hash] = res.value
+//                                generateGraph(res.value)
+//                            }
+//                            val importVertex = IVertex(node, hash)
+//
+//                            if(node.isNamespace) {
+//                                val nVertex = NVertex(node.idents.first(), id=hash, path=node.path)
+//                                depGraph.addVertex(nVertex)
+//
+//                                filesVisited[hash]!!
+//                                    .asSequence()
+//                                    .filterIsInstance<FFunction>()
+//                                    .forEach {
+//                                        val fTex = FVertex(it)
+//                                        depGraph.addVertex(fTex)
+//                                        depGraph.addEdge(nVertex, fTex)
+//                                    }
+//                            } else {
+//                                val tokens = HashSet(node.idents)
+//                                filesVisited[hash]!!
+//                                    .asSequence()
+//                                    .filterIsInstance<FFunction>()
+//                                    .filter { tokens.contains(it.token) }
+//                                    .forEach {
+//                                        val fTex = FVertex(it)
+//                                        depGraph.addVertex(fTex)
+//                                        depGraph.addEdge(importVertex, fTex)
+//                                    }
+//                            }
+//                        }
+//                    }
+//                }
+//                is Space -> {
+//                    depGraph.addVertex(SVertex(node))
+//                }
+//                else -> throw Error("Cannot have $node top level")
+//            }
+//        }
+//    }
 }

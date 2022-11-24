@@ -1,86 +1,12 @@
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
-import com.github.h0tk3y.betterParse.lexer.Token
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
-import kotlin.math.abs
+import nodes.*
 
 
-interface Node
-sealed class Expr : Node {
-    override fun hashCode(): Int {
-        return abs(super.hashCode())
-    }
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-}
-sealed class Statement : Node {
-    override fun hashCode(): Int {
-        return abs(super.hashCode())
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-}
-
-enum class ComparisonOps {
-    Lt,
-    Lte,
-    Gt,
-    Gte,
-    Eq,
-    Neq;
-}
-
-data class Skip(val n: Nothing? = null) : Statement()
-data class StringLiteral(val str: String) : Expr()
-data class Number(val value: String) : Expr()
-data class Variable(val name: String) : Expr() {
-    override fun equals(other: Any?): Boolean {
-        return other is Variable && name == other.name
-    }
-    override fun hashCode(): Int {
-        return name.hashCode()
-    }
-}
-data class Unary(val op: Token, val expr: Expr) : Expr()
-data class Binary(val left: Expr, val right: Expr, val op: String) : Expr()
-data class Call(val callee: Variable, val args: List<Expr>) : Expr()
-data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : Expr()
-data class And(val left: Expr, val right: Expr) : Expr()
-data class Or(val left: Expr, val right: Expr) : Expr()
-data class ArrayLiteral(val exprs: List<Expr>) : Expr()
-data class Path(val chain: Expr, val tok: Expr) : Expr()
-data class Bool(val bool: String) : Expr()
-data class ExpressionStatement(val expr: Expr) : Statement()
-data class Assign(val tok : Variable, val newVal: Expr) : Statement()
-data class Val(val isAssignable: Boolean, val token: Variable, val expr: Expr) : Statement()
-data class Block(val stmts: List<Statement>) : Statement()
-data class Return(val expr: Expr) : Statement()
-data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: Statement) : Statement()
-data class Loop(val condition: Expr, val block: Statement) : Statement()
-data class FFunction(val main: Boolean, val token: Variable, val args: List<Variable>, val block: Statement) : Statement() {
-    override fun equals(other: Any?): Boolean {
-        return super.equals(other)
-    }
-
-    override fun hashCode(): Int {
-        var result = super.hashCode()
-        result = 31 * result + token.hashCode()
-        return result
-    }
-}
-data class Space(val name: Variable, val elements: List<Statement>) : Statement()
-
-data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean) : Statement()
 
 class NumsGrammar : Grammar<List<Statement>>() {
     private val num by regexToken("\\d+")

@@ -1,3 +1,11 @@
+package emission
+
+import ExpressionVisitor
+import NumsWriter
+import Semantics
+import StatementVisitor
+import visit
+import nodes.*
 
 class DefaultFunctionVisitor(
     private val fn: FFunction,
@@ -97,7 +105,7 @@ class DefaultFunctionVisitor(
     }
 
     private val exprVisitor = object : ExpressionVisitor {
-        override fun onNumber(number: Number) {
+        override fun onNumber(number: nodes.Number) {
             val ireg = semantics.addRegister(number)
             f.writeln("${r(ireg)} <- int ${number.value}", semantics.scopeDepth)
         }
@@ -199,7 +207,7 @@ class DefaultFunctionVisitor(
 
         override fun visit(item: Expr) {
             when(item) {
-                is Number -> visit(item, ::onNumber)
+                is nodes.Number -> visit(item, ::onNumber)
                 is StringLiteral -> visit(item, ::onStr)
                 is Binary -> visit(item, ::onBinary)
                 is Unary -> visit(item, ::onUnary)

@@ -1,4 +1,5 @@
-
+import emission.DefaultFunctionVisitor
+import nodes.*
 interface Visitor<T> {
     fun visit(item: T)
 }
@@ -16,7 +17,7 @@ interface StatementVisitor: Visitor<Statement> {
 }
 
 interface ExpressionVisitor : Visitor<Expr> {
-    fun onNumber(number: Number)
+    fun onNumber(number: nodes.Number)
     fun onStr(stringLiteral: StringLiteral)
     fun onBinary(binary: Binary)
     fun onCmp(cmp: Comparison)
