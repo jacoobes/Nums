@@ -12,20 +12,40 @@ class ModuleResolver(root: File) {
         root.sanityCheck()
         val filesGenerated = generateFiles(root)
         println(filesGenerated)
-        //create and parse all files
-//        root.second.find { it is FFunction && it.main }
-//            ?.let { depGraph.addVertex(FVertex(it as FFunction)) }
-//            ?: throw Error("Could not find main entry")
-//        filesVisited[root.first] = root.second
-//        generateGraph(root.second)
+    }
+    companion object {
+
+        fun File.sanityCheck() {
+            if(!exists()) throw Error("File $this does not exist")
+            if(isDirectory) throw Error("No directories allowed")
+            if(extension != "nums") throw Error("Only .nums files are allowed")
+            if(!canRead()) throw Error("Cannot write to this file")
+        }
+        fun generateFiles(root: File): HashMap<File, List<Statement>> {
+            val files = HashMap<File, List<Statement>>()
+            val queue = LinkedList<File>()
+            val grammar = NumsGrammar()
+            queue.add(root)
+            while(queue.isNotEmpty()) {
+                val current = queue.poll()
+                val parsed = grammar.parseToEnd(current.readText())
+                files[current] = parsed
+                for(node in parsed) {
+                    if(node is Import) {
+                        val nf = File(node.path)
+                        if(!files.contains(nf)) {
+                            nf.sanityCheck()
+                            queue.add(nf)
+                            files[nf] = parsed
+                        }
+                    }
+                }
+            }
+            return files
+        }
     }
 
-    private fun File.sanityCheck() {
-        if(!exists()) throw Error("File $this does not exist")
-        if(isDirectory) throw Error("No directories allowed")
-        if(extension != "nums") throw Error("Only .nums files are allowed")
-        if(!canRead()) throw Error("Cannot write to this file")
-    }
+
 
     interface Vertex
     private inner class FVertex(val f: FFunction) : Vertex {
@@ -66,28 +86,7 @@ class ModuleResolver(root: File) {
     }
     private inner class SVertex(val space: Space) : Vertex
 
-    private fun generateFiles(root: File): HashMap<File, List<Statement>> {
-        val files = HashMap<File, List<Statement>>()
-        val queue = LinkedList<File>()
-        val grammar = NumsGrammar()
-        queue.add(root)
 
-        while(queue.isNotEmpty()) {
-            val current = queue.poll()
-            val parsed = grammar.parseToEnd(current.readText())
-                for(node in parsed) {
-                    if(node is Import) {
-                        val nf = File(node.path)
-                        if(!files.contains(nf)) {
-                            nf.sanityCheck()
-                            queue.add(nf)
-                            files[nf] = parsed
-                        }
-                    }
-                }
-        }
-        return files
-    }
 //    private fun generateGraph(dependencies : List<Statement>) {
 //        for (node in dependencies) {
 //            when (node) {

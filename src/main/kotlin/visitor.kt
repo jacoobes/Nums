@@ -46,7 +46,7 @@ fun visitor(tree: List<Statement>, bw: NumsWriter) {
 //    }
 }
 //inorder traversal
-fun visitFns(stmt: FFunction, bw: NumsWriter) {
-    val defaultFnVisitor = DefaultFunctionVisitor(stmt, bw, Semantics())
-    defaultFnVisitor.start()
-}
+//fun visitFns(stmt: FFunction, bw: NumsWriter) {
+//    val defaultFnVisitor = DefaultFunctionVisitor(stmt, bw, Semantics())
+//    defaultFnVisitor.start()
+//}

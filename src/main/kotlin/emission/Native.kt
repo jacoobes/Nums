@@ -1,4 +1,4 @@
-
+package emission
 interface Native {
     fun core() : String {
         val lib = listOf(eq(), lt(), gt(), not())

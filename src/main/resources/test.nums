@@ -1,7 +1,7 @@
 + Name = "src/main/resources/bcd.nums"
 
 fn main() {
-
+    val poo = "1";
 }
 
 fn poo () {

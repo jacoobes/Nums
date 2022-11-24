@@ -7,6 +7,7 @@ data class Local(val name: String, val depth: Int, val registerVal: Int, val isA
     }
 }
 
+//Tracking semantic metadata in a function body
 class Semantics {
     private val locals = arrayListOf<Local>()
     var scopeDepth = 0
