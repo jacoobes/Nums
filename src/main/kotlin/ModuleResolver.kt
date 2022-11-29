@@ -7,14 +7,13 @@ import java.util.LinkedList
 
 class ModuleResolver(root: File) {
 
-    val depGraph: DirectedAcyclicGraph<Vertex, DefaultEdge> = DirectedAcyclicGraph(DefaultEdge::class.java)
     init {
         root.sanityCheck()
         val filesGenerated = generateFiles(root)
         println(filesGenerated)
     }
     companion object {
-
+        val depGraph: DirectedAcyclicGraph<Vertex, DefaultEdge> = DirectedAcyclicGraph(DefaultEdge::class.java)
         fun File.sanityCheck() {
             if(!exists()) throw Error("File $this does not exist")
             if(isDirectory) throw Error("No directories allowed")

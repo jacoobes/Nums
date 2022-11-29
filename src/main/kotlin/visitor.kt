@@ -1,4 +1,3 @@
-import emission.DefaultFunctionVisitor
 import nodes.*
 interface Visitor<T> {
     fun visit(item: T)
@@ -13,6 +12,7 @@ interface StatementVisitor: Visitor<Statement> {
     fun onVal(valStmt: Val)
     fun onReturn(ret: Return)
     fun onAssign(assign:Assign)
+    fun onImport(import: Import)
 
 }
 
