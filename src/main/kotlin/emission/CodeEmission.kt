@@ -47,6 +47,7 @@ class CodeEmission(
             }
             visit(fn.block)
             regMan.clearRegisters()
+            semantics.clearLocals()
             f.writeln("exit")
             f.writeln("end")
         }
@@ -109,7 +110,7 @@ class CodeEmission(
         }
 
         override fun onImport(import: Import) {
-            println(import)
+
         }
     }
 

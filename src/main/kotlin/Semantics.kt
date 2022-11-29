@@ -1,4 +1,3 @@
-import nodes.Expr
 import nodes.Variable
 
 data class Local(val name: String, val depth: Int, val registerVal: Int, val isAssignable: Boolean) {
@@ -10,6 +9,8 @@ data class Local(val name: String, val depth: Int, val registerVal: Int, val isA
 //Tracking semantic metadata in a function body
 class Semantics {
     private val locals = arrayListOf<Local>()
+    //The scope depth of function
+    // it should return to 0 at the end of a function
     var scopeDepth = 0
     fun incDepth() = scopeDepth++
     //TODO: add proper way to dispose variables semantically and in the actual assembly
@@ -33,5 +34,9 @@ class Semantics {
 
     private fun localMatch(other: Local) : Boolean {
         return locals.any { it.inSameScope(other) }
+    }
+
+    fun clearLocals() {
+        locals.clear()
     }
 }
