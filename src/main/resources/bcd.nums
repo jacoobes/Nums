@@ -1,5 +1,5 @@
-quan = "src/main/resources/abc.nums"
 
 fn test() {
-
+    val p = 1;
+    return p;
 }

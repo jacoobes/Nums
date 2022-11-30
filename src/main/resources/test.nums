@@ -1,9 +1,5 @@
-+ Name = "src/main/resources/bcd.nums"
+test = "src/main/resources/bcd.nums"
 
 fn main() {
-    val poo = "1";
-}
-
-fn poo () {
-
+    val poo = test();
 }

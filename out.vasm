@@ -3,15 +3,14 @@
     exit
 func main
   # val poo
-  r1 <- str :1
-exit
-end
-func poo
-exit
-end
-func quan
+  r1 <- call test
+  putchar r1
 exit
 end
 func test
+  # val p
+  r1 <- int 1
+  r2 <- reg r1
+    ret r2
 exit
 end

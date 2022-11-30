@@ -10,11 +10,10 @@ fun init(args: Array<String>) {
     val optimization by parser.option(ArgType.Int, shortName = "O", description = "Optimization level").default(0)
     val out by parser.option(ArgType.String, description = "vasm").required()
     parser.parse(args)
-    val entry = File(input)
-    val files = ModuleResolver.generateFiles(entry)
+    ModuleResolver.generateFiles(File(input))
     val br = NumsWriter(FileWriter(out))
     br.use {
-        for((_, tree) in files) {
+        for((_, tree) in ModuleResolver.depGraph) {
             CodeEmission(f=it).start(tree)
         }
     }

@@ -1,6 +1,7 @@
 package emission
 
 import ExpressionVisitor
+import ModuleResolver
 import NumsWriter
 import Semantics
 import StatementVisitor
@@ -12,7 +13,7 @@ class CodeEmission(
     private val regMan: RegisterManager = RegisterManager(),
     private val f: NumsWriter,
     ) {
-    private val imports = hashSetOf<Expr>()
+    private val imports = hashMapOf<Variable, Statement>()
     private val functions = hashMapOf<String, FFunction>()
     fun start(tree: List<Statement>) {
         for(node in tree) {
@@ -110,7 +111,28 @@ class CodeEmission(
         }
 
         override fun onImport(import: Import) {
-
+            // A naive approach of filtering all nodes that aren't imports, it is pretty slow
+            val tree = ModuleResolver.depGraph[import.file]?.filterNot { it is Import }!!
+            if(import.isNamespace) {
+                //each statement in tree gets accessed through Path expression now
+            } else {
+                val imported = HashSet(import.idents)
+                for(node in tree) {
+                    when(node) {
+                        is FFunction -> {
+                            if(imported.contains(node.token)) {
+                                imports[node.token] = node
+                            }
+                        }
+                        is Space -> {}
+                        else -> throw Error("Shouldn't be here")
+                    }
+                }
+                // moduleresolver graph get all nodes connected to import that have names in list, or if not using graph
+                // do something to fetch the imports stated
+                // add to imports of 'this'
+                //
+            }
         }
     }
 

@@ -5,7 +5,7 @@ import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import nodes.*
-
+import java.io.File
 
 
 class NumsGrammar : Grammar<List<Statement>>() {
@@ -144,9 +144,10 @@ class NumsGrammar : Grammar<List<Statement>>() {
         )
     })
     private val import by  ( optional(plus) * separatedTerms(varParser, comma)) * -assign * stringLiteral map { (ns, ids, path) ->
+        val f = File(path.str)
         ns?.let {
-            if(ids.size == 1) Import(ids,path.str, true) else throw Error("A file can only have one namespace")
-        } ?: Import(ids, path.str, false)
+            if(ids.size == 1) Import(ids, path.str, true, f) else throw Error("A file can only have one namespace")
+        } ?: Import(ids, path.str, false, f)
     }
     private val spaceBlock by -space * varParser * -lcurly *  oneOrMore(parser(::topLevel)) * -rcurly map { (n, stmts) -> Space(n,stmts) }
     private val topLevel : Parser<Statement> by fnDecl or import or spaceBlock

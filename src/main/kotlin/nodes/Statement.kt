@@ -1,5 +1,6 @@
 package nodes
 
+import java.io.File
 import kotlin.math.abs
 
 sealed class Statement : Node {
@@ -34,4 +35,4 @@ data class FFunction(val main: Boolean, val token: Variable, val args: List<Vari
 }
 data class Space(val name: Variable, val elements: List<Statement>) : Statement()
 
-data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean) : Statement()
+data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean, val file: File) : Statement()

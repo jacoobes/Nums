@@ -13,34 +13,31 @@ class ModuleResolver(root: File) {
         println(filesGenerated)
     }
     companion object {
-        val depGraph: DirectedAcyclicGraph<Vertex, DefaultEdge> = DirectedAcyclicGraph(DefaultEdge::class.java)
+        var depGraph: HashMap<File, List<Statement>> = hashMapOf()
         fun File.sanityCheck() {
             if(!exists()) throw Error("File $this does not exist")
             if(isDirectory) throw Error("No directories allowed")
             if(extension != "nums") throw Error("Only .nums files are allowed")
             if(!canRead()) throw Error("Cannot write to this file")
         }
-        fun generateFiles(root: File): HashMap<File, List<Statement>> {
-            val files = HashMap<File, List<Statement>>()
+        fun generateFiles(root: File) {
             val queue = LinkedList<File>()
             val grammar = NumsGrammar()
             queue.add(root)
             while(queue.isNotEmpty()) {
                 val current = queue.poll()
                 val parsed = grammar.parseToEnd(current.readText())
-                files[current] = parsed
+                depGraph[current] = parsed
                 for(node in parsed) {
                     if(node is Import) {
-                        val nf = File(node.path)
-                        if(!files.contains(nf)) {
-                            nf.sanityCheck()
-                            queue.add(nf)
-                            files[nf] = parsed
+                        if(!depGraph.contains(node.file)) {
+                            node.file.sanityCheck()
+                            queue.add(node.file)
+                            depGraph[node.file] = parsed
                         }
                     }
                 }
             }
-            return files
         }
     }
 
