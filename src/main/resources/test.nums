@@ -1,4 +1,4 @@
-test = "src/main/resources/bcd.nums"
++ Name = "src/main/resources/bcd.nums"
 
 fn main() {
     val poo = test();

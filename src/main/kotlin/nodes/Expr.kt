@@ -41,5 +41,5 @@ data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : 
 data class And(val left: Expr, val right: Expr) : Expr()
 data class Or(val left: Expr, val right: Expr) : Expr()
 data class ArrayLiteral(val exprs: List<Expr>) : Expr()
-data class Path(val chain: Expr, val tok: Expr) : Expr()
+data class Path(var chain: Path?, val tok: Expr) : Expr()
 data class Bool(val bool: String) : Expr()

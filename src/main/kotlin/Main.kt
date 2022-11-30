@@ -1,4 +1,5 @@
 import emission.CodeEmission
+import emission.MiniVmNative
 import kotlinx.cli.*
 import java.io.File
 import java.io.FileWriter
@@ -13,6 +14,7 @@ fun init(args: Array<String>) {
     ModuleResolver.generateFiles(File(input))
     val br = NumsWriter(FileWriter(out))
     br.use {
+        it.write(MiniVmNative.core())
         for((_, tree) in ModuleResolver.depGraph) {
             CodeEmission(f=it).start(tree)
         }

@@ -14,7 +14,6 @@ class CodeEmission(
     private val f: NumsWriter,
     ) {
     private val imports = hashMapOf<Variable, Statement>()
-    private val functions = hashMapOf<String, FFunction>()
     fun start(tree: List<Statement>) {
         for(node in tree) {
             stmtVisitor.visit(node)
@@ -114,7 +113,15 @@ class CodeEmission(
             // A naive approach of filtering all nodes that aren't imports, it is pretty slow
             val tree = ModuleResolver.depGraph[import.file]?.filterNot { it is Import }!!
             if(import.isNamespace) {
-                //each statement in tree gets accessed through Path expression now
+                for(node in tree) {
+                    when(node) {
+                        is FFunction -> {
+                            var path = Path(Path(null, import.idents[0]), node.token) as Path?
+                        }
+                        is Space -> {}
+                        else -> throw Error("$node Statement shouldn't be here")
+                    }
+                }
             } else {
                 val imported = HashSet(import.idents)
                 for(node in tree) {
@@ -125,7 +132,7 @@ class CodeEmission(
                             }
                         }
                         is Space -> {}
-                        else -> throw Error("Shouldn't be here")
+                        else -> throw Error("$node shouldn't be here")
                     }
                 }
                 // moduleresolver graph get all nodes connected to import that have names in list, or if not using graph
@@ -244,7 +251,7 @@ class CodeEmission(
         }
 
         override fun onPath(path: Path) {
-
+            println(path)
         }
 
         override fun visit(item: Expr) {
@@ -261,6 +268,7 @@ class CodeEmission(
                 is Comparison -> visit(item, ::onCmp)
                 is Call -> visit(item, ::onCall)
                 is Path -> visit(item, ::onPath)
+                else -> throw Error("visited skip expression")
             }
         }
     }
