@@ -1,5 +1,5 @@
 + Name = "src/main/resources/bcd.nums"
 
 fn main() {
-    val poo = test();
+    val poo = Name:test();
 }

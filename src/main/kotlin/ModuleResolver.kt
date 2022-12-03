@@ -5,20 +5,107 @@ import org.jgrapht.graph.DirectedAcyclicGraph
 import java.io.File
 import java.util.LinkedList
 
-class ModuleResolver(root: File) {
+class ModuleResolver {
+    interface Vertex
+    class FileVertex(val file: File) : Vertex {
+        override fun hashCode(): Int {
+            return file.hashCode()
+        }
 
-    init {
-        root.sanityCheck()
-        val filesGenerated = generateFiles(root)
-        println(filesGenerated)
+        override fun toString(): String {
+            return file.name
+        }
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as FileVertex
+
+            if (file != other.file) return false
+            return true
+        }
     }
+    class NSVertex(val name: String) : Vertex {
+        override fun equals(other: Any?): Boolean {
+            if(other !is NSVertex) return false
+            return name == other.name
+        }
+        override fun hashCode(): Int {
+            return name.hashCode()
+        }
+
+        override fun toString(): String {
+            return "[Namespace: $name]"
+        }
+    }
+    class FnVertex(val fn: FFunction) : Vertex {
+        override fun toString(): String {
+            return fn.toString()
+        }
+    }
+    class SVertex(val space: Space) : Vertex
     companion object {
-        var depGraph: HashMap<File, List<Statement>> = hashMapOf()
-        fun File.sanityCheck() {
+        val depMap: HashMap<File, List<Statement>> = hashMapOf()
+        val pathGraph = HashMap<File, DirectedAcyclicGraph<Vertex, DefaultEdge>>()
+        private fun File.sanityCheck() {
             if(!exists()) throw Error("File $this does not exist")
             if(isDirectory) throw Error("No directories allowed")
             if(extension != "nums") throw Error("Only .nums files are allowed")
             if(!canRead()) throw Error("Cannot write to this file")
+        }
+        fun fileImportGraph() {
+            for((file, tree) in depMap) {
+                val graph = DirectedAcyclicGraph<Vertex, DefaultEdge>(DefaultEdge::class.java)
+                val root = FileVertex(file)
+                graph.addVertex(root)
+                for(node in tree) {
+                     when(node) {
+                         is FFunction -> {
+                             val fnVertex = FnVertex(node).also { graph.addVertex(it) }
+                             graph.addEdge(root, fnVertex)
+                         }
+                         is Import -> {
+                             // A naive approach of filtering all nodes that aren't imports, it is pretty slow
+                            val impTree = depMap[node.file]?.filterNot { it is Import }!!
+                            if(node.isNamespace) {
+                               val nsVertex = NSVertex(node.idents[0].name)
+                               graph.addVertex(nsVertex)
+                               graph.addEdge(root, nsVertex)
+                               for(imported in impTree) {
+                                   when(imported) {
+                                       is FFunction -> {
+                                           val fnVertex = FnVertex(imported)
+                                           graph.addVertex(fnVertex)
+                                           graph.addEdge(nsVertex, fnVertex)
+                                       }
+                                       is Space -> {}
+                                       else -> {}
+                                   }
+                               }
+                            } else {
+                                val idents = HashSet(node.idents)
+                                for(imported in impTree) {
+                                    when(imported) {
+                                        is FFunction -> {
+                                            if(idents.contains(imported.name)) {
+                                                val iFn = FnVertex(imported)
+                                                graph.addEdge(root, iFn)
+                                            }
+                                        }
+                                        is Space -> {
+
+                                        }
+                                        else -> {}
+                                    }
+                                }
+                            }
+                         }
+                         is Space -> {}
+                         else -> {}
+                     }
+                }
+                pathGraph[file] = graph
+            }
         }
         fun generateFiles(root: File) {
             val queue = LinkedList<File>()
@@ -27,60 +114,19 @@ class ModuleResolver(root: File) {
             while(queue.isNotEmpty()) {
                 val current = queue.poll()
                 val parsed = grammar.parseToEnd(current.readText())
-                depGraph[current] = parsed
+                depMap[current] = parsed
                 for(node in parsed) {
                     if(node is Import) {
-                        if(!depGraph.contains(node.file)) {
+                        if(!depMap.contains(node.file)) {
                             node.file.sanityCheck()
                             queue.add(node.file)
-                            depGraph[node.file] = parsed
+                            depMap[node.file] = parsed
                         }
                     }
                 }
             }
         }
     }
-
-
-
-    interface Vertex
-    private inner class FVertex(val f: FFunction) : Vertex {
-        override fun equals(other: Any?): Boolean {
-            if(other !is FVertex) return false
-            return f.token.name === other.f.token.name
-        }
-        override fun hashCode(): Int {
-            return f.token.name.hashCode()
-        }
-        override fun toString(): String {
-            return f.toString()
-        }
-    }
-    private inner class IVertex(val i: Import, val id:Int): Vertex {
-        override fun equals(other: Any?): Boolean {
-            if (other !is IVertex) return false
-            return id == other.id
-        }
-        override fun toString(): String {
-            return "[import: $i id: $id]"
-        }
-        override fun hashCode(): Int {
-            return id
-        }
-    }
-    private inner class NVertex(val name: Variable, val path: String, val id: Int) : Vertex {
-        override fun equals(other: Any?): Boolean {
-            if (other !is NVertex) return false
-            return id == other.id
-        }
-        override fun toString(): String {
-            return "[import-namespace: $name id: $id path: $path]"
-        }
-        override fun hashCode(): Int {
-            return id
-        }
-    }
-    private inner class SVertex(val space: Space) : Vertex
 
 
 //    private fun generateGraph(dependencies : List<Statement>) {

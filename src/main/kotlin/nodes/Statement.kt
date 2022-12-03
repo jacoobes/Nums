@@ -22,14 +22,14 @@ data class Block(val stmts: List<Statement>) : Statement()
 data class Return(val expr: Expr) : Statement()
 data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: Statement) : Statement()
 data class Loop(val condition: Expr, val block: Statement) : Statement()
-data class FFunction(val main: Boolean, val token: Variable, val args: List<Variable>, val block: Statement) : Statement() {
+data class FFunction(val main: Boolean, val name: Variable, val args: List<Variable>, val block: Statement) : Statement() {
     override fun equals(other: Any?): Boolean {
         return super.equals(other)
     }
 
     override fun hashCode(): Int {
         var result = super.hashCode()
-        result = 31 * result + token.hashCode()
+        result = 31 * result + name.hashCode()
         return result
     }
 }

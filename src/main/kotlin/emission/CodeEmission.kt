@@ -7,13 +7,15 @@ import Semantics
 import StatementVisitor
 import visit
 import nodes.*
+import java.io.File
 
 class CodeEmission(
     private val semantics: Semantics = Semantics(),
     private val regMan: RegisterManager = RegisterManager(),
     private val f: NumsWriter,
+    private val curFile: File
     ) {
-    private val imports = hashMapOf<Variable, Statement>()
+    val imports = ModuleResolver.pathGraph[curFile]!!
     fun start(tree: List<Statement>) {
         for(node in tree) {
             stmtVisitor.visit(node)
@@ -28,11 +30,10 @@ class CodeEmission(
                 is Block -> visit(item,::onBlock)
                 is Val -> visit(item, ::onVal)
                 is Return -> visit(item, ::onReturn)
-                is Skip -> {}
                 is Assign -> visit(item, ::onAssign)
                 is Space -> {}
-                is Import -> visit(item, ::onImport)
                 is FFunction -> visit(item, ::onFn)
+                else -> {}
             }
         }
 
@@ -40,7 +41,7 @@ class CodeEmission(
             if(fn.main) {
                 f.writeln("@__entry\n    r0 <- call main\n    exit")
             }
-            f.writeln("func ${fn.token.name}")
+            f.writeln("func ${fn.name.name}")
             fn.args.forEach {
                 val reg = regMan.addRegister(it)
                 semantics.addLocal(it.name, reg, false)
@@ -109,38 +110,6 @@ class CodeEmission(
             f.writeln("${r(local.registerVal)} <- reg ${r(tReg)}", semantics.scopeDepth)
         }
 
-        override fun onImport(import: Import) {
-            // A naive approach of filtering all nodes that aren't imports, it is pretty slow
-            val tree = ModuleResolver.depGraph[import.file]?.filterNot { it is Import }!!
-            if(import.isNamespace) {
-                for(node in tree) {
-                    when(node) {
-                        is FFunction -> {
-                            var path = Path(Path(null, import.idents[0]), node.token) as Path?
-                        }
-                        is Space -> {}
-                        else -> throw Error("$node Statement shouldn't be here")
-                    }
-                }
-            } else {
-                val imported = HashSet(import.idents)
-                for(node in tree) {
-                    when(node) {
-                        is FFunction -> {
-                            if(imported.contains(node.token)) {
-                                imports[node.token] = node
-                            }
-                        }
-                        is Space -> {}
-                        else -> throw Error("$node shouldn't be here")
-                    }
-                }
-                // moduleresolver graph get all nodes connected to import that have names in list, or if not using graph
-                // do something to fetch the imports stated
-                // add to imports of 'this'
-                //
-            }
-        }
     }
 
     private val exprVisitor = object : ExpressionVisitor {
@@ -207,7 +176,7 @@ class CodeEmission(
             } catch (_: java.lang.Exception) {
                 //if trying to access import is null, throw Error
                 //for now
-                if(!imports.contains(variable)) throw Error("Unresolved symbol $variable")
+                //if(!imports.contains(variable)) throw Error("Unresolved symbol $variable")
             }
             val ireg = regMan.addRegister(variable)
             val local = semantics.getLocal(variable)
@@ -251,7 +220,7 @@ class CodeEmission(
         }
 
         override fun onPath(path: Path) {
-            println(path)
+
         }
 
         override fun visit(item: Expr) {

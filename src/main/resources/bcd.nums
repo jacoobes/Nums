@@ -3,3 +3,9 @@ fn test() {
     val p = 1;
     return p;
 }
+
+space Sex {
+    fn poo() {
+        return 1;
+    }
+}

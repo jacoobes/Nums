@@ -12,12 +12,12 @@ fun init(args: Array<String>) {
     val out by parser.option(ArgType.String, description = "vasm").required()
     parser.parse(args)
     ModuleResolver.generateFiles(File(input))
+    ModuleResolver.fileImportGraph()
     val br = NumsWriter(FileWriter(out))
     br.use {
         it.write(MiniVmNative.core())
-        for((_, tree) in ModuleResolver.depGraph) {
-            CodeEmission(f=it).start(tree)
+        for((file, tree) in ModuleResolver.depMap) {
+            CodeEmission(f=it, curFile = file).start(tree)
         }
     }
-
 }

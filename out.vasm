@@ -40,7 +40,6 @@ end
     exit
 func main
   # val poo
-  r1 <- call test 
 exit
 end
 func test
