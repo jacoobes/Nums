@@ -33,13 +33,33 @@ data class Variable(val name: String) : Expr() {
     override fun hashCode(): Int {
         return name.hashCode()
     }
+
+    override fun toString(): String {
+        return "$$name"
+    }
 }
 data class Unary(val op: Token, val expr: Expr) : Expr()
 data class Binary(val left: Expr, val right: Expr, val op: String) : Expr()
-data class Call(val callee: Variable, val args: List<Expr>) : Expr()
+data class Call(val callee: Variable, val args: List<Expr>) : Expr() {
+    override fun toString(): String {
+        return callee.name+"()"
+    }
+}
 data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : Expr()
 data class And(val left: Expr, val right: Expr) : Expr()
 data class Or(val left: Expr, val right: Expr) : Expr()
 data class ArrayLiteral(val exprs: List<Expr>) : Expr()
-data class Path(var chain: Path?, val tok: Expr) : Expr()
+data class Path(var chain: Path?, val tok: Expr) : Expr() {
+    override fun toString(): String {
+        return buildString {
+            var cur = chain
+            append("$tok")
+            while(cur != null) {
+                append(":")
+                append(cur.tok)
+                cur = cur.chain
+            }
+        }
+    }
+}
 data class Bool(val bool: String) : Expr()

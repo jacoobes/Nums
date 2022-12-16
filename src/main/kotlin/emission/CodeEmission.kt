@@ -228,15 +228,16 @@ class CodeEmission(
                 s.add(cur.tok)
                 cur = cur.chain
             }
+            println(path)
             while(s.isNotEmpty()) {
                 val e = s.pop()
                 when(e) {
-                    //for now it will only be namespaces possible
+                    //for now, it will only be namespaces possible
                     is Variable -> {
                         val children = imports.getDescendants(ModuleResolver.NSVertex(e.name))
                         for(child in children) {
                             when(child) {
-                                is ModuleResolver.FnVertex -> s.add(child.fn)
+                                is ModuleResolver.FnVertex -> {}
                             }
                         }
                     }
