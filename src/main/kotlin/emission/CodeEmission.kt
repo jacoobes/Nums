@@ -8,12 +8,13 @@ import StatementVisitor
 import visit
 import nodes.*
 import java.io.File
+import java.util.Stack
 
 class CodeEmission(
     private val semantics: Semantics = Semantics(),
     private val regMan: RegisterManager = RegisterManager(),
     private val f: NumsWriter,
-    private val curFile: File
+    curFile: File
     ) {
     val imports = ModuleResolver.pathGraph[curFile]!!
     fun start(tree: List<Statement>) {
@@ -220,7 +221,28 @@ class CodeEmission(
         }
 
         override fun onPath(path: Path) {
-
+            var cur: Path? = path
+            //Definitely a better way to do this, but im just trying to get it done
+            val s = Stack<Expr>()
+            while(cur != null) {
+                s.add(cur.tok)
+                cur = cur.chain
+            }
+            while(s.isNotEmpty()) {
+                val e = s.pop()
+                when(e) {
+                    //for now it will only be namespaces possible
+                    is Variable -> {
+                        val children = imports.getDescendants(ModuleResolver.NSVertex(e.name))
+                        for(child in children) {
+                            when(child) {
+                                is ModuleResolver.FnVertex -> s.add(child.fn)
+                            }
+                        }
+                    }
+                    else -> {}
+                }
+            }
         }
 
         override fun visit(item: Expr) {

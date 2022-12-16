@@ -38,9 +38,21 @@ class ModuleResolver {
             return "[Namespace: $name]"
         }
     }
+    class SearchableFnVertex(val name: Variable, val len: Int) : Vertex
     class FnVertex(val fn: FFunction) : Vertex {
+        override fun equals(other: Any?):  Boolean {
+            return if(other is SearchableFnVertex) {
+                other.name == fn.name && other.len == fn.args.size
+            } else {
+                fn == other
+            }
+        }
         override fun toString(): String {
             return fn.toString()
+        }
+
+        override fun hashCode(): Int {
+            return fn.hashCode()
         }
     }
     class SVertex(val space: Space) : Vertex
@@ -53,7 +65,7 @@ class ModuleResolver {
             if(extension != "nums") throw Error("Only .nums files are allowed")
             if(!canRead()) throw Error("Cannot write to this file")
         }
-        fun fileImportGraph() {
+        fun createFileImportGraph() {
             for((file, tree) in depMap) {
                 val graph = DirectedAcyclicGraph<Vertex, DefaultEdge>(DefaultEdge::class.java)
                 val root = FileVertex(file)

@@ -12,7 +12,7 @@ fun init(args: Array<String>) {
     val out by parser.option(ArgType.String, description = "vasm").required()
     parser.parse(args)
     ModuleResolver.generateFiles(File(input))
-    ModuleResolver.fileImportGraph()
+    ModuleResolver.createFileImportGraph()
     val br = NumsWriter(FileWriter(out))
     br.use {
         it.write(MiniVmNative.core())
