@@ -21,8 +21,11 @@ class CodeEmission(
         for(node in tree) {
             stmtVisitor.visit(node)
         }
+//        for(node in importedNodes) {
+//            stmtVisitor.visit(node)
+//        }
     }
-    private val stmtVisitor = object : StatementVisitor {
+    private val stmtVisitor: StatementVisitor = object : StatementVisitor {
         override fun visit(item: Statement) {
             when (item) {
                 is Iif -> visit(item, ::onIf)
@@ -54,7 +57,7 @@ class CodeEmission(
             f.writeln("end")
         }
 
-        override fun onIf(iif: Iif) {
+        override fun onIf(iif: Iif)  {
             exprVisitor.visit(iif.condition)
             val eReg = regMan.topMostReg()
             val thenLabel = "then.${iif.thenBody.hashCode()}"
@@ -113,7 +116,7 @@ class CodeEmission(
 
     }
 
-    private val exprVisitor = object : ExpressionVisitor {
+    private val exprVisitor: ExpressionVisitor = object : ExpressionVisitor {
         override fun onNumber(number: nodes.Number) {
             val ireg = regMan.addRegister(number)
             f.writeln("${r(ireg)} <- int ${number.value}", semantics.scopeDepth)
@@ -223,27 +226,31 @@ class CodeEmission(
         override fun onPath(path: Path) {
             var cur: Path? = path
             //Definitely a better way to do this, but im just trying to get it done
-            val s = Stack<Expr>()
             while(cur != null) {
-                s.add(cur.tok)
-                cur = cur.chain
-            }
-            println(path)
-            while(s.isNotEmpty()) {
-                val e = s.pop()
-                when(e) {
+                val e = cur.tok
+                when (e) {
                     //for now, it will only be namespaces possible
                     is Variable -> {
                         val children = imports.getDescendants(ModuleResolver.NSVertex(e.name))
-                        for(child in children) {
-                            when(child) {
-                                is ModuleResolver.FnVertex -> {}
+                        for (child in children) {
+                            when (child) {
+                                is ModuleResolver.FnVertex -> {
+                                    onCall(Call(Variable(path.toString()), child.fn.args))
+                                    //Add this function to be written to output, as it was used
+                                    //The name of the function is transformed to its relative path
+                                    //But wouldn't this lead to incorrect function resolution?
+                                    // Would need a way to make sure many function paths resolve to the same function.
+                                    //I can ensure each function is distinguished by file hashcode plus name of function!
+                                }
+                                else -> {}
                             }
                         }
                     }
                     else -> {}
                 }
+               cur = cur.chain
             }
+
         }
 
         override fun visit(item: Expr) {

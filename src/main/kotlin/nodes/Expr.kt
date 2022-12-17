@@ -33,16 +33,14 @@ data class Variable(val name: String) : Expr() {
     override fun hashCode(): Int {
         return name.hashCode()
     }
+    override fun toString() = name
 
-    override fun toString(): String {
-        return "$$name"
-    }
 }
 data class Unary(val op: Token, val expr: Expr) : Expr()
 data class Binary(val left: Expr, val right: Expr, val op: String) : Expr()
 data class Call(val callee: Variable, val args: List<Expr>) : Expr() {
     override fun toString(): String {
-        return callee.name+"()"
+        return callee.name
     }
 }
 data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : Expr()

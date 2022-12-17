@@ -83,11 +83,11 @@ class NumsGrammar : Grammar<List<Statement>>() {
         term = parser(this::expr)
     ) and -rcurly) map { ArrayLiteral(it) }
     private val grouped by -lparen and parser(this::expr) and -rparen
-    private val getter by leftAssociative(fnCall or varParser, colon) { l,_,r ->
-        if(l !is Path) {
-            Path(Path(null, l), r)
+    private val getter by rightAssociative(fnCall or varParser, colon) { l,_,r ->
+        if(r !is Path) {
+            Path(Path(null, r), l)
         } else {
-            Path(l, r)
+            Path(r, l)
         }
     }
     private val unary by (not and parser(this::expr)) map { Unary(it.t1.type, it.t2) }

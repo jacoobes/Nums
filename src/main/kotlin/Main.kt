@@ -11,13 +11,13 @@ fun init(args: Array<String>) {
     val optimization by parser.option(ArgType.Int, shortName = "O", description = "Optimization level").default(0)
     val out by parser.option(ArgType.String, description = "vasm").required()
     parser.parse(args)
-    ModuleResolver.generateFiles(File(input))
+    val main = File(input)
+    ModuleResolver.generateFiles(main)
     ModuleResolver.createFileImportGraph()
     val br = NumsWriter(FileWriter(out))
+    val mainTree = ModuleResolver.depMap[main]!!
     br.use {
         it.write(MiniVmNative.core())
-        for((file, tree) in ModuleResolver.depMap) {
-            CodeEmission(f=it, curFile = file).start(tree)
-        }
+        CodeEmission(f=it, curFile = main).start(mainTree)
     }
 }

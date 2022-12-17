@@ -42,10 +42,3 @@ func main
   # val poo
 exit
 end
-func test
-  # val p
-  r1 <- int 1
-  r2 <- reg r1
-    ret r2
-exit
-end
