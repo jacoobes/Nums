@@ -39,12 +39,15 @@ class ModuleResolver {
         }
     }
     class SearchableFnVertex(val name: Variable, val len: Int) : Vertex
-    class FnVertex(val fn: FFunction) : Vertex {
+    class FnVertex(val uid: Int, val fn: FFunction) : Vertex {
         override fun equals(other: Any?):  Boolean {
             return if(other is SearchableFnVertex) {
                 other.name == fn.name && other.len == fn.args.size
             } else {
-                fn == other
+                if(other is FnVertex) {
+                    return uid == other.uid && super.equals(other)
+                }
+                return fn == other
             }
         }
         override fun toString(): String {
@@ -73,7 +76,7 @@ class ModuleResolver {
                 for(node in tree) {
                      when(node) {
                          is FFunction -> {
-                             val fnVertex = FnVertex(node).also { graph.addVertex(it) }
+                             val fnVertex = FnVertex(file.hashCode(),node).also { graph.addVertex(it) }
                              graph.addEdge(root, fnVertex)
                          }
                          is Import -> {
@@ -86,7 +89,7 @@ class ModuleResolver {
                                for(imported in impTree) {
                                    when(imported) {
                                        is FFunction -> {
-                                           val fnVertex = FnVertex(imported)
+                                           val fnVertex = FnVertex(node.file.hashCode(), imported)
                                            graph.addVertex(fnVertex)
                                            graph.addEdge(nsVertex, fnVertex)
                                        }
@@ -100,7 +103,7 @@ class ModuleResolver {
                                     when(imported) {
                                         is FFunction -> {
                                             if(idents.contains(imported.name)) {
-                                                val iFn = FnVertex(imported)
+                                                val iFn = FnVertex(node.file.hashCode(), imported)
                                                 graph.addEdge(root, iFn)
                                             }
                                         }

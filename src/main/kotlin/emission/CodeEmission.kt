@@ -8,7 +8,6 @@ import StatementVisitor
 import visit
 import nodes.*
 import java.io.File
-import java.util.Stack
 
 class CodeEmission(
     private val semantics: Semantics = Semantics(),
@@ -17,13 +16,14 @@ class CodeEmission(
     curFile: File
     ) {
     val imports = ModuleResolver.pathGraph[curFile]!!
+    val importedNodes = hashMapOf<Variable, Statement>()
     fun start(tree: List<Statement>) {
         for(node in tree) {
             stmtVisitor.visit(node)
         }
-//        for(node in importedNodes) {
-//            stmtVisitor.visit(node)
-//        }
+        for((_,node) in importedNodes) {
+            stmtVisitor.visit(node)
+        }
     }
     private val stmtVisitor: StatementVisitor = object : StatementVisitor {
         override fun visit(item: Statement) {
@@ -206,6 +206,10 @@ class CodeEmission(
             val storedRegs = call.args.map { "r${regMan.registers[it.hashCode()]}" }
             val regStr = storedRegs.joinToString(" ")
             val i = regMan.addRegister(call)
+            /**
+             * resolves to direct name. So imports and same file functions will collide if they both exist
+             */
+
             f.writeln("${r(i)} <- call ${call.callee.name} $regStr", semantics.scopeDepth)
         }
 
@@ -232,15 +236,18 @@ class CodeEmission(
                     //for now, it will only be namespaces possible
                     is Variable -> {
                         val children = imports.getDescendants(ModuleResolver.NSVertex(e.name))
+                        //advance the current chain
+                        cur = cur.chain
+                        if(cur == null) throw Error("Incomplete path found $path")
+                        val curNode = cur.tok
                         for (child in children) {
                             when (child) {
                                 is ModuleResolver.FnVertex -> {
-                                    onCall(Call(Variable(path.toString()), child.fn.args))
-                                    //Add this function to be written to output, as it was used
-                                    //The name of the function is transformed to its relative path
-                                    //But wouldn't this lead to incorrect function resolution?
-                                    // Would need a way to make sure many function paths resolve to the same function.
-                                    //I can ensure each function is distinguished by file hashcode plus name of function!
+                                    val importedFunctionName = Variable("${child.fn.name}-${child.uid}")
+                                    if(curNode is Call) {
+                                        onCall(Call(importedFunctionName, curNode.args))
+                                    }
+                                    importedNodes[importedFunctionName] = (FFunction(false, importedFunctionName, child.fn.args, child.fn.block))
                                 }
                                 else -> {}
                             }

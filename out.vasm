@@ -40,5 +40,20 @@ end
     exit
 func main
   # val poo
+  r1 <- call test-673665227 
+  # val pee
+  r2 <- call test 
+exit
+end
+func test
+  r3 <- int 1
+      ret r3
+exit
+end
+func test-673665227
+  # val p
+  r4 <- int 1
+  r5 <- reg r4
+          ret r5
 exit
 end
