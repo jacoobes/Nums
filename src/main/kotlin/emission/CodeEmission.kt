@@ -37,6 +37,7 @@ class CodeEmission(
                 is Assign -> visit(item, ::onAssign)
                 is Space -> {}
                 is FFunction -> visit(item, ::onFn)
+                is Import -> visit(item, ::onImport)
                 else -> {}
             }
         }
@@ -114,6 +115,18 @@ class CodeEmission(
             f.writeln("${r(local.registerVal)} <- reg ${r(tReg)}", semantics.scopeDepth)
         }
 
+        /**
+         * This is to cover the case that functions are imported without a namespace identifier
+         */
+        override fun onImport(import: Import) {
+            if(!import.isNamespace) {
+                import.idents.asSequence()
+                    .forEach { _ ->
+                        val node = ModuleResolver.pathGraph[import.file]?.getDescendants(ModuleResolver.FileVertex(import.file))
+                        println(node)
+                    }
+            }
+        }
     }
 
     private val exprVisitor: ExpressionVisitor = object : ExpressionVisitor {

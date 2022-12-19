@@ -2,5 +2,4 @@ test = "src/main/resources/bcd.nums"
 
 fn main() {
     val poo = test();
-    val pee = test();
 }

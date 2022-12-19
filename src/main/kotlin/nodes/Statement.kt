@@ -24,6 +24,9 @@ data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: State
 data class Loop(val condition: Expr, val block: Statement) : Statement()
 data class FFunction(val main: Boolean, val name: Variable, val args: List<Variable>, val block: Statement) : Statement() {
     override fun equals(other: Any?): Boolean {
+        if(other is FFunction) {
+            return other.name == name && args.size == other.args.size
+        }
         return super.equals(other)
     }
 

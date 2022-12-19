@@ -41,11 +41,11 @@ class ModuleResolver {
     class SearchableFnVertex(val name: Variable, val len: Int) : Vertex
     class FnVertex(val uid: Int, val fn: FFunction) : Vertex {
         override fun equals(other: Any?):  Boolean {
-            return if(other is SearchableFnVertex) {
-                other.name == fn.name && other.len == fn.args.size
+            return if(other is FFunction) {
+                other.name == fn.name && fn.args.size == other.args.size
             } else {
                 if(other is FnVertex) {
-                    return uid == other.uid && super.equals(other)
+                    return uid == other.uid && fn == other.fn
                 }
                 return fn == other
             }
@@ -104,6 +104,7 @@ class ModuleResolver {
                                         is FFunction -> {
                                             if(idents.contains(imported.name)) {
                                                 val iFn = FnVertex(node.file.hashCode(), imported)
+                                                graph.addVertex(iFn)
                                                 graph.addEdge(root, iFn)
                                             }
                                         }
