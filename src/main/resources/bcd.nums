@@ -4,6 +4,9 @@ fn test() {
     return p;
 }
 
+fn rest() {
+    return test();
+}
 space Sex {
     fn poo() {
         return 1;

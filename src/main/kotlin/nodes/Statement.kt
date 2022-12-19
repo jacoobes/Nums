@@ -22,7 +22,7 @@ data class Block(val stmts: List<Statement>) : Statement()
 data class Return(val expr: Expr) : Statement()
 data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: Statement) : Statement()
 data class Loop(val condition: Expr, val block: Statement) : Statement()
-data class FFunction(val main: Boolean, val name: Variable, val args: List<Variable>, val block: Statement) : Statement() {
+data class FFunction(val name: Variable, val args: List<Variable>, val block: Statement) : Statement() {
     override fun equals(other: Any?): Boolean {
         if(other is FFunction) {
             return other.name == name && args.size == other.args.size
@@ -35,7 +35,14 @@ data class FFunction(val main: Boolean, val name: Variable, val args: List<Varia
         result = 31 * result + name.hashCode()
         return result
     }
+    fun isMain(): Boolean {
+        return name.name == "main"
+    }
 }
 data class Space(val name: Variable, val elements: List<Statement>) : Statement()
 
-data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean, val file: File) : Statement()
+data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean, val file: File) : Statement() {
+    fun uid(): Int {
+        return file.hashCode()
+    }
+}

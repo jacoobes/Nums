@@ -25,7 +25,8 @@ class ModuleResolver {
             return true
         }
     }
-    class NSVertex(val name: String) : Vertex {
+
+    class NSVertex(val name: Variable) : Vertex {
         override fun equals(other: Any?): Boolean {
             if(other !is NSVertex) return false
             return name == other.name
@@ -38,7 +39,6 @@ class ModuleResolver {
             return "[Namespace: $name]"
         }
     }
-    class SearchableFnVertex(val name: Variable, val len: Int) : Vertex
     class FnVertex(val uid: Int, val fn: FFunction) : Vertex {
         override fun equals(other: Any?):  Boolean {
             return if(other is FFunction) {
@@ -83,13 +83,13 @@ class ModuleResolver {
                              // A naive approach of filtering all nodes that aren't imports, it is pretty slow
                             val impTree = depMap[node.file]?.filterNot { it is Import }!!
                             if(node.isNamespace) {
-                               val nsVertex = NSVertex(node.idents[0].name)
+                               val nsVertex = NSVertex(node.idents[0])
                                graph.addVertex(nsVertex)
                                graph.addEdge(root, nsVertex)
                                for(imported in impTree) {
                                    when(imported) {
                                        is FFunction -> {
-                                           val fnVertex = FnVertex(node.file.hashCode(), imported)
+                                           val fnVertex = FnVertex(node.uid(), imported)
                                            graph.addVertex(fnVertex)
                                            graph.addEdge(nsVertex, fnVertex)
                                        }
@@ -103,7 +103,7 @@ class ModuleResolver {
                                     when(imported) {
                                         is FFunction -> {
                                             if(idents.contains(imported.name)) {
-                                                val iFn = FnVertex(node.file.hashCode(), imported)
+                                                val iFn = FnVertex(node.uid(), imported)
                                                 graph.addVertex(iFn)
                                                 graph.addEdge(root, iFn)
                                             }

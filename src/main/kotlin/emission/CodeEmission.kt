@@ -1,7 +1,7 @@
 package emission
 
 import ExpressionVisitor
-import ModuleResolver
+import ModuleResolver.*
 import NumsWriter
 import Semantics
 import StatementVisitor
@@ -43,7 +43,7 @@ class CodeEmission(
         }
 
         override fun onFn(fn: FFunction) {
-            if(fn.main) {
+            if(fn.isMain()) {
                 f.writeln("@__entry\n    r0 <- call main\n    exit")
             }
             f.writeln("func ${fn.name.name}")
@@ -116,15 +116,21 @@ class CodeEmission(
         }
 
         /**
-         * This is to cover the case that functions are imported without a namespace identifier
+         * This is to cover the case that functions are imported without a namespace identifier,
+         * or should i register all imports here? (instead of path
          */
         override fun onImport(import: Import) {
-            if(!import.isNamespace) {
-                import.idents.asSequence()
-                    .forEach { _ ->
-                        val node = ModuleResolver.pathGraph[import.file]?.getDescendants(ModuleResolver.FileVertex(import.file))
-                        println(node)
+            //get top level children
+            val idents = import.idents.toHashSet()
+            imports.iterator().forEach {
+                when(it) {
+                    is FnVertex -> {
+                        if(idents.contains(it.fn.name)) {
+                            importedNodes[it.fn.name] = it.fn
+                        }
                     }
+                    else -> {}
+                }
             }
         }
     }
@@ -222,8 +228,7 @@ class CodeEmission(
             /**
              * resolves to direct name. So imports and same file functions will collide if they both exist
              */
-
-            f.writeln("${r(i)} <- call ${call.callee.name} $regStr", semantics.scopeDepth)
+             f.writeln("${r(i)} <- call ${call.callee.name} $regStr", semantics.scopeDepth)
         }
 
         override fun onArrLiteral(arrayLiteral: ArrayLiteral) {
@@ -248,19 +253,19 @@ class CodeEmission(
                 when (e) {
                     //for now, it will only be namespaces possible
                     is Variable -> {
-                        val children = imports.getDescendants(ModuleResolver.NSVertex(e.name))
+                        val children = imports.getDescendants(NSVertex(e))
                         //advance the current chain
                         cur = cur.chain
                         if(cur == null) throw Error("Incomplete path found $path")
                         val curNode = cur.tok
                         for (child in children) {
                             when (child) {
-                                is ModuleResolver.FnVertex -> {
+                                is FnVertex -> {
                                     val importedFunctionName = Variable("${child.fn.name}-${child.uid}")
                                     if(curNode is Call) {
                                         onCall(Call(importedFunctionName, curNode.args))
                                     }
-                                    importedNodes[importedFunctionName] = (FFunction(false, importedFunctionName, child.fn.args, child.fn.block))
+                                    importedNodes[importedFunctionName] = (FFunction( importedFunctionName, child.fn.args, child.fn.block))
                                 }
                                 else -> {}
                             }

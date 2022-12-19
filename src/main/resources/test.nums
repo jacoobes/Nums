@@ -1,5 +1,5 @@
-test = "src/main/resources/bcd.nums"
+rest = "src/main/resources/bcd.nums"
 
 fn main() {
-    val poo = test();
+    val poo = rest();
 }

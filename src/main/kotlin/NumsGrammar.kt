@@ -143,7 +143,6 @@ class NumsGrammar : Grammar<List<Statement>>() {
         acceptZero = true
     ) and -rparen and -lcurly * zeroOrMore(statements) * -rcurly use {
         FFunction(
-            t1.name == "main",
             t1,
             t2,
             Block(t3),

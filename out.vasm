@@ -40,6 +40,6 @@ end
     exit
 func main
   # val poo
-  r1 <- call test 
+  r1 <- call rest 
 exit
 end
