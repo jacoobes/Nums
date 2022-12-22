@@ -43,3 +43,8 @@ func main
   r1 <- call rest 
 exit
 end
+func rest
+  r2 <- call test 
+    ret r2
+exit
+end

@@ -1,6 +1,7 @@
 package emission
 
 import ExpressionVisitor
+import ModuleResolver
 import ModuleResolver.*
 import NumsWriter
 import Semantics
@@ -122,16 +123,20 @@ class CodeEmission(
         override fun onImport(import: Import) {
             //get top level children
             val idents = import.idents.toHashSet()
-            imports.iterator().forEach {
+            val fileTree = ModuleResolver.pathGraph[import.file]!!
+            val children = fileTree.getDescendants(FileVertex(import.file))
+            children.asSequence().forEach {
                 when(it) {
                     is FnVertex -> {
-                        if(idents.contains(it.fn.name)) {
-                            importedNodes[it.fn.name] = it.fn
+                        val fnName = it.fn.name
+                        if(idents.contains(fnName)) {
+                            importedNodes[fnName] = it.fn
                         }
                     }
                     else -> {}
                 }
             }
+
         }
     }
 
