@@ -3,7 +3,13 @@ import nodes.*
 import org.jgrapht.graph.DefaultEdge
 import org.jgrapht.graph.DirectedAcyclicGraph
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Files.exists
+import java.nio.file.Path
 import java.util.LinkedList
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isReadable
 
 class ModuleResolver {
     interface Vertex
@@ -39,13 +45,13 @@ class ModuleResolver {
             return "[Namespace: $name]"
         }
     }
-    class FnVertex(val uid: Int, val fn: FFunction) : Vertex {
+    class FnVertex(val fn: FFunction, val fullName: Variable) : Vertex {
         override fun equals(other: Any?):  Boolean {
             return if(other is FFunction) {
                 other.name == fn.name && fn.args.size == other.args.size
             } else {
                 if(other is FnVertex) {
-                    return uid == other.uid && fn == other.fn
+                    return fullName == other.fullName && fn == other.fn
                 }
                 return fn == other
             }
@@ -60,76 +66,78 @@ class ModuleResolver {
     }
     class SVertex(val space: Space) : Vertex
     companion object {
-        val depMap: HashMap<File, List<Statement>> = hashMapOf()
+        val depMap: HashMap<Path, List<Statement>> = hashMapOf()
         val pathGraph = HashMap<File, DirectedAcyclicGraph<Vertex, DefaultEdge>>()
-        private fun File.sanityCheck() {
-            if(!exists()) throw Error("File $this does not exist")
-            if(isDirectory) throw Error("No directories allowed")
+        private fun Path.sanityCheck() {
+            if(!exists(this)) throw Error("File $this does not exist")
+            if(isDirectory()) throw Error("No directories allowed")
             if(extension != "nums") throw Error("Only .nums files are allowed")
-            if(!canRead()) throw Error("Cannot write to this file")
+            if(!isReadable()) throw Error("Cannot write to this file")
         }
-        fun createFileImportGraph() {
-            for((file, tree) in depMap) {
-                val graph = DirectedAcyclicGraph<Vertex, DefaultEdge>(DefaultEdge::class.java)
-                val root = FileVertex(file)
-                graph.addVertex(root)
-                for(node in tree) {
-                     when(node) {
-                         is FFunction -> {
-                             val fnVertex = FnVertex(file.hashCode(),node).also { graph.addVertex(it) }
-                             graph.addEdge(root, fnVertex)
-                         }
-                         is Import -> {
-                             // A naive approach of filtering all nodes that aren't imports, it is pretty slow
-                            val impTree = depMap[node.file]?.filterNot { it is Import }!!
-                            if(node.isNamespace) {
-                               val nsVertex = NSVertex(node.idents[0])
-                               graph.addVertex(nsVertex)
-                               graph.addEdge(root, nsVertex)
-                               for(imported in impTree) {
-                                   when(imported) {
-                                       is FFunction -> {
-                                           val fnVertex = FnVertex(node.uid(), imported)
-                                           graph.addVertex(fnVertex)
-                                           graph.addEdge(nsVertex, fnVertex)
-                                       }
-                                       is Space -> {}
-                                       else -> {}
-                                   }
-                               }
-                            } else {
-                                val idents = HashSet(node.idents)
-                                for(imported in impTree) {
-                                    when(imported) {
-                                        is FFunction -> {
-                                            if(idents.contains(imported.name)) {
-                                                val iFn = FnVertex(node.uid(), imported)
-                                                graph.addVertex(iFn)
-                                                graph.addEdge(root, iFn)
-                                            }
-                                        }
-                                        is Space -> {
-
-                                        }
-                                        else -> {}
-                                    }
-                                }
-                            }
-                         }
-                         is Space -> {}
-                         else -> {}
-                     }
-                }
-                pathGraph[file] = graph
-            }
-        }
-        fun generateFiles(root: File) {
-            val queue = LinkedList<File>()
+//        fun createFileImportGraph() {
+//            for((file, tree) in depMap) {
+//                val graph = DirectedAcyclicGraph<Vertex, DefaultEdge>(DefaultEdge::class.java)
+//                val root = FileVertex(file)
+//                graph.addVertex(root)
+//                for(node in tree) {
+//                     when(node) {
+//                         is FFunction -> {
+//                             //if it is top level import, the full name is its function name
+//                             val fnVertex = FnVertex(node, node.name).also { graph.addVertex(it) }
+//                             graph.addEdge(root, fnVertex)
+//                         }
+//                         is Import -> {
+//                             // A naive approach of filtering all nodes that aren't imports, it is pretty slow
+//                            val impTree = depMap[node.file]?.filterNot { it is Import }!!
+//                            if(node.isNamespace) {
+//                               val nsVertex = NSVertex(node.idents[0])
+//                               graph.addVertex(nsVertex)
+//                               graph.addEdge(root, nsVertex)
+//                               for(imported in impTree) {
+//                                   when(imported) {
+//                                       is FFunction -> {
+//                                           //If its imported via namespace, the name is Namespace:functionname
+//                                           val fnVertex = FnVertex(imported, Variable(Path(Path(null, imported.name), nsVertex.name).toString()))
+//                                           graph.addVertex(fnVertex)
+//                                           graph.addEdge(nsVertex, fnVertex)
+//                                       }
+//                                       is Space -> {}
+//                                       else -> {}
+//                                   }
+//                               }
+//                            } else {
+//                                val idents = HashSet(node.idents)
+//                                for(imported in impTree) {
+//                                    when(imported) {
+//                                        is FFunction -> {
+//                                            //when imported by its direct name, qualified name is filename:fnname
+//                                            // adds all imports to the graph. Treeshaking would be done here
+//                                            val iFn = FnVertex(imported, Variable("${node.file.name}:${imported.name}"))
+//                                            graph.addVertex(iFn)
+//                                            graph.addEdge(root, iFn)
+//                                        }
+//                                        is Space -> {
+//
+//                                        }
+//                                        else -> {}
+//                                    }
+//                                }
+//                            }
+//                         }
+//                         is Space -> {}
+//                         else -> {}
+//                     }
+//                }
+//                pathGraph[file] = graph
+//            }
+//        }
+        fun generateFiles(root: Path) {
+            val queue = LinkedList<Path>()
             val grammar = NumsGrammar()
             queue.add(root)
             while(queue.isNotEmpty()) {
                 val current = queue.poll()
-                val parsed = grammar.parseToEnd(current.readText())
+                val parsed = grammar.parseToEnd(Files.readString(current))
                 depMap[current] = parsed
                 for(node in parsed) {
                     if(node is Import) {

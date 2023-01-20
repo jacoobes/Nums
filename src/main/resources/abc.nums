@@ -1,6 +1,8 @@
-test = "src/main/resources/bcd.nums"
 
 fn quan() {
-
+    return cheese();
 }
 
+fn cheese() {
+    return 2;
+}

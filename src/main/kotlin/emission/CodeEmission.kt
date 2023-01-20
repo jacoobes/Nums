@@ -1,8 +1,8 @@
 package emission
 
 import ExpressionVisitor
-import ModuleResolver
-import ModuleResolver.*
+//import ModuleResolver
+//import ModuleResolver.*
 import NumsWriter
 import Semantics
 import StatementVisitor
@@ -14,15 +14,12 @@ class CodeEmission(
     private val semantics: Semantics = Semantics(),
     private val regMan: RegisterManager = RegisterManager(),
     private val f: NumsWriter,
-    curFile: File
+    curFile: java.nio.file.Path
     ) {
-    val imports = ModuleResolver.pathGraph[curFile]!!
-    val importedNodes = hashMapOf<Variable, Statement>()
+    //val imports = ModuleResolver.pathGraph[curFile]!!
+    val reachableNodes = hashMapOf<Variable, Statement>()
     fun start(tree: List<Statement>) {
         for(node in tree) {
-            stmtVisitor.visit(node)
-        }
-        for((_,node) in importedNodes) {
             stmtVisitor.visit(node)
         }
     }
@@ -116,27 +113,24 @@ class CodeEmission(
             f.writeln("${r(local.registerVal)} <- reg ${r(tReg)}", semantics.scopeDepth)
         }
 
-        /**
-         * This is to cover the case that functions are imported without a namespace identifier,
-         * or should i register all imports here? (instead of path
-         */
         override fun onImport(import: Import) {
-            //get top level children
-            val idents = import.idents.toHashSet()
-            val fileTree = ModuleResolver.pathGraph[import.file]!!
-            val children = fileTree.getDescendants(FileVertex(import.file))
-            children.asSequence().forEach {
-                when(it) {
-                    is FnVertex -> {
-                        val fnName = it.fn.name
-                        if(idents.contains(fnName)) {
-                            importedNodes[fnName] = it.fn
-                        }
-                    }
-                    else -> {}
-                }
-            }
-
+//            //get top level children
+//            val idents = import.idents.toHashSet()
+//            val fileTree = ModuleResolver.pathGraph[import.file]!!
+//            val children = fileTree.getDescendants(FileVertex(import.file))
+//            val listToBeEmitted = arrayListOf<Statement>()
+//            children.asSequence().forEach {
+//                when(it) {
+//                    is FnVertex -> {
+//                        if(idents.contains(it.fn.name)) {
+//                            reachableNodes[it.fn.name] = it.fn
+//                        }
+//                        listToBeEmitted.add(it.fn)
+//                    }
+//                    else -> {}
+//                }
+//            }
+//            start(listToBeEmitted)
         }
     }
 
@@ -233,7 +227,7 @@ class CodeEmission(
             /**
              * resolves to direct name. So imports and same file functions will collide if they both exist
              */
-             f.writeln("${r(i)} <- call ${call.callee.name} $regStr", semantics.scopeDepth)
+            f.writeln("${r(i)} <- call ${call.callee.name} $regStr", semantics.scopeDepth)
         }
 
         override fun onArrLiteral(arrayLiteral: ArrayLiteral) {
@@ -251,36 +245,34 @@ class CodeEmission(
         }
 
         override fun onPath(path: Path) {
-            var cur: Path? = path
-            //Definitely a better way to do this, but im just trying to get it done
-            while(cur != null) {
-                val e = cur.tok
-                when (e) {
-                    //for now, it will only be namespaces possible
-                    is Variable -> {
-                        val children = imports.getDescendants(NSVertex(e))
-                        //advance the current chain
-                        cur = cur.chain
-                        if(cur == null) throw Error("Incomplete path found $path")
-                        val curNode = cur.tok
-                        for (child in children) {
-                            when (child) {
-                                is FnVertex -> {
-                                    val importedFunctionName = Variable("${child.fn.name}-${child.uid}")
-                                    if(curNode is Call) {
-                                        onCall(Call(importedFunctionName, curNode.args))
-                                    }
-                                    importedNodes[importedFunctionName] = (FFunction( importedFunctionName, child.fn.args, child.fn.block))
-                                }
-                                else -> {}
-                            }
-                        }
-                    }
-                    else -> {}
-                }
-               cur = cur.chain
-            }
-
+//            var cur: Path? = path
+//            //Definitely a better way to do this, but im just trying to get it done
+//            while(cur != null) {
+//                val e = cur.tok
+//                when (e) {
+//                    //for now, it will only be namespaces possible
+//                    is Variable -> {
+//                        val children = imports.getDescendants(NSVertex(e))
+//                        //advance the current chain
+//                        cur = cur.chain
+//                        if(cur == null) throw Error("Incomplete path found $path")
+//                        val curNode = cur.tok
+//                        for (child in children) {
+//                            when (child) {
+//                                is FnVertex -> {
+//                                    if(curNode is Call) {
+//                                        onCall(Call(child.fullName, curNode.args))
+//                                    }
+//                                    reachableNodes[child.fullName] = (FFunction(child.fullName, child.fn.args, child.fn.block))
+//                                }
+//                                else -> {}
+//                            }
+//                        }
+//                    }
+//                    else -> {}
+//                }
+//               cur = cur.chain
+//            }
         }
 
         override fun visit(item: Expr) {

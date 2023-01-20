@@ -41,7 +41,7 @@ data class FFunction(val name: Variable, val args: List<Variable>, val block: St
 }
 data class Space(val name: Variable, val elements: List<Statement>) : Statement()
 
-data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean, val file: File) : Statement() {
+data class Import(val idents : List<Variable>, val path: String, val isNamespace: Boolean, val file: java.nio.file.Path) : Statement() {
     fun uid(): Int {
         return file.hashCode()
     }

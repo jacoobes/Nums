@@ -3,6 +3,7 @@ import emission.MiniVmNative
 import kotlinx.cli.*
 import java.io.File
 import java.io.FileWriter
+import java.nio.file.Path
 
 fun main(args: Array<String>) = init(args)
 fun init(args: Array<String>) {
@@ -11,9 +12,9 @@ fun init(args: Array<String>) {
     val optimization by parser.option(ArgType.Int, shortName = "O", description = "Optimization level").default(0)
     val out by parser.option(ArgType.String, description = "vasm").required()
     parser.parse(args)
-    val main = File(input)
+    val main = Path.of(input)
     ModuleResolver.generateFiles(main)
-    ModuleResolver.createFileImportGraph()
+    //ModuleResolver.createFileImportGraph()
     val br = NumsWriter(FileWriter(out))
     val mainTree = ModuleResolver.depMap[main]!!
     br.use {

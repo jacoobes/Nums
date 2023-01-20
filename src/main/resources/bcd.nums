@@ -1,13 +1,13 @@
-
+quan = "src/main/resources/abc.nums"
 fn test() {
     val p = 1;
     return p;
 }
 
 fn rest() {
-    return test();
+    return quan();
 }
-space Sex {
+space Shalnark {
     fn poo() {
         return 1;
     }
