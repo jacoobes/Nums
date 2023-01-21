@@ -5,7 +5,6 @@ import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import nodes.*
-import java.io.File
 
 
 class NumsGrammar : Grammar<List<Statement>>() {
@@ -93,15 +92,15 @@ class NumsGrammar : Grammar<List<Statement>>() {
     private val unary by (not and parser(this::expr)) map { Unary(it.t1.type, it.t2) }
     private val primitiveExpr: Parser<Expr> by (
             numParser or
-            fnCall or
-            getter or
-            varParser or
-            truthParser or
-            falseParser or
-            stringLiteral or
-            grouped or
-            unary or
-            arrayLit
+                    fnCall or
+                    getter or
+                    varParser or
+                    truthParser or
+                    falseParser or
+                    stringLiteral or
+                    grouped or
+                    unary or
+                    arrayLit
             )
     private val multiplicationOperator by timex or div or mod
     private val multiplicationOrTerm by leftAssociative(primitiveExpr, multiplicationOperator) { l, o, r ->  Binary(l, r, binOpToKind[o.type]!!) }
@@ -149,7 +148,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
         )
     })
     private val import by  ( optional(plus) * separatedTerms(varParser, comma)) * -assign * stringLiteral map { (ns, ids, path) ->
-        val f = File(path.str)
+        val f = java.nio.file.Path.of(path.str)
         ns?.let {
             if(ids.size == 1) Import(ids, path.str, true, f) else throw Error("A file can only have one namespace")
         } ?: Import(ids, path.str, false, f)
