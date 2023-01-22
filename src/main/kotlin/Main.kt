@@ -1,15 +1,18 @@
-import emission.CodeEmission
-import emission.MiniVmNative
 import hl.HashLink
 import kotlinx.cli.*
-import org.graalvm.nativeimage.StackValue
-import java.io.FileWriter
-import java.nio.file.Path
+import java.util.*
+
 fun main(args: Array<String>) = init(args)
 fun init(args: Array<String>) {
+    System.loadLibrary("libhl")
+//    val property = System.getProperty("java.library.path")
+//    val parser = StringTokenizer(property, ";")
+//    while (parser.hasMoreTokens()) {
+//        System.err.println(parser.nextToken())
+//    }
     val hl = HashLink()
-    println(HashLink.Companion)
-    println(hl.hl_alloc_dynobj())
+    //println(HashLink.Static.hl_type_kind._H_FORCE_INT.getCValue())
+    //println(hl.hl_alloc_dynobj())
  //  JNAerator.main(args) //-f -direct -mode Directory  hashlink/src/hl.h
 //    val parser = ArgParser("nums")
 //    val input by parser.option(ArgType.String, shortName = "in", description = "Main Entry").required()

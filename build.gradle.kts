@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.7.10"
+    id("com.palantir.graal") version "0.12.0"
     application
 }
 
@@ -10,6 +11,22 @@ version = "1.0"
 
 repositories {
     mavenCentral()
+}
+
+graal {
+    windowsVsVarsPath("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat")
+    outputName("nums")
+
+    graalVersion("22.3.0")
+    javaVersion("17")
+    mainClass("MainKt")
+    option("--no-fallback")
+    option("--verbose")
+    option("-H:ReflectionConfigurationFiles=reflect.config.json")
+  //  option("-H:TempDirectory=C:\\Users\\jacob\\OneDrive\\Desktop\\Projects\\Nums")
+    option("-H:+ReportExceptionStackTraces")
+    option("--native-image-info")
+
 }
 
 application {
@@ -34,7 +51,6 @@ tasks.register<Jar>("toJar") {
             sourcesMain.output
     from(contents)
 }
-
 
 tasks.test {
     useJUnitPlatform()
