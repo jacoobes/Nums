@@ -14,17 +14,21 @@ repositories {
 }
 
 graal {
-    windowsVsVarsPath("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat")
-    outputName("nums")
-
+    windowsVsEdition("BuildTools")
+    windowsVsVersion("2019")
+    outputName("numsc")
     graalVersion("22.3.0")
     javaVersion("17")
     mainClass("MainKt")
+    //option("--link-at-build-time")
+    //option("-H:+PrintClassInitialization")
+    //option("-H:+JNI")
+    option("-H:ReflectionConfigurationFiles=reflect.config.json")
     option("--no-fallback")
     option("--verbose")
-    option("-H:ReflectionConfigurationFiles=reflect.config.json")
-  //  option("-H:TempDirectory=C:\\Users\\jacob\\OneDrive\\Desktop\\Projects\\Nums")
     option("-H:+ReportExceptionStackTraces")
+    //option("-H:+TraceNativeToolUsage")
+    //option("-H:TempDirectory=C:\\Users\\jacob\\OneDrive\\Desktop\\Projects\\Nums")
     option("--native-image-info")
 
 }
@@ -59,5 +63,5 @@ tasks.test {
 tasks.withType<KotlinCompile> {
     //kotlinOptions.useK2 = true
     kotlinOptions.jvmTarget = "17"
-    include("hl/**/*")
+    include("src/main/java")
 }
