@@ -4,7 +4,7 @@ import org.graalvm.nativeimage.c.constant.CEnumLookup;
 import org.graalvm.nativeimage.c.constant.CEnumValue;
 
 @CContext(HashLink.HL.class)
-public class Opcodes {
+public class COpcode {
     @CEnum
     public enum hl_op {
 

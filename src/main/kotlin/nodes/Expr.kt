@@ -1,18 +1,8 @@
 package nodes
 
 import com.github.h0tk3y.betterParse.lexer.Token
-import kotlin.math.abs
 
-sealed class Expr : Node {
-    override fun hashCode(): Int {
-        return abs(super.hashCode())
-    }
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-}
+sealed interface Expr:  Node
 
 enum class ComparisonOps {
     Lt,
@@ -23,31 +13,41 @@ enum class ComparisonOps {
     Neq;
 }
 
-data class Skip(val n: Nothing? = null) : Statement()
-data class StringLiteral(val str: String) : Expr()
-data class Number(val value: String) : Expr()
-data class Variable(val name: String) : Expr() {
-    override fun equals(other: Any?): Boolean {
-        return other is Variable && name == other.name
-    }
-    override fun hashCode(): Int {
-        return name.hashCode()
-    }
-    override fun toString() = name
-
+@JvmInline
+value class Skip(val n: Nothing? = null) : Statement
+@JvmInline
+value class StringLiteral(val str: String) : Expr {
+    fun length() = str.length
 }
-data class Unary(val op: Token, val expr: Expr) : Expr()
-data class Binary(val left: Expr, val right: Expr, val op: String) : Expr()
-data class Call(val callee: Variable, val args: List<Expr>) : Expr() {
+@JvmInline
+value class NumsInt(val value: Int): Expr {
+    override fun toString(): String {
+        return value.toString()
+    }
+}
+@JvmInline
+value class Variable(val name: String) : Expr
+@JvmInline
+value class NumsDouble(val value: Double) : Expr {
+    override fun toString(): String {
+        return value.toString()
+    }
+}
+@JvmInline
+value class Bool(val bool: Boolean) : Expr
+data class Unary(val op: Token, val expr: Expr) : Expr
+data class Binary(val left: Expr, val right: Expr, val op: String) : Expr
+data class Call(val callee: Variable, val args: List<Expr>) : Expr {
     override fun toString(): String {
         return callee.name
     }
 }
-data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : Expr()
-data class And(val left: Expr, val right: Expr) : Expr()
-data class Or(val left: Expr, val right: Expr) : Expr()
-data class ArrayLiteral(val exprs: List<Expr>) : Expr()
-data class Path(var chain: Path?, val tok: Expr) : Expr() {
+
+data class Comparison(val left: Expr, val right: Expr, val op: ComparisonOps) : Expr
+data class And(val left: Expr, val right: Expr) : Expr
+data class Or(val left: Expr, val right: Expr) : Expr
+data class ArrayLiteral(val exprs: List<Expr>) : Expr
+data class Path(var chain: Path?, val tok: Expr) : Expr {
     override fun toString(): String {
         return buildString {
             var cur = chain
@@ -60,4 +60,3 @@ data class Path(var chain: Path?, val tok: Expr) : Expr() {
         }
     }
 }
-data class Bool(val bool: String) : Expr()

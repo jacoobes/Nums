@@ -3,14 +3,9 @@ import org.graalvm.nativeimage.c.constant.CConstant;
 import org.graalvm.nativeimage.c.constant.CEnum;
 import org.graalvm.nativeimage.c.constant.CEnumLookup;
 import org.graalvm.nativeimage.c.constant.CEnumValue;
-import org.graalvm.nativeimage.c.function.CFunction;
+import org.graalvm.nativeimage.c.function.*;
 import org.graalvm.nativeimage.c.function.CFunction.Transition;
-import org.graalvm.nativeimage.c.function.CFunctionPointer;
-import org.graalvm.nativeimage.c.function.InvokeCFunctionPointer;
-import org.graalvm.nativeimage.c.struct.AllowWideningCast;
-import org.graalvm.nativeimage.c.struct.CField;
-import org.graalvm.nativeimage.c.struct.CFieldAddress;
-import org.graalvm.nativeimage.c.struct.CStruct;
+import org.graalvm.nativeimage.c.struct.*;
 import org.graalvm.nativeimage.c.type.CCharPointer;
 import org.graalvm.nativeimage.c.type.CIntPointer;
 import org.graalvm.nativeimage.c.type.VoidPointer;
@@ -20,9 +15,12 @@ import org.graalvm.word.UnsignedWord;
 
 import java.util.List;
 
+
+@CLibrary(
+        value = "C:\\Users\\jacob\\OneDrive\\Desktop\\Projects\\Nums\\bin\\libhl"
+)
 @CContext(HashLink.HL.class)
 public class HashLink {
-
     public static class HL implements CContext.Directives {
         @Override
         public List<String> getHeaderFiles() {
@@ -30,11 +28,6 @@ public class HashLink {
                     "<C:\\Users\\jacob\\OneDrive\\Desktop\\Projects\\Nums\\include\\hl.h>",
                     "<C:\\Users\\jacob\\OneDrive\\Desktop\\Projects\\Nums\\include\\opcodes.h>"
             );
-        }
-
-        @Override
-        public List<String> getLibraries() {
-            return List.of("C:\\Users\\jacob\\OneDrive\\Desktop\\Projects\\Nums\\hashlink\\x64\\Release\\libhl");
         }
     }
 
@@ -90,12 +83,10 @@ public class HashLink {
 
 
     @CConstant("_I8")
-
     public static native String _I8();
 
 
     @CConstant("_I16")
-
     public static native String _I16();
 
 
@@ -397,7 +388,7 @@ public class HashLink {
         CIntPointer interfaces();
     }
 
-    @CStruct
+    @CStruct(addStructKeyword = true)
     public interface hl_type extends PointerBase {
         @CFieldAddress("kind")
         CIntPointer kind();
@@ -706,7 +697,8 @@ public class HashLink {
     )
     public static native vdynobj hl_alloc_dynobj();
 
-    @CFunction(transition = Transition.TO_NATIVE)
+    @CFunction(transition = Transition.NO_TRANSITION)
+    @AllowWideningCast
     public static native byte hl_alloc_bytes(int var1);
 
     @CFunction(
@@ -725,7 +717,7 @@ public class HashLink {
     public static native void hl_gc_set_dump_types(hl_types_dump var1);
 
     @CConstant("HL_VERSION")
-    protected static native int HL_VERSION();
+    public static native int HL_VERSION();
 
     @CFunction
     public static native void hl_global_init();
@@ -889,52 +881,41 @@ public class HashLink {
 //        @CConstant("HL_MAX_EXTRA_STACK")
 //        protected native int HL_MAX_EXTRA_STACK();
 
-    @CFieldAddress("hlt_void")
+    @CStruct
+    public static interface hlt_void extends hl_type  { }
 
-    public static native hl_type hlt_void();
-
-    @CFieldAddress
 
     public static native hl_type hlt_i32();
 
-    @CFieldAddress
 
     public static native hl_type hlt_i64();
 
-    @CFieldAddress
 
     public static native hl_type hlt_f64();
 
-    @CFieldAddress
 
     public static native hl_type hlt_f32();
 
-    @CFieldAddress
 
     public static native hl_type hlt_dyn();
 
-    @CFieldAddress
 
-    public static native hl_type hlt_array();
+    @CStruct
+    public static interface hlt_array extends hl_type {};
 
-    @CFieldAddress
 
     public static native hl_type hlt_bytes();
 
-    @CFieldAddress
-
     public static native hl_type hlt_dynobj();
 
-    @CFieldAddress
 
     public static native hl_type hlt_bool();
 
-    @CFieldAddress
 
     public static native hl_type hlt_abstract();
 
     @CEnum
-    enum hl_type_kind {
+    public enum hl_type_kind {
         HVOID,
         HUI8,
         HUI16,
