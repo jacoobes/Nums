@@ -3,7 +3,10 @@ package hl
 import ExpressionVisitor
 import StatementVisitor
 import nodes.*
-import nodes.Types.*
+import types.Context
+import types.Type
+import types.TypeSolver
+import types.Types.*
 
 class SemanticAnalyzer {
     val stringTable = TableLookup<StringLiteral>()
@@ -11,6 +14,7 @@ class SemanticAnalyzer {
     val floatTable = TableLookup<NumsDouble>()
     val functionTable = TableLookup<FFunction>()
     val typesTable = TableLookup<Type>()
+    val typeSolver = TypeSolver(Context())
     var entryPoint = -1
     fun start(li : List<Statement>) {
         /**HType, TDyn ??*/
@@ -24,7 +28,9 @@ class SemanticAnalyzer {
         override fun onFn(fn: FFunction) {
             stringTable.add(StringLiteral(fn.name.name))
             functionTable.add(fn)
-            typesTable.add(TFn(fn.args.map { it.t2 }, fn.retType))
+            val fnType = TFn(fn.args.map { it.t2 }, fn.retType)
+            typesTable.add(fnType)
+            typeSolver.ctx.add(fn.name.name, fnType)
             if(fn.isMain()) {
                 if(entryPoint == -1) {
                     entryPoint = functionTable.tbl[fn]!!
@@ -59,6 +65,7 @@ class SemanticAnalyzer {
         }
 
         override fun onVal(valStmt: Val) {
+            typeSolver.check(valStmt.type, valStmt.expr)
             exprVisitor.visit(valStmt.expr)
         }
 
@@ -76,13 +83,19 @@ class SemanticAnalyzer {
     }
 
     private val exprVisitor = object : ExpressionVisitor {
-        override fun onFloat(number: NumsDouble) {
+        override fun onDouble(number: NumsDouble) {
             floatTable.add(number)
         }
 
         override fun onInt(number: NumsInt) {
             intTable.add(number)
         }
+
+        override fun onShort(number: NumsShort) {}
+
+        override fun onUByte(number: NumsByte) {}
+
+        override fun onFloat(number: NumsFloat) {}
 
         override fun onStr(stringLiteral: StringLiteral) {
             stringTable.add(stringLiteral)
@@ -118,7 +131,9 @@ class SemanticAnalyzer {
             visit(or.right)
         }
 
-        override fun onCall(call: Call) {}
+        override fun onCall(call: Call) {
+
+        }
 
         override fun onArrLiteral(arrayLiteral: ArrayLiteral) {
             arrayLiteral.exprs.forEach(::visit)

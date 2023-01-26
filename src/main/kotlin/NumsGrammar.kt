@@ -1,16 +1,15 @@
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
-import nodes.Types.*
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import nodes.*
+import types.Types.*
 
 
 class NumsGrammar : Grammar<List<Statement>>() {
-    private val int by regexToken("[+-]?\\d+")
-    private val dobl  by regexToken("[+-]?\\d+(d|(\\.\\d+(d)?))")
+    private val numb by regexToken("(([+-]?\\d*\\.*\\d+[eE])?([+-]?\\d*\\.*\\d+)(f64|f32|u16|u8)?)")
     private val semi by literalToken(";")
     private val space by literalToken("space")
     private val vvar by regexToken("(var|val)\\b")
@@ -80,10 +79,11 @@ class NumsGrammar : Grammar<List<Statement>>() {
         f32 to TF32,
         f64 to TF64,
 
-    )
+        )
     private val multiLineComment by regexToken(":>[^<]*(?:[^<:]*)<:", ignore = true)
     private val singleLineComment by regexToken("~~[^\\n]*\\n", ignore = true)
     private val comma by literalToken(",")
+
     //regex might need adjusting
     private val stringLit by regexToken("\".*?\"")
     private val assign by literalToken("=")
@@ -93,14 +93,28 @@ class NumsGrammar : Grammar<List<Statement>>() {
     private val rcurly by literalToken("}")
     private val pipe by literalToken("|")
 
-    private val nint by int map { mat -> NumsInt(Integer.valueOf(mat.text)) }
-    private val nfloat by dobl map { mat-> NumsDouble(mat.text.toDouble()) }
+    private val parsedNum by numb map { mat ->
+        val endsWith = { s: String -> mat.text.endsWith(s) }
+        val getNumber = { s: String -> mat.text.substringBefore(s) }
+        when {
+            endsWith("f64") -> NumsDouble(getNumber("f64").toDouble())
+            endsWith("f32") -> NumsFloat(getNumber("f32").toFloat())
+            endsWith("u8") -> NumsByte(getNumber("u8").toUByte())
+            endsWith("u16") -> NumsShort(getNumber("u16").toUShort())
+            else -> try {
+                    NumsInt(Integer.valueOf(mat.text))
+                } catch (_: Throwable) {
+                    NumsDouble(mat.text.toDouble())
+                }
+
+        }
+    }
     private val truthParser by ttrue asJust Bool(false)
     private val falseParser by ffalse asJust Bool(true)
 
 
     private val stringLiteral by stringLit use { StringLiteral(text.removeSurrounding("\"", "\"")) }
-    private val types by (i32 or i64 or u8 or u16 or txt or boo or f32 or f64 or word)  map {
+    private val types by (i32 or i64 or u8 or u16 or txt or boo or f32 or f64 or word) map {
         val typ = typesMap[it.type] ?: TVarT(it.text)
         typ
     }
@@ -108,7 +122,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
 
     //will support local functions in future
     private val fnCall by varParser * -lparen * separatedTerms(parser(::expr), comma, acceptZero = true) * -rparen use {
-        Call(t1,t2)
+        Call(t1, t2)
     }
     private val arrayLit by (-lcurly and separatedTerms(
         acceptZero = true,
@@ -116,8 +130,8 @@ class NumsGrammar : Grammar<List<Statement>>() {
         term = parser(this::expr)
     ) and -rcurly) map { ArrayLiteral(it) }
     private val grouped by -lparen and parser(this::expr) and -rparen
-    private val getter by rightAssociative(fnCall or varParser, colon) { l,_,r ->
-        if(r !is Path) {
+    private val getter by rightAssociative(fnCall or varParser, colon) { l, _, r ->
+        if (r !is Path) {
             Path(Path(null, r), l)
         } else {
             Path(r, l)
@@ -125,25 +139,36 @@ class NumsGrammar : Grammar<List<Statement>>() {
     }
     private val unary by (not and parser(this::expr)) map { Unary(it.t1.type, it.t2) }
     private val primitiveExpr: Parser<Expr> by (
-            nint or
-            nfloat or
-            fnCall or
-            getter or
-            varParser or
-            truthParser or
-            falseParser or
-            stringLiteral or
-            grouped or
-            unary or
-            arrayLit
+            parsedNum or
+                    fnCall or
+                    getter or
+                    varParser or
+                    truthParser or
+                    falseParser or
+                    stringLiteral or
+                    grouped or
+                    unary or
+                    arrayLit
             )
     private val multiplicationOperator by timex or div or mod
-    private val multiplicationOrTerm by leftAssociative(primitiveExpr, multiplicationOperator) { l, o, r ->  Binary(l, r, binOpToKind[o.type]!!) }
+    private val multiplicationOrTerm by leftAssociative(primitiveExpr, multiplicationOperator) { l, o, r ->
+        Binary(
+            l,
+            r,
+            binOpToKind[o.type]!!
+        )
+    }
     private val sumOperators by plus or minus
-    private val summationOrMul by leftAssociative(multiplicationOrTerm, sumOperators) { l, o, r ->  Binary(l, r, binOpToKind[o.type]!!) }
+    private val summationOrMul by leftAssociative(multiplicationOrTerm, sumOperators) { l, o, r ->
+        Binary(
+            l,
+            r,
+            binOpToKind[o.type]!!
+        )
+    }
     private val compareOps by lt or gt or greaterEqual or lessEqual
     private val comparisonOrSummation by (summationOrMul * optional(compareOps * summationOrMul)).map { (left, tail) ->
-        tail?.let { (op, r) -> Comparison(left, r, compareToKind[op.type]!! ) } ?: left
+        tail?.let { (op, r) -> Comparison(left, r, compareToKind[op.type]!!) } ?: left
     }
     private val equalityOps by equal or nequal
     private val equality by leftAssociative(comparisonOrSummation, equalityOps) { l, o, r ->
@@ -158,13 +183,19 @@ class NumsGrammar : Grammar<List<Statement>>() {
     private val expr: Parser<Expr> by orChain
 
     private val exprStatement by expr and -semi map { ExpressionStatement(it) }
-    private val assignStmt : Parser<Assign> by (varParser * -assign * parser(::expr) * -semi).map { (t1, t2) -> Assign(t1, t2) }
-    private val valStmt by vvar * varParser * optional(-colon * types ) and -assign * exprStatement use {
-        Val(t1.text == "var", t2, t4.expr, t3 ?: Infer )
+    private val assignStmt: Parser<Assign> by (varParser * -assign * parser(::expr) * -semi).map { (t1, t2) ->
+        Assign(
+            t1,
+            t2
+        )
+    }
+    private val valStmt by vvar * varParser * optional(-colon * types) and -assign * exprStatement use {
+
+        Val(t1.text == "var", t2, t4.expr, t3 ?: Infer)
     }
     private val iifStmt by (-iif * expr * -lcurly * optional(parser(::statements)) * -rcurly
             * zeroOrMore(-eels * -iif * expr * -lcurly * optional(parser(this::statements)) * -rcurly) *
-            (optional(-eels * -lcurly * optional(parser(this::statements)) * -rcurly )).map { it ?: Skip() }
+            (optional(-eels * -lcurly * optional(parser(this::statements)) * -rcurly)).map { it ?: Skip() }
             ).use {
             Iif(t1, t2 ?: Skip(), t3.foldRight(t4) { (elifC, elifB), el -> Iif(elifC, elifB ?: Skip(), el) })
         }
@@ -182,16 +213,24 @@ class NumsGrammar : Grammar<List<Statement>>() {
             t1,
             t2,
             Block(t4),
-            t3 ?: Infer,
-            )
+            t3 ?: TUnit,
+        )
     })
-    private val import by  ( optional(plus) * separatedTerms(varParser, comma)) * -assign * stringLiteral map { (ns, ids, path) ->
+    private val import by (optional(plus) * separatedTerms(
+        varParser,
+        comma
+    )) * -assign * stringLiteral map { (ns, ids, path) ->
         val f = java.nio.file.Path.of(path.str)
         ns?.let {
-            if(ids.size == 1) Import(ids, path.str, true, f) else throw Error("A file can only have one namespace")
+            if (ids.size == 1) Import(ids, path.str, true, f) else throw Error("A file can only have one namespace")
         } ?: Import(ids, path.str, false, f)
     }
-    private val spaceBlock by -space * varParser * -lcurly *  oneOrMore(parser(::topLevel)) * -rcurly map { (n, stmts) -> Space(n,stmts) }
-    private val topLevel : Parser<Statement> by fnDecl or import or spaceBlock
+    private val spaceBlock by -space * varParser * -lcurly * oneOrMore(parser(::topLevel)) * -rcurly map { (n, stmts) ->
+        Space(
+            n,
+            stmts
+        )
+    }
+    private val topLevel: Parser<Statement> by fnDecl or import or spaceBlock
     override val rootParser by oneOrMore(topLevel)
 }

@@ -35,19 +35,19 @@ fun init(args: Array<String>) {
     val tree = numsGrammar.parseToEnd(strInput)
     val s = SemanticAnalyzer().apply { start(tree) }
 
-    NumsWriter(pathToHl).use {
-        val code = hl_code(
-            version = 5,
-            hasDebug = false,
-            ints = s.intTable,
-            types = s.typesTable,
-            floats = s.floatTable,
-            funDecls = s.functionTable,
-            strings = s.stringTable,
-            entryPoint = s.entryPoint
-        )
-        val hl = HLEmitter(it, code)
-        hl.start(tree)
+//    NumsWriter(pathToHl).use {
+//        val code = hl_code(
+//            version = 5,
+//            hasDebug = false,
+//            ints = s.intTable,
+//            types = s.typesTable,
+//            floats = s.floatTable,
+//            funDecls = s.functionTable,
+//            strings = s.stringTable,
+//            entryPoint = s.entryPoint
+//        )
+//        val hl = HLEmitter(it, code)
+//        hl.start(tree)
     }
 
 //    val parser = ArgParser("nums")
@@ -64,5 +64,3 @@ fun init(args: Array<String>) {
 //        it.write(MiniVmNative.core())
 //        CodeEmission(f=it, curFile = main).start(mainTree)
 //    }
-
-}

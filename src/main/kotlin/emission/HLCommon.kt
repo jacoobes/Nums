@@ -30,3 +30,7 @@ fun indexGen(b: (Int) -> Unit, i: Int) {
         b(i and 0xFF)
     }
 }
+
+fun hlHeader(version: Int) : ByteArray {
+    return ("HLB".toByteArray())+ version.toByte()
+}

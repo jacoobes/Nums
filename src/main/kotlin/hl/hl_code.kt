@@ -2,6 +2,7 @@ package hl
 
 import com.github.h0tk3y.betterParse.utils.Tuple2
 import nodes.*
+import types.Type
 
 /**
  * typedef struct {

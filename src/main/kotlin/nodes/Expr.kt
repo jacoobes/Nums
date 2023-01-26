@@ -34,6 +34,24 @@ value class NumsDouble(val value: Double) : Expr {
     }
 }
 @JvmInline
+value class NumsFloat(val value: Float) : Expr {
+    override fun toString(): String {
+        return value.toString()
+    }
+}
+@JvmInline
+value class NumsByte(val value: UByte) : Expr {
+    override fun toString(): String {
+        return value.toString()
+    }
+}
+@JvmInline
+value class NumsShort(val value: UShort) : Expr {
+    override fun toString(): String {
+        return value.toString()
+    }
+}
+@JvmInline
 value class Bool(val bool: Boolean) : Expr
 data class Unary(val op: Token, val expr: Expr) : Expr
 data class Binary(val left: Expr, val right: Expr, val op: String) : Expr

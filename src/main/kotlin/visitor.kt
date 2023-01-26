@@ -34,8 +34,12 @@ interface StatementVisitor : Visitor<Statement> {
 
 interface ExpressionVisitor : Visitor<Expr> {
 
-    fun onFloat(number: NumsDouble)
+    fun onDouble(number: NumsDouble)
     fun onInt(number: NumsInt)
+    fun onShort(number: NumsShort)
+    fun onUByte(number: NumsByte)
+    fun onFloat(number: NumsFloat)
+
     fun onStr(stringLiteral: StringLiteral)
     fun onBinary(binary: Binary)
     fun onCmp(cmp: Comparison)
@@ -50,6 +54,10 @@ interface ExpressionVisitor : Visitor<Expr> {
     override fun visit(item: Expr) {
         when (item) {
             is NumsInt -> visit(item, ::onInt)
+            is NumsFloat -> visit(item, ::onFloat)
+            is NumsShort -> visit(item, ::onShort)
+            is NumsDouble -> visit(item, ::onDouble)
+            is NumsByte -> visit(item, ::onUByte)
             is StringLiteral -> visit(item, ::onStr)
             is Binary -> visit(item, ::onBinary)
             is Unary -> visit(item, ::onUnary)

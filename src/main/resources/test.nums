@@ -1,4 +1,13 @@
+fn test(a str) {
+
+}
 
 fn main (a str, b str, c str) {
-    val a = 4;
+    val a = test(1);
+}
+
+space sdsfd {
+    fn f () {
+
+    }
 }

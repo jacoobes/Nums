@@ -4,6 +4,8 @@ import NumsWriter
 import StatementVisitor
 import hl.hl_code
 import nodes.*
+import types.Type
+import types.Types
 
 //Targets the HL vm
 class HLEmitter(
@@ -17,7 +19,7 @@ class HLEmitter(
     //   11[+/-][5] [24] = -x20000000/+x20000000
     //
     init {
-        f.write(hlHeader()) //HEADER = HLB{VERSION}
+        f.write(hlHeader(hlCode.version)) //HEADER = HLB{VERSION}
         val flags = 0
         f.write(
             if(hlCode.hasDebug) flags or 1 else flags
@@ -77,9 +79,6 @@ class HLEmitter(
             else -> throw Error("not yet")
         }
     }
-    private fun hlHeader() : ByteArray {
-        return ("HLB".toByteArray())+ hlCode.version.toByte()
-    }
     fun start(tree: List<Statement>) {
         for(stmt in tree) {
             stmtVisitor.visit(stmt)
@@ -89,10 +88,6 @@ class HLEmitter(
 
         override fun onFn(fn: FFunction) {
             val loc = hlCode.funDecls.tbl[fn] ?: throw Error("Unknown function $fn")
-
-            if(fn.isMain()) {
-                f.write(loc) //entry point
-            }
             //writing function bytecode
             f.write(HashLink.hl_type_kind.HI32)
             indexGen(f::write, loc)
@@ -138,11 +133,23 @@ class HLEmitter(
 
     }
     private val exprVisitor = object: ExpressionVisitor {
-        override fun onFloat(number: NumsDouble) {
+        override fun onDouble(number: NumsDouble) {
             TODO("Not yet implemented")
         }
 
         override fun onInt(number: NumsInt) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onShort(number: NumsShort) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onUByte(number: NumsByte) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onFloat(number: NumsFloat) {
             TODO("Not yet implemented")
         }
 
