@@ -1,5 +1,5 @@
 package emission
-
+import hl.*
 
 
 fun indexGen(b: (Int) -> Unit, i: Int) {
@@ -33,4 +33,36 @@ fun indexGen(b: (Int) -> Unit, i: Int) {
 
 fun hlHeader(version: Int) : ByteArray {
     return ("HLB".toByteArray())+ version.toByte()
+}
+
+/**
+ * Covers most general opcodes that have 1:4 operands
+ */
+fun writeOps(write: (Int) -> Unit, opCode: Opcode) {
+    when(opCode) {
+        is NoOperand -> {
+            write(opCode.op.cValue)
+        }
+        is OneOperand -> {
+            write(opCode.op.cValue)
+        }
+        is TwoOperands -> {
+            write(opCode.op.cValue)
+            write(opCode.p1)
+            write(opCode.p2)
+        }
+        is ThreeOperands -> {
+            write(opCode.op.cValue)
+            write(opCode.p1)
+            write(opCode.p2)
+            write(opCode.p3)
+        }
+        is FourOperands -> {
+            write(opCode.op.cValue)
+            write(opCode.p1)
+            write(opCode.p2)
+            write(opCode.p3)
+            write(opCode.p4)
+        }
+    }
 }

@@ -70,7 +70,7 @@ class HLEmitter(
             is Types.TFn -> {
                 val argssize = t.typs.size
                 if (argssize > 255) throw IllegalArgumentException("Too many arguments: $argssize")
-                f.write(10)
+                f.write(10)//HFunction
                 f.write(argssize)
                 for(arg in t.typs) writeTypes(arg)
                 writeTypes(t.ret)
@@ -89,7 +89,7 @@ class HLEmitter(
         override fun onFn(fn: FFunction) {
             val loc = hlCode.funDecls.tbl[fn] ?: throw Error("Unknown function $fn")
             //writing function bytecode
-            f.write(HashLink.hl_type_kind.HI32)
+            writeTypes(fn.type)
             indexGen(f::write, loc)
             //should be empty for now
             indexGen(f::write, fn.args.size)

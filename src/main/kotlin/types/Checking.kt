@@ -2,6 +2,7 @@ package types
 
 import nodes.*
 import types.Types.*
+import kotlin.math.max
 
 class TypeError(message: String) : Error(message)
 
@@ -9,31 +10,57 @@ class TypeError(message: String) : Error(message)
 inline fun typeerror(message: String): Nothing {
     throw TypeError(message)
 }
+sealed class ContextItem {
+    interface CtxItem
+//    @JvmInline
+//    value class TypeDecl(val id: Variable) : CtxItem
+    data class VarDecl(val id: Variable, val type : Type) : CtxItem
 
-data class CtxItem(val name: String, val type: Type)
+    data class FnDecl(val id: Variable, val type: TFn) : CtxItem
+
+    data class ExistentialDeclaration(val id: Int, val type: Type?): CtxItem
+    @JvmInline
+    value class Marker(val id : Int) : CtxItem
+}
 
 //https://github.com/atennapel/bidirectional.js/blob/master/ts-mutable/src/context.ts
-class Context(val elements: ArrayList<CtxItem> = arrayListOf()) {
+class Context(private val elements: ArrayList<ContextItem.CtxItem> = arrayListOf()) {
+    private var existentials : Int = 0
     fun clone(): Context {
         return ArrayList(elements).run(::Context)
     }
-    fun add(name : String, type: Type) {
-        elements.add(CtxItem(name, type))
-    }
-    fun indexOf(t: CtxItem): Int {
-        return elements.indexOfFirst { t.type == it.type && t.name == it.name }
-    }
-
-    fun contains(t: CtxItem): Boolean {
-        return indexOf(t) != -1
-    }
-
-    fun lookup(ty: Type, name: String): CtxItem? {
-        return elements.getOrNull(indexOf(CtxItem(name, ty)))
+    fun add(item : ContextItem.CtxItem) {
+        // make sure we track the largest id in our environment
+        when(item) {
+            is ContextItem.ExistentialDeclaration -> {
+                existentials = max(item.id+1, existentials)
+            }
+        }
+        elements.add(item)
     }
 
-    fun find(name: String): CtxItem? {
-        return elements.find { ci -> ci.name == name }
+    fun any(pred : (ContextItem.CtxItem) -> Boolean) : Boolean {
+        return elements.any(pred)
+    }
+
+    fun contains(t: ContextItem.CtxItem): Boolean {
+        return any { t == it }
+    }
+
+    fun lookupExistential(id : Int): Type? {
+        return elements
+            .asSequence()
+            .filterIsInstance<ContextItem.ExistentialDeclaration>()
+            .first { id == it.id }
+            .type
+    }
+
+    fun lookupVar(name : Variable): Type? {
+        return elements
+            .asSequence()
+            .filterIsInstance<ContextItem.VarDecl>()
+            .firstOrNull { name == it.id }
+            ?.type
     }
 
 }
@@ -63,6 +90,13 @@ class TypeSolver(val ctx: Context) {
                 is NumsShort -> when (t) {
                     !is TU16 -> typeerror(message)
                 }
+                is NumsByte -> when(t) {
+                    !is TU8 -> typeerror(message)
+                }
+
+                is NumsFloat -> when(t) {
+                    !is TF32 -> typeerror(message)
+                }
 
                 is Bool -> when (t) {
                     !is TBool -> typeerror(message)
@@ -73,21 +107,27 @@ class TypeSolver(val ctx: Context) {
                 }
 
                 is Call -> {
-                    val getContext = ctx.find(e.callee.name) ?: throw Error("Unknown symbol to call: ${e.callee}")
-                    if (getContext.type !is TFn) typeerror("Tried calling a non function")
-                    for ((idx, arg) in getContext.type.typs.withIndex()) {
-                        check(
-                            arg, e.args.getOrNull(idx)
-                                ?: typeerror("Arity of call ${e.callee} invalid: Found ${e.args.size}, expected ${getContext.type.typs}")
-                        )
-                    }
-
+                //    val getContext = ctx.find(e.callee.name) ?: throw Error("Unknown symbol to call: ${e.callee}")
+                  //  if (getContext.type !is TFn) typeerror("Tried calling a non function")
+                    //if(e.args.size != getContext.type.typs.size) typeerror("Arity of call ${e.callee} invalid: Found ${e.args.size}, expected ${getContext.type.typs}")
+                    //for ((idx, arg) in getContext.type.typs.withIndex()) {
+                //        check(arg, e.args[idx])
+                //    }
                 }
-
                 else -> typeerror(message)
             }
         }
 
+    }
+
+    //all primitive types are wellformed
+    fun isPrimitive(e : Expr): Boolean {
+        return e is NumsShort
+                || e is NumsFloat
+                || e is NumsInt
+                || e is NumsDouble
+                || e is StringLiteral
+                || e is Bool
     }
 
     //e -> t
@@ -99,11 +139,11 @@ class TypeSolver(val ctx: Context) {
             is NumsFloat -> TF32
             is Bool -> TBool
             is StringLiteral -> TTxt
-            is Call -> {
-                val getContext = ctx.find(e.callee.name) ?: throw Error("Unknown symbol to call: ${e.callee}")
-                if (getContext.type !is TFn) typeerror("Tried calling a non function")
-                getContext.type.ret
-            }
+            //is Call -> {
+           //     val getContext = ctx.find(e.callee.name) ?: throw Error("Unknown symbol to call: ${e.callee}")
+             //   if (getContext.type !is TFn) typeerror("Tried calling a non function")
+            //    getContext.type.ret
+           // }
             else -> throw TypeError("Could not infer the type of $e")
         }
     }

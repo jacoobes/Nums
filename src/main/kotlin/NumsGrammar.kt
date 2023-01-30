@@ -5,6 +5,7 @@ import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import nodes.*
+import types.Type
 import types.Types.*
 
 
@@ -78,7 +79,6 @@ class NumsGrammar : Grammar<List<Statement>>() {
         txt to TTxt,
         f32 to TF32,
         f64 to TF64,
-
         )
     private val multiLineComment by regexToken(":>[^<]*(?:[^<:]*)<:", ignore = true)
     private val singleLineComment by regexToken("~~[^\\n]*\\n", ignore = true)
@@ -106,7 +106,6 @@ class NumsGrammar : Grammar<List<Statement>>() {
                 } catch (_: Throwable) {
                     NumsDouble(mat.text.toDouble())
                 }
-
         }
     }
     private val truthParser by ttrue asJust Bool(false)
@@ -209,11 +208,18 @@ class NumsGrammar : Grammar<List<Statement>>() {
         separator = comma,
         acceptZero = true
     ) and -rparen and optional(-colon and types) and -lcurly * zeroOrMore(statements) * -rcurly use {
+        val typList = arrayListOf<Type>()
+        val argsList = arrayListOf<Variable>()
+        t2.forEach {
+            typList.add(it.t2)
+            argsList.add(it.t1)
+        }
+        val fntyp = TFn(typList, t3 ?: TUnit)
         FFunction(
             t1,
-            t2,
+            argsList,
             Block(t4),
-            t3 ?: TUnit,
+            fntyp,
         )
     })
     private val import by (optional(plus) * separatedTerms(

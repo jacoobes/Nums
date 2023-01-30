@@ -1,7 +1,7 @@
 package nodes
 
-import com.github.h0tk3y.betterParse.utils.Tuple2
 import types.Type
+import types.Types
 
 interface Statement : Node
 
@@ -12,7 +12,7 @@ data class Block(val stmts: List<Statement>) : Statement
 data class Return(val expr: Expr) : Statement
 data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: Statement) : Statement
 data class Loop(val condition: Expr, val block: Statement) : Statement
-data class FFunction(val name: Variable, val args: List<Tuple2<Variable, Type>>, val block: Statement, val retType : Type) : Statement {
+data class FFunction(val name: Variable, val args: List<Variable>, val block: Statement, val type : Types.TFn) : Statement {
     fun isMain(): Boolean {
         return name == Variable("main")
     }

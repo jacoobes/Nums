@@ -1,9 +1,9 @@
-fn test(a str) {
+fn test(a str, b u8, c str) {
 
 }
 
 fn main (a str, b str, c str) {
-    val a = test(1);
+    val a = test("Asd", 5u8, "sd");
 }
 
 space sdsfd {

@@ -1,6 +1,7 @@
 package hl
 
 import ExpressionVisitor
+import Semantics
 import StatementVisitor
 import nodes.*
 import types.Context
@@ -15,35 +16,37 @@ class SemanticAnalyzer {
     val functionTable = TableLookup<FFunction>()
     val typesTable = TableLookup<Type>()
     val typeSolver = TypeSolver(Context())
+    val semantics = Semantics()
     var entryPoint = -1
-    fun start(li : List<Statement>) {
+    fun start(li: List<Statement>) {
         /**HType, TDyn ??*/
         arrayOf(TUnit, TU8, TU16, TI32, TI64, TF32, TF64, TBool).forEach(typesTable::add)
         li.forEach(stmts::visit)
-        if(entryPoint == -1) {
+        if (entryPoint == -1) {
             throw Error("Could not find a main function")
         }
     }
+
     private val stmts = object : StatementVisitor {
         override fun onFn(fn: FFunction) {
             stringTable.add(StringLiteral(fn.name.name))
             functionTable.add(fn)
-            val fnType = TFn(fn.args.map { it.t2 }, fn.retType)
-            typesTable.add(fnType)
-            typeSolver.ctx.add(fn.name.name, fnType)
-            if(fn.isMain()) {
-                if(entryPoint == -1) {
+            typesTable.add(fn.type)
+           // typeSolver.ctx.add(fn.name.name, fnType)
+            if (fn.isMain()) {
+                if (entryPoint == -1) {
                     entryPoint = functionTable.tbl[fn]!!
                 } else {
                     throw Error("Found two functions named main")
                 }
             }
-            if(fn.block is Block) {
-                for(s in fn.block.stmts) {
-                    visit(s)
-                }
-            } else {
-                visit(fn.block)
+            for(v in fn.args) {
+                //typeSolver.ctx.add(v.name, type)
+                semantics.addLocal(v.name, isAssignable = false)
+            }
+            fn.block as Block
+            for (s in fn.block.stmts) {
+                visit(s)
             }
         }
 
@@ -66,6 +69,7 @@ class SemanticAnalyzer {
 
         override fun onVal(valStmt: Val) {
             typeSolver.check(valStmt.type, valStmt.expr)
+
             exprVisitor.visit(valStmt.expr)
         }
 
@@ -84,20 +88,29 @@ class SemanticAnalyzer {
 
     private val exprVisitor = object : ExpressionVisitor {
         override fun onDouble(number: NumsDouble) {
+            typeSolver.check(TF64, number)
             floatTable.add(number)
         }
 
         override fun onInt(number: NumsInt) {
+            typeSolver.check(TI32, number)
             intTable.add(number)
         }
 
-        override fun onShort(number: NumsShort) {}
+        override fun onShort(number: NumsShort) {
+            typeSolver.check(TU16, number)
+        }
 
-        override fun onUByte(number: NumsByte) {}
+        override fun onUByte(number: NumsByte) {
+            typeSolver.check(TU8, number)
+        }
 
-        override fun onFloat(number: NumsFloat) {}
+        override fun onFloat(number: NumsFloat) {
+            typeSolver.check(TF32, number)
+        }
 
         override fun onStr(stringLiteral: StringLiteral) {
+            typeSolver.check(TTxt, stringLiteral)
             stringTable.add(stringLiteral)
         }
 
@@ -115,9 +128,12 @@ class SemanticAnalyzer {
             visit(unary.expr)
         }
 
-        override fun onBool(bool: Bool) {}
+        override fun onBool(bool: Bool) {
+            typeSolver.check(TBool, bool)
+        }
 
         override fun onVariable(variable: Variable) {
+//            val ctxitem = typeSolver.ctx.find(variable.name) ?: throw TypeError("Unresolved name :$variable")
             stringTable.add(StringLiteral(variable.name))
         }
 

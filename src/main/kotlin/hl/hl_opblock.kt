@@ -1,12 +1,12 @@
 package hl
 
 import COpcode.hl_op
-interface Operand
-data class NoOperand(val op: hl_op) : Operand
-data class OneOperand(val op: hl_op, val p1: Int) : Operand
-data class TwoOperands(val op: hl_op, val p1: Int, val p2: Int) : Operand
-data class ThreeOperands(val op: hl_op, val p1: Int, val p2: Int, val p3: Int) : Operand
-data class FourOperands(val op: hl_op, val p1: Int, val p2: Int, val p3: Int) : Operand
+interface Opcode
+data class NoOperand(val op: hl_op) : Opcode
+data class OneOperand(val op: hl_op, val p1: Int) : Opcode
+data class TwoOperands(val op: hl_op, val p1: Int, val p2: Int) : Opcode
+data class ThreeOperands(val op: hl_op, val p1: Int, val p2: Int, val p3: Int) : Opcode
+data class FourOperands(val op: hl_op, val p1: Int, val p2: Int, val p3: Int, val p4: Int) : Opcode
 
 
 fun NOp() = NoOperand(hl_op.ONop)

@@ -1,6 +1,6 @@
 import nodes.Variable
 
-data class Local(val name: String, val depth: Int, val registerVal: Int, val isAssignable: Boolean) {
+data class Local(val name: String, val depth: Int, val isAssignable: Boolean) {
     fun inSameScope(local:Local) : Boolean {
         return name.compareTo(local.name) == 0 && depth == local.depth
     }
@@ -20,8 +20,8 @@ class Semantics {
         scopeDepth--
     }
 
-    fun addLocal(local: String, registerVal: Int, isAssignable: Boolean) {
-        val newLocal = Local(local, scopeDepth, registerVal, isAssignable)
+    fun addLocal(local: String, isAssignable: Boolean) {
+        val newLocal = Local(local, scopeDepth, isAssignable)
         if(localMatch(newLocal)) throw Error("Already have another variable $local in same scope")
         locals.add(newLocal)
     }
@@ -36,7 +36,5 @@ class Semantics {
         return locals.any { it.inSameScope(other) }
     }
 
-    fun clearLocals() {
-        locals.clear()
-    }
+    fun clearLocals() = locals.clear()
 }
