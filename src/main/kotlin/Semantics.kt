@@ -36,5 +36,9 @@ class Semantics {
         return locals.any { it.inSameScope(other) }
     }
 
+    fun localSize() : Int {
+        return locals.size
+    }
+
     fun clearLocals() = locals.clear()
 }

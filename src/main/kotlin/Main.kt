@@ -1,11 +1,12 @@
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import emission.HLEmitter
-import hl.SemanticAnalyzer
+import hl.SemanticVisitor
 import hl.hl_code
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
+import nodes.Statement
 import org.graalvm.nativeimage.c.function.CLibrary
 import java.nio.file.Files
 import java.nio.file.Path
@@ -33,8 +34,7 @@ fun init(args: Array<String>) {
     println(pathToHl)
     val numsGrammar = NumsGrammar()
     val tree = numsGrammar.parseToEnd(strInput)
-    val s = SemanticAnalyzer().apply { start(tree) }
-
+    tree.visit()
 //    NumsWriter(pathToHl).use {
 //        val code = hl_code(
 //            version = 5,
@@ -50,17 +50,6 @@ fun init(args: Array<String>) {
 //        hl.start(tree)
     }
 
-//    val parser = ArgParser("nums")
-//    val input by parser.option(ArgType.String, shortName = "in", description = "Main Entry").required()
-//    val optimization by parser.option(ArgType.Int, shortName = "O", description = "Optimization level").default(0)
-//    val out by parser.option(ArgType.String, description = "vasm").required()
-//    parser.parse(args)
-//    val main = Path.of(input)
-//    ModuleResolver.generateFiles(main)
-//    //ModuleResolver.createFileImportGraph()
-//    val br = NumsWriter(FileWriter(out))
-//    val mainTree = ModuleResolver.depMap[main]!!
-//    br.use {
-//        it.write(MiniVmNative.core())
-//        CodeEmission(f=it, curFile = main).start(mainTree)
-//    }
+fun List<Statement>.visit() {
+    SemanticVisitor().start(this)
+}

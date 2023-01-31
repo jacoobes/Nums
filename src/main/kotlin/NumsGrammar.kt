@@ -194,9 +194,9 @@ class NumsGrammar : Grammar<List<Statement>>() {
     }
     private val iifStmt by (-iif * expr * -lcurly * optional(parser(::statements)) * -rcurly
             * zeroOrMore(-eels * -iif * expr * -lcurly * optional(parser(this::statements)) * -rcurly) *
-            (optional(-eels * -lcurly * optional(parser(this::statements)) * -rcurly)).map { it ?: Skip() }
+            (optional(-eels * -lcurly * optional(parser(this::statements)) * -rcurly)).map { it ?: Skip }
             ).use {
-            Iif(t1, t2 ?: Skip(), t3.foldRight(t4) { (elifC, elifB), el -> Iif(elifC, elifB ?: Skip(), el) })
+            Iif(t1, t2 ?: Skip, t3.foldRight(t4) { (elifC, elifB), el -> Iif(elifC, elifB ?: Skip, el) })
         }
 
     private val loopCombine by -loop * expr * parser(this::statements) use { Loop(t1, t2) }
@@ -231,7 +231,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
             if (ids.size == 1) Import(ids, path.str, true, f) else throw Error("A file can only have one namespace")
         } ?: Import(ids, path.str, false, f)
     }
-    private val spaceBlock by -space * varParser * -lcurly * oneOrMore(parser(::topLevel)) * -rcurly map { (n, stmts) ->
+    private val spaceBlock by -space * varParser * -lcurly * zeroOrMore(parser(::topLevel)) * -rcurly map { (n, stmts) ->
         Space(
             n,
             stmts

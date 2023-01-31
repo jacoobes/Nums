@@ -10,5 +10,5 @@ data class TableLookup<T>(
             li.add(t)
         }
     }
-    val size = li.size
+    val size get() = li.size
 }
