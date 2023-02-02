@@ -1,3 +1,3 @@
 package nodes
 
-interface Node
+sealed interface Node

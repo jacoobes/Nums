@@ -5,14 +5,14 @@ import Semantics
 import StatementVisitor
 import nodes.*
 import types.Context
+import types.ContextItem
 import types.Type
 import types.TypeSolver
 import types.Types.*
-import kotlin.math.exp
 
-//Pass 1: visits and collects data about the tree that will be used for pass 2 (bytecode generation)
+//Pass 1: visits and collects data about the tree and type checking that will be used for pass 2 (bytecode generation)
 class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
-    val stringTable = TableLookup<StringLiteral>()
+    val stringTable = TableLookup<TextId>()
     val intTable = TableLookup<NumsInt>()
     val floatTable = TableLookup<NumsDouble>()
     val functionTable = TableLookup<FFunction>()
@@ -20,10 +20,24 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     val typeSolver = TypeSolver(Context())
     val semantics = Semantics()
     var entryPoint = -1
-
     fun start(tree: List<Statement>) {
-        tree.forEach(::stmt)
+        /**HType, TDyn ??*/
+        arrayOf(TUnit, TU8, TU16, TI32, TI64, TF32, TF64, TBool).forEach(typesTable::add)
+        tree.forEach {
+            if(it is FFunction) {
+                typeSolver.ctx.add(ContextItem.FnDecl(id = it.name, type = it.type))
+                stringTable.add(TextId(it.name.value))
+                stringTable.add(TextId(it.fullName))
+                typesTable.add(it.type)
+                functionTable.add(it)
+            }
+        }
+        tree.forEach(::visit)
+        if (entryPoint == -1) {
+            throw Error("Could not find a main function")
+        }
     }
+
     override fun visit(number: NumsDouble): Expr {
         floatTable.add(number)
         return number
@@ -47,24 +61,25 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     }
 
     override fun visit(stringLiteral: StringLiteral): Expr {
-        stringTable.add(stringLiteral)
+        stringTable.add(TextId(stringLiteral.str))
         return stringLiteral
     }
 
     override fun visit(binary: Binary): Expr {
-        expr(binary.left)
-        expr(binary.right)
+        val lhs = visit(binary.left)
+        val rhs = visit(binary.right)
+
         return binary
     }
-
     override fun visit(cmp: Comparison): Expr {
-        expr(cmp.left)
-        expr(cmp.right)
+        val lhs = visit(cmp.left)
+        val rhs = visit(cmp.right)
+
         return cmp
     }
 
     override fun visit(unary: Unary): Expr {
-        expr(unary.expr)
+        val e = visit(unary.expr)
         return unary
     }
 
@@ -72,245 +87,137 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
         return bool
     }
 
-    override fun visit(variable: Variable): Expr {
-        return variable
+    override fun visit(textId: TextId): Expr {
+        return textId
     }
 
     override fun visit(and: And): Expr {
-        expr(and.left)
-        expr(and.right)
+        visit(and.left)
+        visit(and.right)
         return and
     }
 
     override fun visit(or: Or): Expr {
-        expr(or.left)
-        expr(or.right)
+        visit(or.left)
+        visit(or.right)
         return or
     }
 
-    override fun visit(call: Call): Expr? {
-        TODO("Not yet implemented")
+    override fun visit(call: Call): Expr {
+       return call
     }
 
-    override fun visit(arrayLiteral: ArrayLiteral): Expr? {
+    override fun visit(arrayLiteral: ArrayLiteral): Expr {
         TODO("Not yet implemented")
     }
 
     override fun visit(path: Path): Expr {
-        stringTable.add(StringLiteral(path.toString()))
+        stringTable.add(TextId(path.toString()))
         return path
     }
 
     override fun visit(fn: FFunction) {
-        stringTable.add(StringLiteral(fn.name.name))
-        functionTable.add(fn)
-        typesTable.add(fn.type)
-        if(fn.isMain()) {
+        if (fn.isMain()) {
             if (entryPoint == -1) {
                 entryPoint = functionTable.tbl[fn]!!
             } else throw Error("Found two functions named main")
         }
         for (v in fn.args) {
-            semantics.addLocal(v.name, isAssignable = false)
+            semantics.addLocal(v.value, isAssignable = false)
         }
-        for(stmt in (fn.block as Block).stmts) {
+        for (stmt in (fn.block as Block).stmts) {
             stmt.accept(this)
         }
         semantics.clearLocals() // should clear all locals after block has been finished
     }
 
     override fun visit(iif: Iif) {
-        val expr = expr(iif.condition)
-
+        val expr = visit(iif.condition)
     }
 
     override fun visit(loop: Loop) {
-        TODO("Not yet implemented")
+        visit(loop.condition)
+        loop.block.accept(this)
     }
 
     override fun visit(expressionStatement: ExpressionStatement) {
-        expr(expressionStatement.expr)
+        visit(expressionStatement.expr)
     }
 
     override fun visit(block: Block) {
         semantics.incDepth()
-        block.stmts.forEach(::stmt)
+        block.stmts.forEach(::visit)
         semantics.decDepth()
     }
 
     override fun visit(valStmt: Val) {
-        val e = expr(valStmt.expr)
-        semantics.addLocal(valStmt.token.name, isAssignable = valStmt.isAssignable)
+        val e = visit(valStmt.expr)
+        val typ = if(valStmt.type == Infer) {
+            typeSolver.infer(e)
+        } else {
+            valStmt.type
+        }
+        typeSolver.check(typ, e)
+        valStmt.type = typ // mutation
+        semantics.addLocal(valStmt.token.value, isAssignable = valStmt.isAssignable)
     }
 
     override fun visit(ret: Return) {
-        val e = expr(ret.expr)
+        val e = visit(ret.expr)
     }
 
     override fun visit(assign: Assign) {
-        val e = expr(assign.newVal)
+        val local = semantics.getLocal(assign.tok)
+        if(!local.isAssignable) throw Error("Cannot assign to $local")
+        val e = visit(assign.newVal)
     }
 
 
     override fun visit(import: Import) {
         TODO("Not yet implemented")
     }
-    private fun stmt(s : Statement) {
-        s.accept(this)
-    }
-    private fun expr(e : Expr) : Expr? {
-        return e.accept(this)
+
+    override fun visit(space: Space) {
     }
 
+    override fun visit(dataset: Dataset) {
+        println(dataset)
+    }
+    override fun visit(stmt: Statement) {
+        when(stmt) {
+            is Assign -> visit(stmt)
+            is Block ->  visit(stmt)
+            is ExpressionStatement ->  visit(stmt)
+            is FFunction ->  visit(stmt)
+            is Iif ->  visit(stmt)
+            is Import ->  visit(stmt)
+            is Loop ->  visit(stmt)
+            is Return ->  visit(stmt)
+            Skip ->  throw Error("Skip found")
+            is Space ->  visit(stmt)
+            is Dataset -> visit(stmt)
+            is Val -> visit(stmt)
+        }
+    }
+
+    override fun visit(e: Expr): Expr =
+        when(e) {
+            is And -> visit(e)
+            is ArrayLiteral -> visit(e)
+            is Binary -> visit(e)
+            is Bool -> visit(e)
+            is Call -> visit(e)
+            is Comparison -> visit(e)
+            is NumsByte -> visit(e)
+            is NumsDouble -> visit(e)
+            is NumsFloat -> visit(e)
+            is NumsInt -> visit(e)
+            is NumsShort -> visit(e)
+            is Or -> visit(e)
+            is Path -> visit(e)
+            is StringLiteral -> visit(e)
+            is Unary -> visit(e)
+            is TextId -> visit(e)
+        }
+
 }
-//class SemanticAnalyzer {
-//
-//    fun start(li: List<Statement>) {
-//        /**HType, TDyn ??*/
-//        arrayOf(TUnit, TU8, TU16, TI32, TI64, TF32, TF64, TBool).forEach(typesTable::add)
-//        li.forEach(stmts::visit)
-//        if (entryPoint == -1) {
-//            throw Error("Could not find a main function")
-//        }
-//    }
-//    private fun addFunctionData(fn : FFunction) {
-//        stringTable.add(StringLiteral(fn.name.name))
-//        functionTable.add(fn)
-//        typesTable.add(fn.type)
-//    }
-//    private val stmts = object : StatementVisitor {
-//         fun onFn(fn: FFunction) {
-//            addFunctionData(fn)
-//            if (fn.isMain()) {
-//                if (entryPoint == -1) {
-//                    entryPoint = functionTable.tbl[fn]!!
-//                } else throw Error("Found two functions named main")
-//            }
-//            bytecodeGenerator.addReg(fn.type.ret) //adds the return type of function
-//            for((idx, v) in fn.args.withIndex()) {
-//                bytecodeGenerator.addReg(fn.type.typs[idx]) // adds the type of function to register
-//                semantics.addLocal(v.name, isAssignable = false)
-//            }
-//            fn.block as Block
-//            for (s in fn.block.stmts) {
-//                visit(s)
-//            }
-//            bytecodeGenerator.addBytecode(fn)
-//            bytecodeGenerator.clearAll()
-//            semantics.clearLocals() // should clear all locals after block has been finished
-//        }
-//
-//         fun onIf(iif: Iif) {
-//            exprVisitor.visit(iif.condition)
-//        }
-//
-//         fun onLoop(loop: Loop) {
-//            exprVisitor.visit(loop.condition)
-//            visit(loop.block)
-//        }
-//
-//         fun onExprStmt(expressionStatement: ExpressionStatement) {
-//            exprVisitor.visit(expressionStatement.expr)
-//        }
-//
-//         fun onBlock(block: Block) {
-//            semantics.incDepth()
-//            block.stmts.forEach(::visit)
-//            semantics.decDepth()
-//        }
-//
-//         fun onVal(valStmt: Val) {
-//            bytecodeGenerator.addReg(valStmt.type) // still need to type check this because it could be the infer type
-//            semantics.addLocal(valStmt.token.name, isAssignable = valStmt.isAssignable)
-//            exprVisitor.visit(valStmt.expr)
-//        }
-//
-//         fun onReturn(ret: Return) {
-//            exprVisitor.visit(ret.expr)
-//        }
-//
-//         fun onAssign(assign: Assign) {
-//            exprVisitor.visit(assign.newVal)
-//        }
-//
-//        fun onImport(import: Import) {
-//            TODO("Not yet implemented")
-//        }
-//    }
-//
-//    private val exprVisitor = object : ExpressionVisitor {
-//        override fun onDouble(number: NumsDouble) {
-//            typeSolver.check(TF64, number)
-//            floatTable.add(number)
-//        }
-//
-//        override fun onInt(number: NumsInt) {
-//            typeSolver.check(TI32, number)
-//            intTable.add(number)
-//            bytecodeGenerator.addOp(OInt(semantics.localSize(), intTable.size))
-//        }
-//
-//        override fun onShort(number: NumsShort) {
-//            typeSolver.check(TU16, number)
-//        }
-//
-//        override fun onUByte(number: NumsByte) {
-//            typeSolver.check(TU8, number)
-//        }
-//
-//        override fun onFloat(number: NumsFloat) {
-//            typeSolver.check(TF32, number)
-//        }
-//
-//        override fun onStr(stringLiteral: StringLiteral) {
-//            typeSolver.check(TTxt, stringLiteral)
-//            stringTable.add(stringLiteral)
-//        }
-//
-//        override fun onBinary(binary: Binary) {
-//             visit(binary.left)
-//             visit(binary.right)
-//        }
-//
-//        override fun onCmp(cmp: Comparison) {
-//            visit(cmp.left)
-//            visit(cmp.right)
-//        }
-//
-//        override fun onUnary(unary: Unary) {
-//            visit(unary.expr)
-//        }
-//
-//        override fun onBool(bool: Bool) {
-//            typeSolver.check(TBool, bool)
-//        }
-//
-//        override fun onVariable(variable: Variable) {
-////            val ctxitem = typeSolver.ctx.find(variable.name) ?: throw TypeError("Unresolved name :$variable")
-//            stringTable.add(StringLiteral(variable.name))
-//        }
-//
-//        override fun onAnd(and: And) {
-//            visit(and.left)
-//            visit(and.right)
-//        }
-//
-//        override fun onOr(or: Or) {
-//            visit(or.left)
-//            visit(or.right)
-//        }
-//
-//        override fun onCall(call: Call) {
-//
-//        }
-//
-//        override fun onArrLiteral(arrayLiteral: ArrayLiteral) {
-//            arrayLiteral.exprs.forEach(::visit)
-//        }
-//
-//        override fun onPath(path: Path) {
-//            stringTable.add(StringLiteral(path.toString()))
-//        }
-//
-//    }
-//}

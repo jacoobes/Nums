@@ -75,67 +75,71 @@ class HLEmitter(
         }
     }
 
-    override fun visit(number: NumsDouble): Expr? {
+    override fun visit(expr: Expr): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(number: NumsInt): Expr? {
+    override fun visit(number: NumsDouble): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(number: NumsShort): Expr? {
+    override fun visit(number: NumsInt): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(number: NumsByte): Expr? {
+    override fun visit(number: NumsShort): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(number: NumsFloat): Expr? {
+    override fun visit(number: NumsByte): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(stringLiteral: StringLiteral): Expr? {
+    override fun visit(number: NumsFloat): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(binary: Binary): Expr? {
+    override fun visit(stringLiteral: StringLiteral): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(cmp: Comparison): Expr? {
+    override fun visit(binary: Binary): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(unary: Unary): Expr? {
+    override fun visit(cmp: Comparison): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(bool: Bool): Expr? {
+    override fun visit(unary: Unary): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(variable: Variable): Expr? {
+    override fun visit(bool: Bool): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(and: And): Expr? {
+    override fun visit(textId: TextId): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(or: Or): Expr? {
+    override fun visit(and: And): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(call: Call): Expr? {
+    override fun visit(or: Or): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(arrayLiteral: ArrayLiteral): Expr? {
+    override fun visit(call: Call): Expr {
         TODO("Not yet implemented")
     }
 
-    override fun visit(path: Path): Expr? {
+    override fun visit(arrayLiteral: ArrayLiteral): Expr {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(path: Path): Expr {
         TODO("Not yet implemented")
     }
 
@@ -150,35 +154,47 @@ class HLEmitter(
         // visit(fn.block)
     }
 
-    override fun visit(iif: Iif): Unit? {
+    override fun visit(iif: Iif) {
         TODO("Not yet implemented")
     }
 
-    override fun visit(loop: Loop): Unit? {
+    override fun visit(loop: Loop){
         TODO("Not yet implemented")
     }
 
-    override fun visit(expressionStatement: ExpressionStatement): Unit? {
+    override fun visit(expressionStatement: ExpressionStatement) {
         TODO("Not yet implemented")
     }
 
-    override fun visit(block: Block): Unit? {
+    override fun visit(block: Block) {
         TODO("Not yet implemented")
     }
 
-    override fun visit(valStmt: Val): Unit? {
+    override fun visit(valStmt: Val) {
         TODO("Not yet implemented")
     }
 
-    override fun visit(ret: Return): Unit? {
+    override fun visit(ret: Return) {
         TODO("Not yet implemented")
     }
 
-    override fun visit(assign: Assign): Unit? {
+    override fun visit(assign: Assign) {
         TODO("Not yet implemented")
     }
 
-    override fun visit(import: Import): Unit? {
+    override fun visit(import: Import) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(space: Space) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(dataset: Dataset) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(stmt: Statement) {
         TODO("Not yet implemented")
     }
 

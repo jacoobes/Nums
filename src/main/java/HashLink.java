@@ -882,7 +882,7 @@ public class HashLink {
 //        protected native int HL_MAX_EXTRA_STACK();
 
     @CStruct
-    public static interface hlt_void extends hl_type  { }
+    public interface hlt_void extends hl_type  { }
 
 
     public static native hl_type hlt_i32();
@@ -901,7 +901,7 @@ public class HashLink {
 
 
     @CStruct
-    public static interface hlt_array extends hl_type {};
+    public interface hlt_array extends hl_type {}
 
 
     public static native hl_type hlt_bytes();

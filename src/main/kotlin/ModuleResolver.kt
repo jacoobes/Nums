@@ -32,7 +32,7 @@ class ModuleResolver {
         }
     }
 
-    class NSVertex(val name: Variable) : Vertex {
+    class NSVertex(val name: TextId) : Vertex {
         override fun equals(other: Any?): Boolean {
             if(other !is NSVertex) return false
             return name == other.name
@@ -45,7 +45,7 @@ class ModuleResolver {
             return "[Namespace: $name]"
         }
     }
-    class FnVertex(val fn: FFunction, val fullName: Variable) : Vertex {
+    class FnVertex(val fn: FFunction, val fullName: TextId) : Vertex {
         override fun equals(other: Any?):  Boolean {
             return if(other is FFunction) {
                 other.name == fn.name && fn.args.size == other.args.size

@@ -32,6 +32,12 @@ sealed class Types {
     object TUnit : Type {
         override fun toString() = "void"
     }
+
+    data class TDataSet(val name: String, val elems: List<Type> ) : Type {
+        override fun toString(): String {
+            return "$name(${elems.joinToString(", ")})"
+        }
+    }
     @JvmInline
     value class TVarT(val name: String): Type {
         override fun toString(): String {

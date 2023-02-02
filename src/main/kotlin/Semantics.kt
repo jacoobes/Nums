@@ -1,4 +1,4 @@
-import nodes.Variable
+import nodes.TextId
 
 data class Local(val name: String, val depth: Int, val isAssignable: Boolean) {
     fun inSameScope(local:Local) : Boolean {
@@ -8,7 +8,7 @@ data class Local(val name: String, val depth: Int, val isAssignable: Boolean) {
 
 //Tracking semantic metadata in a function body
 class Semantics {
-    private val locals = arrayListOf<Local>()
+    val locals = arrayListOf<Local>()
     //The scope depth of function
     // it should return to 0 at the end of a function
     var scopeDepth = 0
@@ -26,10 +26,10 @@ class Semantics {
         locals.add(newLocal)
     }
 
-    fun getLocal(variable: Variable): Local {
-        return locals.find {
-            it.name == variable.name && it.depth <= scopeDepth
-        } ?: throw Error("Could not find a $variable")
+    fun getLocal(textId: TextId): Local {
+        return locals.findLast {
+            it.name == textId.value && it.depth <= scopeDepth
+        } ?: throw Error("Could not find a $textId")
     }
 
     private fun localMatch(other: Local) : Boolean {

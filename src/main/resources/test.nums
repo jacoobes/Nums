@@ -1,7 +1,17 @@
-fn test(a str, b u8, c str) {
+
+fn main (a str, b str, c str) {
 
 }
 
-fn main (a str, b str, c str) {
-    val s: i32 = 1;
+space s {
+    fn gua () : int {
+        return 1;
+    }
+
+    dataset Fooba (
+       a str,
+       b str,
+       guayin som
+    )
+
 }

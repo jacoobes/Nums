@@ -29,12 +29,15 @@ fun init(args: Array<String>) {
     val input by parser.argument(ArgType.String, "Main Entry")
     val out by parser.option(ArgType.String).default("out.hl")
     parser.parse(args)
-    val strInput = Files.readString(Path.of(System.getProperty("user.dir"), input))
+    val inputPath = Path.of(System.getProperty("user.dir"), input)
+    val strInput = Files.readString(inputPath)
     val pathToHl = Path.of(System.getProperty("user.dir"), out)
     println(pathToHl)
     val numsGrammar = NumsGrammar()
+    numsGrammar.currentFile = inputPath //sets the current path to the input path
     val tree = numsGrammar.parseToEnd(strInput)
     tree.visit()
+
 //    NumsWriter(pathToHl).use {
 //        val code = hl_code(
 //            version = 5,
@@ -51,5 +54,7 @@ fun init(args: Array<String>) {
     }
 
 fun List<Statement>.visit() {
-    SemanticVisitor().start(this)
+    val sv = SemanticVisitor()
+    sv.start(this)
+
 }

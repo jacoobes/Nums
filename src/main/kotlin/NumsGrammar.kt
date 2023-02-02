@@ -7,12 +7,17 @@ import com.github.h0tk3y.betterParse.parser.Parser
 import nodes.*
 import types.Type
 import types.Types.*
+import kotlin.io.path.absolutePathString
 
 
 class NumsGrammar : Grammar<List<Statement>>() {
+
+    lateinit var currentFile: java.nio.file.Path
+
     private val numb by regexToken("(([+-]?\\d*\\.*\\d+[eE])?([+-]?\\d*\\.*\\d+)(f64|f32|u16|u8)?)")
     private val semi by literalToken(";")
     private val space by literalToken("space")
+    private val data by literalToken("dataset")
     private val vvar by regexToken("(var|val)\\b")
     private val iif by literalToken("if")
     private val eels by literalToken("else")
@@ -27,8 +32,8 @@ class NumsGrammar : Grammar<List<Statement>>() {
     private val f32 by regexToken("f32\\b")
     private val f64 by regexToken("f64\\b")
 
-    private val ttrue by literalToken("T")
-    private val ffalse by literalToken("F")
+    private val ttrue by regexToken("T\\b")
+    private val ffalse by regexToken("F\\b")
 
     private val and by literalToken("and")
     private val or by literalToken("or")
@@ -79,7 +84,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
         txt to TTxt,
         f32 to TF32,
         f64 to TF64,
-        )
+    )
     private val multiLineComment by regexToken(":>[^<]*(?:[^<:]*)<:", ignore = true)
     private val singleLineComment by regexToken("~~[^\\n]*\\n", ignore = true)
     private val comma by literalToken(",")
@@ -97,27 +102,27 @@ class NumsGrammar : Grammar<List<Statement>>() {
         val endsWith = { s: String -> mat.text.endsWith(s) }
         val getNumber = { s: String -> mat.text.substringBefore(s) }
         when {
-            endsWith("f64") -> NumsDouble(getNumber("f64").toDouble())
-            endsWith("f32") -> NumsFloat(getNumber("f32").toFloat())
-            endsWith("u8") -> NumsByte(getNumber("u8").toUByte())
-            endsWith("u16") -> NumsShort(getNumber("u16").toUShort())
+            endsWith("f64") -> NumsDouble(getNumber("f64").toDouble(), TF64)
+            endsWith("f32") -> NumsFloat(getNumber("f32").toFloat(), TF32)
+            endsWith("u8") -> NumsByte(getNumber("u8").toUByte(), TU8)
+            endsWith("u16") -> NumsShort(getNumber("u16").toUShort(), TU16)
             else -> try {
-                    NumsInt(Integer.valueOf(mat.text))
-                } catch (_: Throwable) {
-                    NumsDouble(mat.text.toDouble())
-                }
+                NumsInt(Integer.valueOf(mat.text), TI32)
+            } catch (_: Throwable) {
+                NumsDouble(mat.text.toDouble(), TF64)
+            }
         }
     }
-    private val truthParser by ttrue asJust Bool(false)
-    private val falseParser by ffalse asJust Bool(true)
+    private val truthParser by ttrue asJust Bool(false, TBool)
+    private val falseParser by ffalse asJust Bool(true, TBool)
 
 
-    private val stringLiteral by stringLit use { StringLiteral(text.removeSurrounding("\"", "\"")) }
+    private val stringLiteral by stringLit use { StringLiteral(text.removeSurrounding("\"", "\""), TTxt) }
     private val types by (i32 or i64 or u8 or u16 or txt or boo or f32 or f64 or word) map {
         val typ = typesMap[it.type] ?: TVarT(it.text)
         typ
     }
-    private val varParser by word use { Variable(text) }
+    private val varParser by word use { TextId(text) }
 
     //will support local functions in future
     private val fnCall by varParser * -lparen * separatedTerms(parser(::expr), comma, acceptZero = true) * -rparen use {
@@ -209,17 +214,17 @@ class NumsGrammar : Grammar<List<Statement>>() {
         acceptZero = true
     ) and -rparen and optional(-colon and types) and -lcurly * zeroOrMore(statements) * -rcurly use {
         val typList = arrayListOf<Type>()
-        val argsList = arrayListOf<Variable>()
+        val argsList = arrayListOf<TextId>()
         t2.forEach {
             typList.add(it.t2)
             argsList.add(it.t1)
         }
-        val fntyp = TFn(typList, t3 ?: TUnit)
         FFunction(
-            t1,
-            argsList,
-            Block(t4),
-            fntyp,
+            name = t1,
+            fullName = currentFile.parent.absolutePathString() + ":" + t1.value,
+            args = argsList,
+            block = Block(t4),
+            type = TFn(typList, t3 ?: TUnit),
         )
     })
     private val import by (optional(plus) * separatedTerms(
@@ -231,12 +236,18 @@ class NumsGrammar : Grammar<List<Statement>>() {
             if (ids.size == 1) Import(ids, path.str, true, f) else throw Error("A file can only have one namespace")
         } ?: Import(ids, path.str, false, f)
     }
-    private val spaceBlock by -space * varParser * -lcurly * zeroOrMore(parser(::topLevel)) * -rcurly map { (n, stmts) ->
-        Space(
-            n,
-            stmts
-        )
+    private val dataSet by -data * varParser * -lparen * separatedTerms(varParser * types, separator = comma) * -rparen use {
+        val typList = arrayListOf<Type>()
+        val argsList = arrayListOf<TextId>()
+        t2.forEach {
+            typList.add(it.t2)
+            argsList.add(it.t1)
+        }
+        Dataset(name = t1, elements = argsList, type = TDataSet(t1.value, typList))
     }
-    private val topLevel: Parser<Statement> by fnDecl or import or spaceBlock
+    private val spaceBlock by -space * varParser * -lcurly * oneOrMore(parser(::topLevel)) * -rcurly map { (n, stmts) ->
+        Space(n, stmts)
+    }
+    private val topLevel: Parser<Statement> by dataSet or fnDecl or import or spaceBlock
     override val rootParser by oneOrMore(topLevel)
 }

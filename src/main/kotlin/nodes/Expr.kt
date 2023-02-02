@@ -1,11 +1,11 @@
 package nodes
 
 import ExpressionVisitor
-import StatementVisitor
 import com.github.h0tk3y.betterParse.lexer.Token
+import types.Types
 
 sealed interface Expr : Node {
-    fun <T> accept(visitor: ExpressionVisitor<T>): T?
+    fun <T> accept(visitor: ExpressionVisitor<T>): T
 }
 
 enum class ComparisonOps {
@@ -17,18 +17,13 @@ enum class ComparisonOps {
     Neq;
 }
 
-object Skip : Statement {
-    override fun <R> accept(visitor: StatementVisitor<R>): R? = null
-}
 
-@JvmInline
-value class StringLiteral(val str: String) : Expr {
+data class StringLiteral(val str: String, val type: Types.TTxt) : Expr {
     fun length() = str.length
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
 }
 
-@JvmInline
-value class NumsInt(val value: Int) : Expr {
+data class NumsInt(val value: Int, val type: Types.TI32) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
 
     override fun toString(): String {
@@ -37,12 +32,14 @@ value class NumsInt(val value: Int) : Expr {
 }
 
 @JvmInline
-value class Variable(val name: String) : Expr {
+value class TextId(val value: String) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
+    override fun toString(): String {
+        return value
+    }
 }
 
-@JvmInline
-value class NumsDouble(val value: Double) : Expr {
+data class NumsDouble(val value: Double, val type: Types.TF64) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
 
     override fun toString(): String {
@@ -50,8 +47,7 @@ value class NumsDouble(val value: Double) : Expr {
     }
 }
 
-@JvmInline
-value class NumsFloat(val value: Float) : Expr {
+data class NumsFloat(val value: Float, val type: Types.TF32) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
 
     override fun toString(): String {
@@ -59,8 +55,7 @@ value class NumsFloat(val value: Float) : Expr {
     }
 }
 
-@JvmInline
-value class NumsByte(val value: UByte) : Expr {
+data class NumsByte(val value: UByte, val type: Types.TU8) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
 
     override fun toString(): String {
@@ -68,8 +63,7 @@ value class NumsByte(val value: UByte) : Expr {
     }
 }
 
-@JvmInline
-value class NumsShort(val value: UShort) : Expr {
+data class NumsShort(val value: UShort, val type: Types.TU16) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
 
     override fun toString(): String {
@@ -77,8 +71,7 @@ value class NumsShort(val value: UShort) : Expr {
     }
 }
 
-@JvmInline
-value class Bool(val bool: Boolean) : Expr {
+data class Bool(val bool: Boolean, val type : Types.TBool) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
 }
 
@@ -90,10 +83,10 @@ data class Binary(val left: Expr, val right: Expr, val op: String) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
 }
 
-data class Call(val callee: Variable, val args: List<Expr>) : Expr {
+data class Call(val callee: TextId, val args: List<Expr>) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
     override fun toString(): String {
-        return callee.name
+        return callee.value
     }
 }
 
