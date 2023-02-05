@@ -11,13 +11,13 @@ class Semantics {
     val locals = arrayListOf<Local>()
     //The scope depth of function
     // it should return to 0 at the end of a function
-    var scopeDepth = 0
+    private var scopeDepth = 0
     fun incDepth() = scopeDepth++
     //TODO: add proper way to dispose variables semantically and in the actual assembly
     // was thinking get all that were removed and reset register tracker to highest depth?
     fun decDepth() {
-        locals.retainAll { it.depth >= scopeDepth }
         scopeDepth--
+        locals.retainAll { it.depth >= scopeDepth }
     }
 
     fun addLocal(local: String, isAssignable: Boolean) {

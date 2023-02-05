@@ -1,17 +1,21 @@
 
-fn main (a str, b str, c str) {
+
+hide fn main () {
 
 }
 
-space s {
-    fn gua () : int {
+
+space poo {
+    fn gua () int {
         return 1;
     }
 
-    dataset Fooba (
+    show dataset Fooba (
        a str,
        b str,
        guayin som
-    )
+    ): {
+        fn s () {}
+    }
 
 }

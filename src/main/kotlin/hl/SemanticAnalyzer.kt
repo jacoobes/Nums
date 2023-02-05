@@ -5,7 +5,6 @@ import Semantics
 import StatementVisitor
 import nodes.*
 import types.Context
-import types.ContextItem
 import types.Type
 import types.TypeSolver
 import types.Types.*
@@ -25,7 +24,8 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
         arrayOf(TUnit, TU8, TU16, TI32, TI64, TF32, TF64, TBool).forEach(typesTable::add)
         tree.forEach {
             if(it is FFunction) {
-                typeSolver.ctx.add(ContextItem.FnDecl(id = it.name, type = it.type))
+                typeSolver.env[it.name] = it.type
+                //typeSolver.ctx.add(ContextItem.FnDecl(id = it.name, type = it.type))
                 stringTable.add(TextId(it.name.value))
                 stringTable.add(TextId(it.fullName))
                 typesTable.add(it.type)
@@ -108,7 +108,7 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     }
 
     override fun visit(arrayLiteral: ArrayLiteral): Expr {
-        TODO("Not yet implemented")
+        return arrayLiteral
     }
 
     override fun visit(path: Path): Expr {
@@ -128,6 +128,13 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
         for (stmt in (fn.block as Block).stmts) {
             stmt.accept(this)
         }
+        fn.block.stmts.lastOrNull()?.let {
+            if(it !is Return && fn.type.ret != TUnit) {
+                throw Error("Expected a return at the end of function returning a value")
+            }
+            typeSolver.check(fn.type.ret, (it as Return).expr)
+        }
+
         semantics.clearLocals() // should clear all locals after block has been finished
     }
 
@@ -158,7 +165,7 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
             valStmt.type
         }
         typeSolver.check(typ, e)
-        valStmt.type = typ // mutation
+        typeSolver.env[valStmt.token] = typ //assigns this variable to the type env where its type information can be looked up
         semantics.addLocal(valStmt.token.value, isAssignable = valStmt.isAssignable)
     }
 
@@ -197,7 +204,11 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
             is Space ->  visit(stmt)
             is Dataset -> visit(stmt)
             is Val -> visit(stmt)
+            is TraitDeclaration -> visit(stmt)
         }
+    }
+    override fun visit(traitDeclaration: TraitDeclaration) {
+
     }
 
     override fun visit(e: Expr): Expr =

@@ -36,5 +36,6 @@ interface StatementVisitor<T> {
 
     fun visit(dataset: Dataset) : T
     fun visit(stmt: Statement): T
+    fun visit(traitDeclaration: TraitDeclaration) : T
 
 }

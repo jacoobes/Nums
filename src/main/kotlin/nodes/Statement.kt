@@ -1,8 +1,14 @@
 package nodes
 
 import StatementVisitor
+import org.w3c.dom.Text
 import types.Type
 import types.Types
+
+enum class Vis {
+    Show,
+    Hide
+}
 
 sealed interface Statement : Node {
     fun <R> accept(visitor: StatementVisitor<R>) = visitor.visit(this)
@@ -23,20 +29,20 @@ data class Iif(val condition: Expr, val thenBody: Statement, val elseBody: State
 data class Loop(val condition: Expr, val block: Statement) : Statement
 
 data class FFunction(
+    val vis: Vis = Vis.Hide,
     val name: TextId,
-    val fullName: String,
+    var fullName: String,
     val args: List<TextId>,
     val block: Statement,
     val type: Types.TFn
-) :
-    Statement {
+) : Statement {
     fun isMain(): Boolean {
         return name == TextId("main")
     }
 }
-data class Dataset(val name: TextId, val elements: List<TextId>, val type: Types.TDataSet) : Statement
-data class Space(val name: TextId, val elements: List<Statement>) : Statement
-
+data class Dataset(val vis: Vis = Vis.Hide, val name: TextId, val elements: List<TextId>, val type: Types.TDataSet) : Statement
+data class Space(val vis: Vis = Vis.Hide, val name: TextId, val elements: List<Statement>) : Statement
+data class TraitDeclaration(val vis: Vis = Vis.Hide, val traitName: TextId, val body: List<FFunction>) : Statement
 data class Import(
     val idents: List<TextId>,
     val path: String,

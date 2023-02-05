@@ -17,12 +17,13 @@ class NumsGrammar : Grammar<List<Statement>>() {
     private val numb by regexToken("(([+-]?\\d*\\.*\\d+[eE])?([+-]?\\d*\\.*\\d+)(f64|f32|u16|u8)?)")
     private val semi by literalToken(";")
     private val space by literalToken("space")
+    private val trait by literalToken("trait")
+    private val vis by regexToken("(hide|show)\\b")
     private val data by literalToken("dataset")
     private val vvar by regexToken("(var|val)\\b")
     private val iif by literalToken("if")
     private val eels by literalToken("else")
     private val fn by regexToken("fn\\b")
-
     private val i32 by regexToken("int\\b")
     private val i64 by regexToken("i64\\b")
     private val u8 by regexToken("u8\\b")
@@ -37,6 +38,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
 
     private val and by literalToken("and")
     private val or by literalToken("or")
+    private val has by literalToken("has")
     private val rreturn by literalToken("return")
     private val loop by literalToken("loop")
     private val not by literalToken("not")
@@ -48,6 +50,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
     private val div by literalToken("/")
     private val mod by literalToken("%")
     private val colon by literalToken(":")
+   // private val doublecolon by regexToken("::\\b")
     private val timex by literalToken("*")
     private val equal by literalToken("==")
     private val nequal by literalToken("!=")
@@ -203,28 +206,31 @@ class NumsGrammar : Grammar<List<Statement>>() {
             ).use {
             Iif(t1, t2 ?: Skip, t3.foldRight(t4) { (elifC, elifB), el -> Iif(elifC, elifB ?: Skip, el) })
         }
-
+    private val visToEnum by vis use {
+        if(text == "show") Vis.Show else Vis.Hide
+    }
     private val loopCombine by -loop * expr * parser(this::statements) use { Loop(t1, t2) }
     private val block by -lcurly * zeroOrMore(parser(this::statements)) and -rcurly map { Block(it) }
     private val returnStmt by -rreturn * expr * -semi use { Return(this) }
     private val statements: Parser<Statement> by valStmt or assignStmt or returnStmt or iifStmt or block or exprStatement or loopCombine
-    private val fnDecl by (-fn * varParser * -lparen * separatedTerms(
+    private val fnDecl by (optional(visToEnum) * -fn * varParser * -lparen * separatedTerms(
         varParser * types,
         separator = comma,
         acceptZero = true
-    ) and -rparen and optional(-colon and types) and -lcurly * zeroOrMore(statements) * -rcurly use {
+    ) and -rparen and optional(types) and -lcurly * zeroOrMore(statements) * -rcurly use {
         val typList = arrayListOf<Type>()
         val argsList = arrayListOf<TextId>()
-        t2.forEach {
+        t3.forEach {
             typList.add(it.t2)
             argsList.add(it.t1)
         }
         FFunction(
-            name = t1,
-            fullName = currentFile.parent.absolutePathString() + ":" + t1.value,
+            vis = t1 ?: Vis.Hide,
+            name = t2,
+            fullName = currentFile.parent.absolutePathString() + ":" + t2.value,
             args = argsList,
-            block = Block(t4),
-            type = TFn(typList, t3 ?: TUnit),
+            block = Block(t5),
+            type = TFn(typList, t4 ?: TUnit),
         )
     })
     private val import by (optional(plus) * separatedTerms(
@@ -236,18 +242,29 @@ class NumsGrammar : Grammar<List<Statement>>() {
             if (ids.size == 1) Import(ids, path.str, true, f) else throw Error("A file can only have one namespace")
         } ?: Import(ids, path.str, false, f)
     }
-    private val dataSet by -data * varParser * -lparen * separatedTerms(varParser * types, separator = comma) * -rparen use {
+    private val dataSet by optional(visToEnum) * -data * varParser * -lparen * separatedTerms(varParser * types, separator = comma) * -rparen *
+            zeroOrMore(-colon * optional(varParser) * -lcurly * zeroOrMore(fnDecl) * -rcurly) use {
         val typList = arrayListOf<Type>()
         val argsList = arrayListOf<TextId>()
-        t2.forEach {
+        t3.forEach {
             typList.add(it.t2)
             argsList.add(it.t1)
         }
-        Dataset(name = t1, elements = argsList, type = TDataSet(t1.value, typList))
+        val traits = t4.map { Trait(it.t1 ?: t2, it.t2.map { f -> f.type }) }
+        Dataset(vis = t1 ?: Vis.Hide, name = t2, elements = argsList, type = TDataSet(t2.value, typList, traits))
     }
-    private val spaceBlock by -space * varParser * -lcurly * oneOrMore(parser(::topLevel)) * -rcurly map { (n, stmts) ->
-        Space(n, stmts)
+
+    private val traitDeclaration by optional(visToEnum) * -trait * varParser * -lcurly * zeroOrMore(fnDecl) * -rcurly use {
+        TraitDeclaration(t1 ?: Vis.Hide, t2, t3)
     }
-    private val topLevel: Parser<Statement> by dataSet or fnDecl or import or spaceBlock
+
+//    private val traitImplementation by -colon  * varParser * -has * varParser * -lcurly * zeroOrMore(fnDecl) * -rcurly use {
+//        TraitImplementation(t1, t2, t3)
+//    }
+
+    private val spaceBlock by optional(visToEnum)* -space * varParser * -lcurly * oneOrMore(parser(::topLevel)) * -rcurly map { (vis, n, stmts) ->
+        Space(vis ?: Vis.Hide, n, stmts)
+    }
+    private val topLevel: Parser<Statement> by traitDeclaration or dataSet or fnDecl or import or spaceBlock
     override val rootParser by oneOrMore(topLevel)
 }

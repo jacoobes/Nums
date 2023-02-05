@@ -7,15 +7,15 @@ import kotlin.math.max
 class TypeError(message: String) : Error(message)
 
 
-inline fun typeerror(message: String): Nothing {
+fun typeerror(message: String): Nothing {
     throw TypeError(message)
 }
 
 sealed class ContextItem {
     interface CtxItem
 
-    //    @JvmInline
-//    value class TypeDecl(val id: Variable) : CtxItem
+//  @JvmInline
+//  value class TypeDecl(val id: Variable) : CtxItem
     data class VarDecl(val id: TextId, val type : Type) : CtxItem
 
     data class FnDecl(val id: TextId, val type: TFn) : CtxItem
@@ -75,7 +75,7 @@ class Context(private val elements: ArrayList<ContextItem.CtxItem> = arrayListOf
 }
 
 class TypeSolver(val ctx: Context) {
-
+    val env = hashMapOf<TextId, Type>()
     fun tryInfer(e: Expr) {
         check(infer(e), e)
     }
@@ -117,13 +117,14 @@ class TypeSolver(val ctx: Context) {
                 }
 
                 is Call -> {
-                    val getContext = ctx.lookupFn(e.callee) ?: throw Error("Unknown symbol to call: ${e.callee}")
-                    if (e.args.size != getContext.type.typs.size) typeerror("Arity of call ${e.callee} invalid: Found ${e.args.size}, expected ${getContext.type.typs}")
-                    for ((idx, arg) in getContext.type.typs.withIndex()) {
+                    val caller = env[e.callee] ?: throw Error("Unknown symbol to call: ${e.callee}")
+                    if(caller !is TFn) throw Error("$caller is not a function type ")
+                    if (e.args.size != caller.typs.size) typeerror("Arity of call ${e.callee} invalid: Found ${e.args.size}, expected ${caller.typs}")
+                    for ((idx, arg) in caller.typs.withIndex()) {
                         check(arg, e.args[idx])
                     }
                     when {
-                        t != getContext.type.ret -> typeerror(message)
+                        t != caller.ret -> typeerror(message)
                     }
                 }
                 else -> typeerror(message)
@@ -131,7 +132,15 @@ class TypeSolver(val ctx: Context) {
         }
 
     }
-
+    fun isSingleton(e: Expr) : Boolean {
+        return e is NumsInt
+                || e is NumsDouble
+                || e is NumsShort
+                || e is NumsFloat
+                || e is Bool
+                || e is NumsByte
+                || e is StringLiteral
+    }
     fun isSubtype(t1:Type, t2: Type) : Boolean {
         return when {
             t1 is TF64 && t2 is TF64

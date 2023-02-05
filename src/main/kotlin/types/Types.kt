@@ -1,5 +1,7 @@
 package types
 
+import nodes.TextId
+
 
 interface Type
 
@@ -18,7 +20,7 @@ sealed class Types {
         override fun toString() = "u8"
     }
     object TU16 : Type {
-        override fun toString() = "U16"
+        override fun toString() = "u16"
     }
     object TTxt : Type {
         override fun toString() = "string"
@@ -33,9 +35,9 @@ sealed class Types {
         override fun toString() = "void"
     }
 
-    data class TDataSet(val name: String, val elems: List<Type> ) : Type {
+    data class TDataSet(val name: String, val elems: List<Type>, val traits : List<Trait> ) : Type {
         override fun toString(): String {
-            return "$name(${elems.joinToString(", ")})"
+            return "$name(${elems.joinToString(", ")}) implements $traits"
         }
     }
     @JvmInline
@@ -49,6 +51,7 @@ sealed class Types {
             return "(${typs.joinToString(",")}) -> $ret"
         }
     }
+    data class Trait(val name : TextId, val impls : List<TFn>) : Type
     object Infer : Type
     data class TArr(val typ : Type)
 }

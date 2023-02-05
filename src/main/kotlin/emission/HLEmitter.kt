@@ -197,5 +197,8 @@ class HLEmitter(
     override fun visit(stmt: Statement) {
         TODO("Not yet implemented")
     }
+    override fun visit(traitDeclaration: TraitDeclaration) {
+        TODO("Not yet implemented")
+    }
 
 }
