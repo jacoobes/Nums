@@ -7,12 +7,11 @@ import com.github.h0tk3y.betterParse.parser.Parser
 import nodes.*
 import types.Type
 import types.Types.*
-import kotlin.io.path.absolutePathString
+import kotlin.io.path.name
 
 
-class NumsGrammar : Grammar<List<Statement>>() {
+class NumsGrammar(root: java.nio.file.Path) : Grammar<List<Statement>>() {
 
-    lateinit var currentFile: java.nio.file.Path
 
     private val numb by regexToken("(([+-]?\\d*\\.*\\d+[eE])?([+-]?\\d*\\.*\\d+)(f64|f32|u16|u8)?)")
     private val semi by literalToken(";")
@@ -38,7 +37,6 @@ class NumsGrammar : Grammar<List<Statement>>() {
 
     private val and by literalToken("and")
     private val or by literalToken("or")
-    private val has by literalToken("has")
     private val rreturn by literalToken("return")
     private val loop by literalToken("loop")
     private val not by literalToken("not")
@@ -225,9 +223,9 @@ class NumsGrammar : Grammar<List<Statement>>() {
             argsList.add(it.t1)
         }
         FFunction(
-            vis = t1 ?: Vis.Hide,
+            vis = t1 ?: Vis.Show,
             name = t2,
-            fullName = currentFile.parent.absolutePathString() + ":" + t2.value,
+            fullName = "${root.name.substringBeforeLast(".nums")}:${t2.value}",
             args = argsList,
             block = Block(t5),
             type = TFn(typList, t4 ?: TUnit),
@@ -251,11 +249,11 @@ class NumsGrammar : Grammar<List<Statement>>() {
             argsList.add(it.t1)
         }
         val traits = t4.map { Trait(it.t1 ?: t2, it.t2.map { f -> f.type }) }
-        Dataset(vis = t1 ?: Vis.Hide, name = t2, elements = argsList, type = TDataSet(t2.value, typList, traits))
+        Dataset(vis = t1 ?: Vis.Show, name = t2, elements = argsList, type = TDataSet(t2.value, typList, traits))
     }
 
     private val traitDeclaration by optional(visToEnum) * -trait * varParser * -lcurly * zeroOrMore(fnDecl) * -rcurly use {
-        TraitDeclaration(t1 ?: Vis.Hide, t2, t3)
+        TraitDeclaration(t1 ?: Vis.Show, t2, t3)
     }
 
 //    private val traitImplementation by -colon  * varParser * -has * varParser * -lcurly * zeroOrMore(fnDecl) * -rcurly use {
@@ -263,7 +261,7 @@ class NumsGrammar : Grammar<List<Statement>>() {
 //    }
 
     private val spaceBlock by optional(visToEnum)* -space * varParser * -lcurly * oneOrMore(parser(::topLevel)) * -rcurly map { (vis, n, stmts) ->
-        Space(vis ?: Vis.Hide, n, stmts)
+        Space(vis ?: Vis.Show, n, stmts)
     }
     private val topLevel: Parser<Statement> by traitDeclaration or dataSet or fnDecl or import or spaceBlock
     override val rootParser by oneOrMore(topLevel)

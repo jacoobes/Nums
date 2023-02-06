@@ -1,5 +1,6 @@
 quan = "src/main/resources/abc.nums"
-fn test() {
+
+hide fn test() {
     val p = 1;
     return p;
 }

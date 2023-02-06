@@ -1,6 +1,7 @@
 package hl
 
 import ExpressionVisitor
+import ModuleResolver
 import Semantics
 import StatementVisitor
 import nodes.*
@@ -8,6 +9,7 @@ import types.Context
 import types.Type
 import types.TypeSolver
 import types.Types.*
+import java.util.LinkedList
 
 //Pass 1: visits and collects data about the tree and type checking that will be used for pass 2 (bytecode generation)
 class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
@@ -22,15 +24,32 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     fun start(tree: List<Statement>) {
         /**HType, TDyn ??*/
         arrayOf(TUnit, TU8, TU16, TI32, TI64, TF32, TF64, TBool).forEach(typesTable::add)
-        tree.forEach {
-            if(it is FFunction) {
-                typeSolver.env[it.name] = it.type
-                //typeSolver.ctx.add(ContextItem.FnDecl(id = it.name, type = it.type))
-                stringTable.add(TextId(it.name.value))
-                stringTable.add(TextId(it.fullName))
-                typesTable.add(it.type)
-                functionTable.add(it)
+        val queue = LinkedList(tree)
+        while(queue.isNotEmpty()) {
+            val node = queue.poll()
+            when(node) {
+                is FFunction -> {
+                    typeSolver.env[node.name] = node.type
+                    //typeSolver.ctx.add(ContextItem.FnDecl(id = it.name, type = it.type))
+                    stringTable.add(TextId(node.name.value))
+                    stringTable.add(TextId(node.fullName))
+                    typesTable.add(node.type)
+                    functionTable.add(node)
+                }
+                is Import -> {
+                    val tree = ModuleResolver.dependencyMap[node.file]
+                    //for now, get imports working. no need to tree shake for now
+                    if(node.isNamespace) {
+
+                    } else {
+
+                    }
+                }
+                else -> Unit
             }
+        }
+        tree.forEach { node ->
+
         }
         tree.forEach(::visit)
         if (entryPoint == -1) {
@@ -104,7 +123,8 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     }
 
     override fun visit(call: Call): Expr {
-       return call
+
+        return call
     }
 
     override fun visit(arrayLiteral: ArrayLiteral): Expr {
@@ -129,7 +149,7 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
             stmt.accept(this)
         }
         fn.block.stmts.lastOrNull()?.let {
-            if(it !is Return && fn.type.ret != TUnit) {
+            if (it !is Return && fn.type.ret != TUnit) {
                 throw Error("Expected a return at the end of function returning a value")
             }
             typeSolver.check(fn.type.ret, (it as Return).expr)
@@ -159,7 +179,7 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
 
     override fun visit(valStmt: Val) {
         val e = visit(valStmt.expr)
-        val typ = if(valStmt.type == Infer) {
+        val typ = if (valStmt.type == Infer) {
             typeSolver.infer(e)
         } else {
             valStmt.type
@@ -175,13 +195,13 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
 
     override fun visit(assign: Assign) {
         val local = semantics.getLocal(assign.tok)
-        if(!local.isAssignable) throw Error("Cannot assign to $local")
+        if (!local.isAssignable) throw Error("Cannot assign to $local")
         val e = visit(assign.newVal)
     }
 
 
     override fun visit(import: Import) {
-        TODO("Not yet implemented")
+       val tree = ModuleResolver.dependencyMap[import.file]
     }
 
     override fun visit(space: Space) {
@@ -190,45 +210,8 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     override fun visit(dataset: Dataset) {
         println(dataset)
     }
-    override fun visit(stmt: Statement) {
-        when(stmt) {
-            is Assign -> visit(stmt)
-            is Block ->  visit(stmt)
-            is ExpressionStatement ->  visit(stmt)
-            is FFunction ->  visit(stmt)
-            is Iif ->  visit(stmt)
-            is Import ->  visit(stmt)
-            is Loop ->  visit(stmt)
-            is Return ->  visit(stmt)
-            Skip ->  throw Error("Skip found")
-            is Space ->  visit(stmt)
-            is Dataset -> visit(stmt)
-            is Val -> visit(stmt)
-            is TraitDeclaration -> visit(stmt)
-        }
-    }
+
     override fun visit(traitDeclaration: TraitDeclaration) {
 
     }
-
-    override fun visit(e: Expr): Expr =
-        when(e) {
-            is And -> visit(e)
-            is ArrayLiteral -> visit(e)
-            is Binary -> visit(e)
-            is Bool -> visit(e)
-            is Call -> visit(e)
-            is Comparison -> visit(e)
-            is NumsByte -> visit(e)
-            is NumsDouble -> visit(e)
-            is NumsFloat -> visit(e)
-            is NumsInt -> visit(e)
-            is NumsShort -> visit(e)
-            is Or -> visit(e)
-            is Path -> visit(e)
-            is StringLiteral -> visit(e)
-            is Unary -> visit(e)
-            is TextId -> visit(e)
-        }
-
 }

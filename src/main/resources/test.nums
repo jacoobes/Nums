@@ -1,16 +1,16 @@
++ Bcd = "src/main/resources/bcd.nums"
 
-
-hide fn main () {
+fn main () {
 
 }
 
 
-space poo {
+hide space poo {
     fn gua () int {
         return 1;
     }
 
-    show dataset Fooba (
+    dataset Fooba (
        a str,
        b str,
        guayin som
