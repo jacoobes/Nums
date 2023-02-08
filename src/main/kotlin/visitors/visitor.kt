@@ -15,7 +15,7 @@ interface ExpressionVisitor<T> {
         is NumsInt -> visit(e)
         is NumsShort -> visit(e)
         is Or -> visit(e)
-        is Path -> visit(e)
+        is NumsPath -> visit(e)
         is StringLiteral -> visit(e)
         is Unary -> visit(e)
         is TextId -> visit(e)
@@ -37,7 +37,7 @@ interface ExpressionVisitor<T> {
     fun visit(or: Or): T
     fun visit(call: Call): T
     fun visit(arrayLiteral: ArrayLiteral): T
-    fun visit(path: Path): T
+    fun visit(path: NumsPath): T
 }
 
 interface StatementVisitor<T> {

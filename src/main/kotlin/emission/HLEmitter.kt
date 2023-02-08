@@ -139,7 +139,7 @@ class HLEmitter(
         TODO("Not yet implemented")
     }
 
-    override fun visit(path: Path): Expr {
+    override fun visit(path: NumsPath): Expr {
         TODO("Not yet implemented")
     }
 

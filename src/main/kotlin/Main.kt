@@ -1,5 +1,4 @@
 
-import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import hl.SemanticVisitor
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
@@ -20,7 +19,7 @@ fun init(args: Array<String>) {
     val pathToHl = Path.of(System.getProperty("user.dir"), out)
     println(pathToHl)
     ModuleResolver.generateFiles(inputPath)
-    val programStart = ModuleResolver.dependencyMap[inputPath].also(::println)
+    val programStart = ModuleResolver.dependencyMap[inputPath]
     programStart!!.visit()
 //    NumsWriter(pathToHl).use {
 //        val code = hl_code(

@@ -106,7 +106,7 @@ data class ArrayLiteral(val exprs: List<Expr>) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
 }
 
-data class Path(var chain: Path?, val tok: Expr) : Expr {
+data class NumsPath(var chain: NumsPath?, val tok: Expr) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
 
     override fun toString(): String {

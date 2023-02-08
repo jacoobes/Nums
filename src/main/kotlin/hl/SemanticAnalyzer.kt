@@ -9,11 +9,13 @@ import types.Context
 import types.Type
 import types.TypeSolver
 import types.Types.*
-import java.util.LinkedList
+import java.util.*
+import kotlin.collections.ArrayList
 
 //Pass 1: visits and collects data about the tree and type checking that will be used for pass 2 (bytecode generation)
 class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     val stringTable = TableLookup<TextId>()
+    val traitTableLookup = TableLookup<TraitDeclaration>()
     val intTable = TableLookup<NumsInt>()
     val floatTable = TableLookup<NumsDouble>()
     val functionTable = TableLookup<FFunction>()
@@ -21,13 +23,14 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     val typeSolver = TypeSolver(Context())
     val semantics = Semantics()
     var entryPoint = -1
-    fun start(tree: List<Statement>) {
+    fun start(root: List<Statement>) {
+        val importedNameSpaces = arrayListOf<TextId>()
         /**HType, TDyn ??*/
         arrayOf(TUnit, TU8, TU16, TI32, TI64, TF32, TF64, TBool).forEach(typesTable::add)
-        val queue = LinkedList(tree)
-        while(queue.isNotEmpty()) {
-            val node = queue.poll()
-            when(node) {
+        val queue = LinkedList(root)
+        val tree = ArrayList<Statement>(root)
+        while (queue.isNotEmpty()) {
+            when (val node = queue.poll()) {
                 is FFunction -> {
                     typeSolver.env[node.name] = node.type
                     //typeSolver.ctx.add(ContextItem.FnDecl(id = it.name, type = it.type))
@@ -37,21 +40,22 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
                     functionTable.add(node)
                 }
                 is Import -> {
-                    val tree = ModuleResolver.dependencyMap[node.file]
+                    val importedTree = ModuleResolver.dependencyMap[node.file]!!
                     //for now, get imports working. no need to tree shake for now
-                    if(node.isNamespace) {
-
-                    } else {
+                    if (node.isNamespace) {
+                        importedNameSpaces.add(node.idents[0])
 
                     }
+                    tree.addAll(importedTree)
+                    queue.addAll(importedTree)
                 }
+                is TraitDeclaration -> traitTableLookup.add(node)
+
                 else -> Unit
             }
         }
-        tree.forEach { node ->
-
-        }
         tree.forEach(::visit)
+        println(tree)
         if (entryPoint == -1) {
             throw Error("Could not find a main function")
         }
@@ -90,6 +94,7 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
 
         return binary
     }
+
     override fun visit(cmp: Comparison): Expr {
         val lhs = visit(cmp.left)
         val rhs = visit(cmp.right)
@@ -131,7 +136,7 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
         return arrayLiteral
     }
 
-    override fun visit(path: Path): Expr {
+    override fun visit(path: NumsPath): Expr {
         stringTable.add(TextId(path.toString()))
         return path
     }
@@ -185,7 +190,8 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
             valStmt.type
         }
         typeSolver.check(typ, e)
-        typeSolver.env[valStmt.token] = typ //assigns this variable to the type env where its type information can be looked up
+        typeSolver.env[valStmt.token] =
+            typ //assigns this variable to the type env where its type information can be looked up
         semantics.addLocal(valStmt.token.value, isAssignable = valStmt.isAssignable)
     }
 
@@ -201,7 +207,7 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
 
 
     override fun visit(import: Import) {
-       val tree = ModuleResolver.dependencyMap[import.file]
+        val tree = ModuleResolver.dependencyMap[import.file]
     }
 
     override fun visit(space: Space) {

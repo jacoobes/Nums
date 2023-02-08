@@ -125,7 +125,7 @@ class Expander : StatementVisitor<Unit>, ExpressionVisitor<Unit> {
         TODO("Not yet implemented")
     }
 
-    override fun visit(path: Path) {
+    override fun visit(path: NumsPath) {
         TODO("Not yet implemented")
     }
 }

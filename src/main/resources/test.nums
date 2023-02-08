@@ -1,4 +1,4 @@
-+ Bcd = "src/main/resources/bcd.nums"
+rest = "src/main/resources/bcd.nums"
 
 fn main () {
 

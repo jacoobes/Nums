@@ -136,10 +136,10 @@ class NumsGrammar(root: java.nio.file.Path) : Grammar<List<Statement>>() {
     ) and -rcurly) map { ArrayLiteral(it) }
     private val grouped by -lparen and parser(this::expr) and -rparen
     private val getter by rightAssociative(fnCall or varParser, colon) { l, _, r ->
-        if (r !is Path) {
-            Path(Path(null, r), l)
+        if (r !is NumsPath) {
+            NumsPath(NumsPath(null, r), l)
         } else {
-            Path(r, l)
+            NumsPath(r, l)
         }
     }
     private val unary by (not and parser(this::expr)) map { Unary(it.t1.type, it.t2) }

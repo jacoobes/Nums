@@ -1,8 +1,8 @@
 
-fn quan() {
+fn quan() int {
     return cheese();
 }
 
-fn cheese() {
+fn cheese() int {
     return 2;
 }

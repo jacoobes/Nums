@@ -116,6 +116,7 @@ class TypeSolver(val ctx: Context) {
                     !is TTxt -> typeerror(message)
                 }
 
+
                 is Call -> {
                     val caller = env[e.callee] ?: throw Error("Unknown symbol to call: ${e.callee}")
                     if(caller !is TFn) throw Error("$caller is not a function type ")

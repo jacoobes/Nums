@@ -1,15 +1,13 @@
 quan = "src/main/resources/abc.nums"
 
-hide fn test() {
-    val p = 1;
-    return p;
+hide fn test()  {
 }
 
-fn rest() {
+fn rest() int {
     return quan();
 }
 space Shalnark {
-    fn poo() {
+    fn poo() int {
         return 1;
     }
 }
