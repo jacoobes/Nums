@@ -1,38 +1,29 @@
+import org.objectweb.asm.ClassWriter
 import java.io.Closeable
 import java.io.DataOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import kotlin.io.path.*
+import kotlin.io.path.createFile
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.isReadable
 
 class NumsWriter(file: Path) : Closeable {
     private val ds : DataOutputStream
     init {
         file.deleteIfExists()
         file.createFile()
-        ds = DataOutputStream(Files.newOutputStream(file, StandardOpenOption.APPEND).buffered())
-        if(!file.isReadable()) {
+        ds = DataOutputStream(Files.newOutputStream(file, StandardOpenOption.APPEND, StandardOpenOption.WRITE).buffered())
+        if (!file.isReadable()) {
             throw Error("Cannot read this file")
         }
     }
-    fun writeInt(i : Int) {
-        ds.writeInt(i)
-    }
-    fun write(byte: Int) {
-        ds.writeByte(byte)
-    }
-    fun writeDouble(d: Double) {
-        ds.writeDouble(d)
-    }
-    fun write(type: HashLink.hl_type_kind) {
-        ds.writeByte(type.cValue)
-    }
-    fun write(byteArray: ByteArray) {
-        ds.write(byteArray)
-    }
 
-    fun writeUTF8(string: String) {
-        ds.writeUTF(string)
+
+    fun classWriter(writeScope: (ClassWriter) -> Unit) {
+        val classWriter = ClassWriter(0)
+        writeScope(classWriter)
+        ds.write(classWriter.toByteArray())
     }
     override fun close() {
         ds.flush()

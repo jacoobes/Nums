@@ -1,3 +1,7 @@
+import jvm.Chunk
+import jvm.IR
+import jvm.IRFunction
+import jvm.Instruction
 import nodes.*
 
 interface ExpressionVisitor<T> {
@@ -26,7 +30,6 @@ interface ExpressionVisitor<T> {
     fun visit(number: NumsShort): T
     fun visit(number: NumsByte): T
     fun visit(number: NumsFloat): T
-
     fun visit(stringLiteral: StringLiteral): T
     fun visit(binary: Binary): T
     fun visit(cmp: Comparison): T
@@ -71,4 +74,16 @@ interface StatementVisitor<T> {
 
     fun visit(traitDeclaration: TraitDeclaration): T
 
+}
+
+interface IRVisitor<T> {
+    fun visit(insn: Instruction): T
+    fun visit(irfn: IRFunction) : T
+
+    fun visit(chunk: Chunk) : T
+    fun visit(ir: IR) : T = when (ir) {
+        is IRFunction -> visit(ir)
+        is Instruction -> visit(ir)
+        is Chunk -> visit(ir)
+    }
 }

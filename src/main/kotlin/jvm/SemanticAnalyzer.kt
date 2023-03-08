@@ -1,73 +1,57 @@
-package hl
+package jvm
 
 import ExpressionVisitor
 import ModuleResolver
 import Semantics
 import StatementVisitor
 import nodes.*
+import org.objectweb.asm.*
+import org.objectweb.asm.Opcodes.*
 import types.Context
-import types.Type
 import types.TypeSolver
 import types.Types.*
 import java.util.*
-import kotlin.collections.ArrayList
 
 //Pass 1: visits and collects data about the tree and type checking that will be used for pass 2 (bytecode generation)
-class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
-    val stringTable = TableLookup<TextId>()
-    val traitTableLookup = TableLookup<TraitDeclaration>()
-    val intTable = TableLookup<NumsInt>()
-    val floatTable = TableLookup<NumsDouble>()
-    val functionTable = TableLookup<FFunction>()
-    val typesTable = TableLookup<Type>()
+class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes {
     val typeSolver = TypeSolver(Context())
     val semantics = Semantics()
-    var entryPoint = -1
-    fun start(root: List<Statement>) {
+    var entryPoint: FFunction? = null
+    fun start(root: List<Statement>): List<IR?> {
         val importedNameSpaces = arrayListOf<TextId>()
-        /**HType, TDyn ??*/
-        arrayOf(TUnit, TU8, TU16, TI32, TI64, TF32, TF64, TBool).forEach(typesTable::add)
         val queue = LinkedList(root)
-        val tree = ArrayList<Statement>(root)
+        val tree = ArrayList(root)
         while (queue.isNotEmpty()) {
             when (val node = queue.poll()) {
                 is FFunction -> {
                     typeSolver.env[node.name] = node.type
                     //typeSolver.ctx.add(ContextItem.FnDecl(id = it.name, type = it.type))
-                    stringTable.add(TextId(node.name.value))
-                    stringTable.add(TextId(node.fullName))
-                    typesTable.add(node.type)
-                    functionTable.add(node)
                 }
                 is Import -> {
                     val importedTree = ModuleResolver.dependencyMap[node.file]!!
                     //for now, get imports working. no need to tree shake for now
                     if (node.isNamespace) {
                         importedNameSpaces.add(node.idents[0])
-
                     }
                     tree.addAll(importedTree)
                     queue.addAll(importedTree)
                 }
-                is TraitDeclaration -> traitTableLookup.add(node)
-
+                is TraitDeclaration -> Unit
                 else -> Unit
             }
         }
-        tree.forEach(::visit)
-        println(tree)
-        if (entryPoint == -1) {
+        val ir = tree.map(::visit)
+        if (entryPoint == null) {
             throw Error("Could not find a main function")
         }
+        return ir
     }
 
     override fun visit(number: NumsDouble): Expr {
-        floatTable.add(number)
         return number
     }
 
     override fun visit(number: NumsInt): Expr {
-        intTable.add(number)
         return number
     }
 
@@ -84,7 +68,6 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     }
 
     override fun visit(stringLiteral: StringLiteral): Expr {
-        stringTable.add(TextId(stringLiteral.str))
         return stringLiteral
     }
 
@@ -128,7 +111,6 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     }
 
     override fun visit(call: Call): Expr {
-
         return call
     }
 
@@ -137,52 +119,69 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
     }
 
     override fun visit(path: NumsPath): Expr {
-        stringTable.add(TextId(path.toString()))
         return path
     }
 
-    override fun visit(fn: FFunction) {
+    override fun visit(fn: FFunction): IR {
         if (fn.isMain()) {
-            if (entryPoint == -1) {
-                entryPoint = functionTable.tbl[fn]!!
+            if (entryPoint == null) {
+                entryPoint = fn
             } else throw Error("Found two functions named main")
         }
         for (v in fn.args) {
             semantics.addLocal(v.value, isAssignable = false)
         }
+
+        val body: Bytecode = arrayListOf()
+
         for (stmt in (fn.block as Block).stmts) {
-            stmt.accept(this)
+            body.add(stmt.accept(this)!!)
         }
         fn.block.stmts.lastOrNull()?.let {
-            if (it !is Return && fn.type.ret != TUnit) {
-                throw Error("Expected a return at the end of function returning a value")
+            if (it is Return && fn.type.ret != TUnit) {
+                typeSolver.check(fn.type.ret, (it).expr)
             }
-            typeSolver.check(fn.type.ret, (it as Return).expr)
         }
-
+        //val maxStack = 256
+        //val localsSize = fn.args.size + fn.block.stmts.filterIsInstance<Val>().size
         semantics.clearLocals() // should clear all locals after block has been finished
+
+        return if(fn.isMain()) {
+            makeIRMainFunction(fn, body)
+        } else {
+            TODO()
+        }
     }
 
-    override fun visit(iif: Iif) {
+    override fun visit(iif: Iif): IR {
         val expr = visit(iif.condition)
+        TODO()
     }
 
-    override fun visit(loop: Loop) {
+    override fun visit(loop: Loop): IR {
         visit(loop.condition)
         loop.block.accept(this)
+        TODO()
+
     }
 
-    override fun visit(expressionStatement: ExpressionStatement) {
+    override fun visit(expressionStatement: ExpressionStatement): IR {
+//        if(expressionStatement.expr !is Call) {
+//            throw Error("expression statement is not calling anything")
+//        }
         visit(expressionStatement.expr)
+        TODO()
+
     }
 
-    override fun visit(block: Block) {
+    override fun visit(block: Block): IR? {
         semantics.incDepth()
         block.stmts.forEach(::visit)
         semantics.decDepth()
+        return null
     }
 
-    override fun visit(valStmt: Val) {
+    override fun visit(valStmt: Val): IR {
         val e = visit(valStmt.expr)
         val typ = if (valStmt.type == Infer) {
             typeSolver.infer(e)
@@ -190,34 +189,56 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<Unit> {
             valStmt.type
         }
         typeSolver.check(typ, e)
-        typeSolver.env[valStmt.token] =
-            typ //assigns this variable to the type env where its type information can be looked up
-        semantics.addLocal(valStmt.token.value, isAssignable = valStmt.isAssignable)
+        typeSolver.env[valStmt.token] = typ //assigns this variable to the type env where its type information can be looked up
+        val loc = semantics.addLocal(valStmt.token.value, isAssignable = valStmt.isAssignable)
+
+        return when(typ) {
+            // for now, no jvm opcode optimizations, just getting it working
+            is TI32 -> {
+                e as NumsInt
+                Chunk(Instruction(BIPUSH, e.value), Instruction(ISTORE, loc.index))
+            }
+//            is TI64 -> {
+//                e as NumsFloat
+//                Instruction(, loc.index)
+//            }
+            else -> TODO()
+        }
     }
 
-    override fun visit(ret: Return) {
+    override fun visit(ret: Return): IR {
         val e = visit(ret.expr)
+        TODO()
     }
 
-    override fun visit(assign: Assign) {
+    override fun visit(assign: Assign): IR {
         val local = semantics.getLocal(assign.tok)
         if (!local.isAssignable) throw Error("Cannot assign to $local")
         val e = visit(assign.newVal)
+        TODO()
+
     }
 
 
-    override fun visit(import: Import) {
+    override fun visit(import: Import): IR {
         val tree = ModuleResolver.dependencyMap[import.file]
+        TODO()
+
     }
 
-    override fun visit(space: Space) {
+    override fun visit(space: Space): IR {
+        TODO()
+
     }
 
-    override fun visit(dataset: Dataset) {
+    override fun visit(dataset: Dataset): IR {
         println(dataset)
+        TODO()
+
     }
 
-    override fun visit(traitDeclaration: TraitDeclaration) {
+    override fun visit(traitDeclaration: TraitDeclaration) : IR {
+        TODO()
 
     }
 }

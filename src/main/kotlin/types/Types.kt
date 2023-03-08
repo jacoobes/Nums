@@ -53,5 +53,5 @@ sealed class Types {
     }
     data class Trait(val name : TextId, val impls : List<TFn>) : Type
     object Infer : Type
-    data class TArr(val typ : Type)
+    data class TArr(val typ : Type): Type
 }

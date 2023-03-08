@@ -56,6 +56,7 @@ class NumsGrammar(root: java.nio.file.Path) : Grammar<List<Statement>>() {
     private val greaterEqual by literalToken(">=")
     private val lt by literalToken("<")
     private val gt by literalToken(">")
+    private val square by literalToken("[]")
 
     private val _ws by regexToken("\\s+", ignore = true)
     private val _newline by regexToken("[\r\n]+", ignore = true)
@@ -119,9 +120,12 @@ class NumsGrammar(root: java.nio.file.Path) : Grammar<List<Statement>>() {
 
 
     private val stringLiteral by stringLit use { StringLiteral(text.removeSurrounding("\"", "\""), TTxt) }
-    private val types by (i32 or i64 or u8 or u16 or txt or boo or f32 or f64 or word) map {
-        val typ = typesMap[it.type] ?: TVarT(it.text)
-        typ
+    private val types by optional(square) * (i32 or i64 or u8 or u16 or txt or boo or f32 or f64 or word) map {
+        if(it.t1 == null) {
+            typesMap[it.t2.type] ?: TVarT(it.t2.text)
+        } else {
+            TArr(typesMap[it.t2.type] ?: TVarT(it.t2.text))
+        }
     }
     private val varParser by word use { TextId(text) }
 
@@ -225,7 +229,7 @@ class NumsGrammar(root: java.nio.file.Path) : Grammar<List<Statement>>() {
         FFunction(
             vis = t1 ?: Vis.Show,
             name = t2,
-            fullName = "${root.name.substringBeforeLast(".nums")}:${t2.value}",
+            fullName = "${root.name.substringBeforeLast(".nums")}/${t2.value}",
             args = argsList,
             block = Block(t5),
             type = TFn(typList, t4 ?: TUnit),
