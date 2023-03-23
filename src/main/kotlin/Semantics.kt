@@ -1,6 +1,7 @@
+import nodes.Expr
 import nodes.TextId
 
-data class Local(val name: String, val depth: Int, val index: Int, val isAssignable: Boolean) {
+data class Local(val name: String, val depth: Int, val index: Int, val isAssignable: Boolean, val expr: Expr) {
     fun inSameScope(local:Local) : Boolean {
         return name.compareTo(local.name) == 0 && depth == local.depth
     }
@@ -21,8 +22,8 @@ class Semantics {
         locals.retainAll { it.depth >= scopeDepth }
     }
 
-    fun addLocal(local: String, isAssignable: Boolean): Local {
-        val newLocal = Local(local, scopeDepth, localIndex++, isAssignable)
+    fun addLocal(local: String, isAssignable: Boolean, expr: Expr): Local {
+        val newLocal = Local(local, scopeDepth, localIndex++, isAssignable, expr)
         if(localMatch(newLocal)) throw Error("Already have another variable $local in same scope")
         locals.add(newLocal)
         return newLocal

@@ -93,18 +93,19 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
     }
 
     override fun visit(textId: TextId): Expr {
+
         return textId
     }
 
     override fun visit(and: And): Expr {
-        visit(and.left)
-        visit(and.right)
+        val lhs = visit(and.left)
+        val rhs = visit(and.right)
         return and
     }
 
     override fun visit(or: Or): Expr {
-        visit(or.left)
-        visit(or.right)
+        val lhs = visit(or.left)
+        val rhs = visit(or.right)
         return or
     }
 
@@ -128,7 +129,7 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
         }
         for ((idx, v) in fn.args.withIndex()) {
             typeSolver.env[v] = fn.type.typs[idx]
-            semantics.addLocal(v.value, isAssignable = false)
+            semantics.addLocal(v.value, isAssignable = false, v)
         }
 
         val body: Bytecode = arrayListOf()
@@ -189,7 +190,7 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
         }
         typeSolver.check(typ, e)
         typeSolver.env[valStmt.token] = typ //assigns this variable to the type env where its type information can be looked up
-        val loc = semantics.addLocal(valStmt.token.value, isAssignable = valStmt.isAssignable)
+        val loc = semantics.addLocal(valStmt.token.value, isAssignable = valStmt.isAssignable, valStmt.expr)
 
         return when(e) {
             // for now, no jvm opcode optimizations, just getting it working
