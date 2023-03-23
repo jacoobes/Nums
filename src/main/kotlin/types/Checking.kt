@@ -96,13 +96,13 @@ class TypeSolver(val ctx: Context) {
                     !is TF64 -> typeerror(message)
                 }
 
-                is NumsShort -> when (t) {
-                    !is TU16 -> typeerror(message)
-                }
-
-                is NumsByte -> when (t) {
-                    !is TU8 -> typeerror(message)
-                }
+//                is NumsShort -> when (t) {
+//                    !is TU16 -> typeerror(message)
+//                }
+//
+//                is NumsByte -> when (t) {
+//                    !is TU8 -> typeerror(message)
+//                }
 
                 is NumsFloat -> when (t) {
                     !is TF32 -> typeerror(message)
@@ -115,8 +115,6 @@ class TypeSolver(val ctx: Context) {
                 is StringLiteral -> when (t) {
                     !is TTxt -> typeerror(message)
                 }
-
-
                 is Call -> {
                     val caller = env[e.callee] ?: throw Error("Unknown symbol to call: ${e.callee}")
                     if(caller !is TFn) throw Error("$caller is not a function type ")
@@ -128,6 +126,12 @@ class TypeSolver(val ctx: Context) {
                         t != caller.ret -> typeerror(message)
                     }
                 }
+                is ArrayLiteral -> {
+
+                }
+                is TextId -> {
+
+                }
                 else -> typeerror(message)
             }
         }
@@ -136,10 +140,10 @@ class TypeSolver(val ctx: Context) {
     fun isSingleton(e: Expr) : Boolean {
         return e is NumsInt
                 || e is NumsDouble
-                || e is NumsShort
+            //    || e is NumsShort
                 || e is NumsFloat
                 || e is Bool
-                || e is NumsByte
+           //     || e is NumsByte
                 || e is StringLiteral
     }
     fun isSubtype(t1:Type, t2: Type) : Boolean {
@@ -147,8 +151,8 @@ class TypeSolver(val ctx: Context) {
             t1 is TF64 && t2 is TF64
             || t1 is TF32 && t2 is TF32
             || t1 is TTxt && t2 is TTxt
-            || t1 is TU8 && t2 is TU8
-            || t1 is TU16 && t2 is TU16
+          //  || t1 is TU8 && t2 is TU8
+          //  || t1 is TU16 && t2 is TU16
             || t1 is TUnit && t2 is TUnit -> true
             else -> false
         }
@@ -160,7 +164,7 @@ class TypeSolver(val ctx: Context) {
         return when (e) {
             is NumsInt -> TI32
             is NumsDouble -> TF64
-            is NumsShort -> TI32
+          //  is NumsShort -> TI32
             is NumsFloat -> TF32
             is Bool -> TBool
             is StringLiteral -> TTxt

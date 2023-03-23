@@ -41,25 +41,21 @@ class Expander : StatementVisitor<Unit>, ExpressionVisitor<Unit> {
         TODO("Not yet implemented")
     }
 
-    override fun visit(import: Import) {
-        TODO("Not yet implemented")
-    }
-
     override fun visit(space: Space) {
         TODO("Not yet implemented")
     }
 
-    override fun visit(dataset: Dataset) {
-        TODO("Not yet implemented")
-    }
+//    override fun visit(dataset: Dataset) {
+//        TODO("Not yet implemented")
+//    }
 
     override fun visit(stmt: Statement) {
         TODO("Not yet implemented")
     }
 
-    override fun visit(traitDeclaration: TraitDeclaration) {
-        TODO("Not yet implemented")
-    }
+//    override fun visit(traitDeclaration: TraitDeclaration) {
+//        TODO("Not yet implemented")
+//    }
 
     override fun visit(expr: Expr) {
         TODO("Not yet implemented")
@@ -73,13 +69,13 @@ class Expander : StatementVisitor<Unit>, ExpressionVisitor<Unit> {
         TODO("Not yet implemented")
     }
 
-    override fun visit(number: NumsShort) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visit(number: NumsByte) {
-        TODO("Not yet implemented")
-    }
+//    override fun visit(number: NumsShort) {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun visit(number: NumsByte) {
+//        TODO("Not yet implemented")
+//    }
 
     override fun visit(number: NumsFloat) {
         TODO("Not yet implemented")

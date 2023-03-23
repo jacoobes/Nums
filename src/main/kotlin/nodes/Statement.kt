@@ -40,17 +40,17 @@ data class FFunction(
         return name == TextId("main")
     }
 }
-data class Dataset(val vis: Vis = Vis.Show, val name: TextId, val elements: List<TextId>, val type: Types.TDataSet) : Statement
+//data class Dataset(val vis: Vis = Vis.Show, val name: TextId, val elements: List<TextId>, val type: Types.TDataSet) : Statement
 data class Space(val vis: Vis = Vis.Show, val name: TextId, val elements: List<Statement>) : Statement
-data class TraitDeclaration(val vis: Vis = Vis.Show, val traitName: TextId, val body: List<FFunction>) : Statement
-data class Import(
-    val idents: List<TextId>,
-    val path: String,
-    val isNamespace: Boolean,
-    val file: java.nio.file.Path
-) : Statement {
-    fun uid(): Int {
-        return file.hashCode()
-    }
-}
+//data class TraitDeclaration(val vis: Vis = Vis.Show, val traitName: TextId, val body: List<FFunction>) : Statement
+//data class Import(
+//    val idents: List<TextId>,
+//    val path: String,
+//    val isNamespace: Boolean,
+//    val file: java.nio.file.Path
+//) : Statement {
+//    fun uid(): Int {
+//        return file.hashCode()
+//    }
+//}
 object Skip : Statement

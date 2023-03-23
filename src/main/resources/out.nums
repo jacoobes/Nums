@@ -1,4 +1,4 @@
 
 fn main (args []string) {
-    val f = 10;
+    val p: []string = args;
 }

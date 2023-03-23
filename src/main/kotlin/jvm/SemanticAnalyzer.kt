@@ -1,7 +1,6 @@
 package jvm
 
 import ExpressionVisitor
-import ModuleResolver
 import Semantics
 import StatementVisitor
 import nodes.*
@@ -18,25 +17,24 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
     val semantics = Semantics()
     var entryPoint: FFunction? = null
     fun start(root: List<Statement>): List<IR?> {
-        val importedNameSpaces = arrayListOf<TextId>()
+//        val importedNameSpaces = arrayListOf<TextId>()
         val queue = LinkedList(root)
         val tree = ArrayList(root)
         while (queue.isNotEmpty()) {
             when (val node = queue.poll()) {
                 is FFunction -> {
                     typeSolver.env[node.name] = node.type
-                    //typeSolver.ctx.add(ContextItem.FnDecl(id = it.name, type = it.type))
                 }
-                is Import -> {
-                    val importedTree = ModuleResolver.dependencyMap[node.file]!!
-                    //for now, get imports working. no need to tree shake for now
-                    if (node.isNamespace) {
-                        importedNameSpaces.add(node.idents[0])
-                    }
-                    tree.addAll(importedTree)
-                    queue.addAll(importedTree)
-                }
-                is TraitDeclaration -> Unit
+//                is Import -> {
+//                    val importedTree = ModuleResolver.dependencyMap[node.file]!!
+//                    //for now, get imports working. no need to tree shake for now
+//                    if (node.isNamespace) {
+//                        importedNameSpaces.add(node.idents[0])
+//                    }
+//                    tree.addAll(importedTree)
+//                    queue.addAll(importedTree)
+//                }
+//                is TraitDeclaration -> Unit
                 else -> Unit
             }
         }
@@ -55,13 +53,13 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
         return number
     }
 
-    override fun visit(number: NumsShort): Expr {
-        return number
-    }
-
-    override fun visit(number: NumsByte): Expr {
-        return number
-    }
+//    override fun visit(number: NumsShort): Expr {
+//        return number
+//    }
+//
+//    override fun visit(number: NumsByte): Expr {
+//        return number
+//    }
 
     override fun visit(number: NumsFloat): Expr {
         return number
@@ -128,7 +126,8 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
                 entryPoint = fn
             } else throw Error("Found two functions named main")
         }
-        for (v in fn.args) {
+        for ((idx, v) in fn.args.withIndex()) {
+            typeSolver.env[v] = fn.type.typs[idx]
             semantics.addLocal(v.value, isAssignable = false)
         }
 
@@ -192,16 +191,30 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
         typeSolver.env[valStmt.token] = typ //assigns this variable to the type env where its type information can be looked up
         val loc = semantics.addLocal(valStmt.token.value, isAssignable = valStmt.isAssignable)
 
-        return when(typ) {
+        return when(e) {
             // for now, no jvm opcode optimizations, just getting it working
-            is TI32 -> {
-                e as NumsInt
+            is NumsInt -> {
                 Chunk(Instruction(BIPUSH, e.value), Instruction(ISTORE, loc.index))
             }
-//            is TI64 -> {
-//                e as NumsFloat
-//                Instruction(, loc.index)
-//            }
+            is NumsDouble -> {
+                Chunk(LDC(value = e.value), Instruction(DSTORE, loc.index))
+            }
+            is Bool -> {
+                if(e.bool) {
+                    Chunk(Instruction(ICONST_1), Instruction(ISTORE, loc.index))
+                } else {
+                    Chunk(Instruction(ICONST_0), Instruction(ISTORE, loc.index))
+                }
+            }
+            is TextId -> {
+                val referencedLocal = semantics.getLocal(e)
+//                println(typeSolver.env[e]) accessing local variable data
+//                println(referencedLocal)
+                Chunk()
+            }
+            is ArrayLiteral -> {
+                Chunk()
+            }
             else -> TODO()
         }
     }
@@ -220,25 +233,24 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
     }
 
 
-    override fun visit(import: Import): IR {
-        val tree = ModuleResolver.dependencyMap[import.file]
-        TODO()
-
-    }
+//    override fun visit(import: Import): IR {
+//        TODO()
+//
+//    }
 
     override fun visit(space: Space): IR {
         TODO()
 
     }
 
-    override fun visit(dataset: Dataset): IR {
-        println(dataset)
-        TODO()
+//    override fun visit(dataset: Dataset): IR {
+//        println(dataset)
+//        TODO()
+//
+//    }
 
-    }
-
-    override fun visit(traitDeclaration: TraitDeclaration) : IR {
-        TODO()
-
-    }
+//    override fun visit(traitDeclaration: TraitDeclaration) : IR {
+//        TODO()
+//
+//    }
 }

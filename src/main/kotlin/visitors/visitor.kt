@@ -1,7 +1,4 @@
-import jvm.Chunk
-import jvm.IR
-import jvm.IRFunction
-import jvm.Instruction
+import jvm.*
 import nodes.*
 
 interface ExpressionVisitor<T> {
@@ -13,11 +10,11 @@ interface ExpressionVisitor<T> {
         is Bool -> visit(e)
         is Call -> visit(e)
         is Comparison -> visit(e)
-        is NumsByte -> visit(e)
+//        is NumsByte -> visit(e)
         is NumsDouble -> visit(e)
         is NumsFloat -> visit(e)
         is NumsInt -> visit(e)
-        is NumsShort -> visit(e)
+//        is NumsShort -> visit(e)
         is Or -> visit(e)
         is NumsPath -> visit(e)
         is StringLiteral -> visit(e)
@@ -27,8 +24,8 @@ interface ExpressionVisitor<T> {
 
     fun visit(number: NumsDouble): T
     fun visit(number: NumsInt): T
-    fun visit(number: NumsShort): T
-    fun visit(number: NumsByte): T
+//    fun visit(number: NumsShort): T
+//    fun visit(number: NumsByte): T
     fun visit(number: NumsFloat): T
     fun visit(stringLiteral: StringLiteral): T
     fun visit(binary: Binary): T
@@ -52,38 +49,39 @@ interface StatementVisitor<T> {
     fun visit(valStmt: Val): T
     fun visit(ret: Return): T
     fun visit(assign: Assign): T
-    fun visit(import: Import): T
+ //   fun visit(import: Import): T
     fun visit(space: Space): T
-
-    fun visit(dataset: Dataset): T
+//    fun visit(dataset: Dataset): T
     fun visit(stmt: Statement): T = when (stmt) {
         is Assign -> visit(stmt)
         is Block -> visit(stmt)
         is ExpressionStatement -> visit(stmt)
         is FFunction -> visit(stmt)
         is Iif -> visit(stmt)
-        is Import -> visit(stmt)
+//        is Import -> visit(stmt)
         is Loop -> visit(stmt)
         is Return -> visit(stmt)
         Skip -> throw Error("Skip found")
         is Space -> visit(stmt)
-        is Dataset -> visit(stmt)
+//        is Dataset -> visit(stmt)
         is Val -> visit(stmt)
-        is TraitDeclaration -> visit(stmt)
+//        is TraitDeclaration -> visit(stmt)
     }
 
-    fun visit(traitDeclaration: TraitDeclaration): T
+  //  fun visit(traitDeclaration: TraitDeclaration): T
 
 }
 
 interface IRVisitor<T> {
     fun visit(insn: Instruction): T
     fun visit(irfn: IRFunction) : T
+    fun visit(ldc: LDC) : T
 
     fun visit(chunk: Chunk) : T
     fun visit(ir: IR) : T = when (ir) {
         is IRFunction -> visit(ir)
         is Instruction -> visit(ir)
         is Chunk -> visit(ir)
+        is LDC -> visit(ir)
     }
 }

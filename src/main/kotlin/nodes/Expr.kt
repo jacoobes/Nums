@@ -55,21 +55,21 @@ data class NumsFloat(val value: Float, val type: Types.TF32) : Expr {
     }
 }
 
-data class NumsByte(val value: UByte, val type: Types.TU8) : Expr {
-    override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
+//data class NumsByte(val value: UByte, val type: Types.TU8) : Expr {
+//    override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
+//
+//    override fun toString(): String {
+//        return value.toString()
+//    }
+//}
 
-    override fun toString(): String {
-        return value.toString()
-    }
-}
-
-data class NumsShort(val value: UShort, val type: Types.TU16) : Expr {
-    override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
-
-    override fun toString(): String {
-        return value.toString()
-    }
-}
+//data class NumsShort(val value: UShort, val type: Types.TU16) : Expr {
+//    override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)
+//
+//    override fun toString(): String {
+//        return value.toString()
+//    }
+//}
 
 data class Bool(val bool: Boolean, val type : Types.TBool) : Expr {
     override fun <T> accept(visitor: ExpressionVisitor<T>) = visitor.visit(this)

@@ -80,8 +80,8 @@ class NumsGrammar(root: java.nio.file.Path) : Grammar<List<Statement>>() {
     private val typesMap = mapOf(
         i32 to TI32,
         i64 to TI64,
-        u16 to TU16,
-        u8 to TU8,
+//        u16 to TU16,
+//        u8 to TU8,
         boo to TBool,
         txt to TTxt,
         f32 to TF32,
@@ -106,8 +106,8 @@ class NumsGrammar(root: java.nio.file.Path) : Grammar<List<Statement>>() {
         when {
             endsWith("f64") -> NumsDouble(getNumber("f64").toDouble(), TF64)
             endsWith("f32") -> NumsFloat(getNumber("f32").toFloat(), TF32)
-            endsWith("u8") -> NumsByte(getNumber("u8").toUByte(), TU8)
-            endsWith("u16") -> NumsShort(getNumber("u16").toUShort(), TU16)
+//            endsWith("u8") -> NumsByte(getNumber("u8").toUByte(), TU8)
+//            endsWith("u16") -> NumsShort(getNumber("u16").toUShort(), TU16)
             else -> try {
                 NumsInt(Integer.valueOf(mat.text), TI32)
             } catch (_: Throwable) {
@@ -115,8 +115,8 @@ class NumsGrammar(root: java.nio.file.Path) : Grammar<List<Statement>>() {
             }
         }
     }
-    private val truthParser by ttrue asJust Bool(false, TBool)
-    private val falseParser by ffalse asJust Bool(true, TBool)
+    private val truthParser by ttrue asJust Bool(true, TBool)
+    private val falseParser by ffalse asJust Bool(false, TBool)
 
 
     private val stringLiteral by stringLit use { StringLiteral(text.removeSurrounding("\"", "\""), TTxt) }
@@ -235,38 +235,38 @@ class NumsGrammar(root: java.nio.file.Path) : Grammar<List<Statement>>() {
             type = TFn(typList, t4 ?: TUnit),
         )
     })
-    private val import by (optional(plus) * separatedTerms(
-        varParser,
-        comma
-    )) * -assign * stringLiteral map { (ns, ids, path) ->
-        val f = java.nio.file.Path.of(path.str)
-        ns?.let {
-            if (ids.size == 1) Import(ids, path.str, true, f) else throw Error("A file can only have one namespace")
-        } ?: Import(ids, path.str, false, f)
+    private val spaceBlock by optional(visToEnum)* -space * varParser * -lcurly * oneOrMore(parser(::topLevel)) * -rcurly map { (vis, n, stmts) ->
+        Space(vis ?: Vis.Show, n, stmts)
     }
-    private val dataSet by optional(visToEnum) * -data * varParser * -lparen * separatedTerms(varParser * types, separator = comma) * -rparen *
-            zeroOrMore(-colon * optional(varParser) * -lcurly * zeroOrMore(fnDecl) * -rcurly) use {
-        val typList = arrayListOf<Type>()
-        val argsList = arrayListOf<TextId>()
-        t3.forEach {
-            typList.add(it.t2)
-            argsList.add(it.t1)
-        }
-        val traits = t4.map { Trait(it.t1 ?: t2, it.t2.map { f -> f.type }) }
-        Dataset(vis = t1 ?: Vis.Show, name = t2, elements = argsList, type = TDataSet(t2.value, typList, traits))
-    }
+    private val topLevel: Parser<Statement> by fnDecl or spaceBlock
+    override val rootParser by oneOrMore(topLevel)
+}
+//    private val import by (optional(plus) * separatedTerms(
+//        varParser,
+//        comma
+//    )) * -assign * stringLiteral map { (ns, ids, path) ->
+//        val f = java.nio.file.Path.of(path.str)
+//        ns?.let {
+//            if (ids.size == 1) Import(ids, path.str, true, f) else throw Error("A file can only have one namespace")
+//        } ?: Import(ids, path.str, false, f)
 
-    private val traitDeclaration by optional(visToEnum) * -trait * varParser * -lcurly * zeroOrMore(fnDecl) * -rcurly use {
-        TraitDeclaration(t1 ?: Vis.Show, t2, t3)
-    }
-
+//    private val dataSet by optional(visToEnum) * -data * varParser * -lparen * separatedTerms(varParser * types, separator = comma) * -rparen *
+//            zeroOrMore(-colon * optional(varParser) * -lcurly * zeroOrMore(fnDecl) * -rcurly) use {
+//        val typList = arrayListOf<Type>()
+//        val argsList = arrayListOf<TextId>()
+//        t3.forEach {
+//            typList.add(it.t2)
+//            argsList.add(it.t1)
+//        }
+//        val traits = t4.map { Trait(it.t1 ?: t2, it.t2.map { f -> f.type }) }
+//        Dataset(vis = t1 ?: Vis.Show, name = t2, elements = argsList, type = TDataSet(t2.value, typList, traits))
+//    }
+//
+//    private val traitDeclaration by optional(visToEnum) * -trait * varParser * -lcurly * zeroOrMore(fnDecl) * -rcurly use {
+//        TraitDeclaration(t1 ?: Vis.Show, t2, t3)
+//    }
+//
 //    private val traitImplementation by -colon  * varParser * -has * varParser * -lcurly * zeroOrMore(fnDecl) * -rcurly use {
 //        TraitImplementation(t1, t2, t3)
 //    }
 
-    private val spaceBlock by optional(visToEnum)* -space * varParser * -lcurly * oneOrMore(parser(::topLevel)) * -rcurly map { (vis, n, stmts) ->
-        Space(vis ?: Vis.Show, n, stmts)
-    }
-    private val topLevel: Parser<Statement> by traitDeclaration or dataSet or fnDecl or import or spaceBlock
-    override val rootParser by oneOrMore(topLevel)
-}

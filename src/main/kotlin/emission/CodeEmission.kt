@@ -1,13 +1,11 @@
 package emission
 
-import ExpressionVisitor
 import IRVisitor
 import NumsWriter
-import StatementVisitor
 import jvm.*
-import nodes.*
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Type
 import java.nio.file.Path
 
 class NumsEmitter(path: Path) : IRVisitor<Unit> {
@@ -31,9 +29,8 @@ class NumsEmitter(path: Path) : IRVisitor<Unit> {
         }
         when(insn.opcode) {
             BIPUSH -> mv!!.visitIntInsn(insn.opcode, insn.operands[0])
-            ISTORE -> {
-                mv!!.visitVarInsn(insn.opcode, insn.operands[0])
-            }
+            ICONST_0, ICONST_1 -> mv!!.visitInsn(insn.opcode)
+            ISTORE -> mv!!.visitVarInsn(insn.opcode, insn.operands[0])
         }
     }
 
@@ -42,6 +39,7 @@ class NumsEmitter(path: Path) : IRVisitor<Unit> {
             it.visit(JAVA_VERSION, irfn.classAccessors, irfn.className, null, "java/lang/Object", null)
             mv = it.visitMethod(irfn.fnAccessor, irfn.name.value, irfn.jvmMethodDescriptor, null, null)
             irfn.body.forEach { insn ->
+
                 visit(insn)
             }
             mv?.visitEnd() ?: throw Error("method visitor is null")
@@ -50,7 +48,14 @@ class NumsEmitter(path: Path) : IRVisitor<Unit> {
         }
     }
 
+    override fun visit(ldc: LDC) {
+        if(mv !== null) {
+            mv!!.visitLdcInsn(ldc.value)
+        }
+    }
+
     override fun visit(chunk: Chunk) {
+        println("visited chunk")
         chunk.instr.forEach(::visit)
     }
 
