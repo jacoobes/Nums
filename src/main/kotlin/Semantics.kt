@@ -1,3 +1,4 @@
+import jvm.CallableStructure
 import nodes.Expr
 import nodes.TextId
 
@@ -7,9 +8,8 @@ data class Local(val name: String, val depth: Int, val index: Int, val isAssigna
     }
 }
 
-//Tracking semantic metadata in a function body
 class Semantics {
-    val locals = arrayListOf<Local>()
+    private val locals = arrayListOf<Local>()
     //The scope depth of function
     // it should return to 0 at the end of a function
     private var scopeDepth = 0
@@ -47,4 +47,6 @@ class Semantics {
         locals.clear()
         localIndex = 0
     }
+
+
 }

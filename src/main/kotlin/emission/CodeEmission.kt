@@ -7,19 +7,37 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import java.nio.file.Path
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
 
-class NumsEmitter(path: Path) : IRVisitor<Unit> {
+class NumsEmitter(
+    val path: Path
+) : IRVisitor<Unit> {
     private val numsWriter = NumsWriter(path)
     private var mv : MethodVisitor? = null
 
     fun start(ir: List<IR?>) {
         numsWriter.use {
-            for(chunk in ir) {
-                if(chunk ==null) {
-                    println("null chunk")
-                } else {
-                    visit(chunk)
+            numsWriter.classWriter {
+                it.visit(
+                    JAVA_VERSION,
+                    ACC_PUBLIC,
+                    path.nameWithoutExtension,
+                   null,
+                   "java/lang/Object",
+                   null
+                )
+                for(chunk in ir) {
+                    if(chunk ==null) {
+                        println("null chunk")
+                    } else {
+                        if(chunk is IRFunction) {
+                            mv = it.visitMethod(chunk.fnAccessor, chunk.name.value, chunk.jvmMethodDescriptor, null, null)
+                        }
+                        visit(chunk)
+                    }
                 }
+                it.visitEnd()
             }
         }
     }
@@ -35,17 +53,11 @@ class NumsEmitter(path: Path) : IRVisitor<Unit> {
     }
 
     override fun visit(irfn: IRFunction) {
-        numsWriter.classWriter {
-            it.visit(JAVA_VERSION, irfn.classAccessors, irfn.className, null, "java/lang/Object", null)
-            mv = it.visitMethod(irfn.fnAccessor, irfn.name.value, irfn.jvmMethodDescriptor, null, null)
-            irfn.body.forEach { insn ->
-
-                visit(insn)
-            }
-            mv?.visitEnd() ?: throw Error("method visitor is null")
-            mv?.visitMaxs(256, 2)
-            it.visitEnd()
+        irfn.body.forEach { insn ->
+            visit(insn)
         }
+        mv?.visitEnd() ?: throw Error("method visitor is null")
+        mv?.visitMaxs(256, 2)
     }
 
     override fun visit(ldc: LDC) {

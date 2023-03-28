@@ -1,5 +1,6 @@
 package jvm
 
+import EnvironmentManager
 import ExpressionVisitor
 import Semantics
 import StatementVisitor
@@ -15,7 +16,7 @@ import java.util.*
 class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes {
     val typeSolver = TypeSolver(Context())
     val semantics = Semantics()
-    var entryPoint: FFunction? = null
+    val envManager = EnvironmentManager()
     fun start(root: List<Statement>): List<IR?> {
 //        val importedNameSpaces = arrayListOf<TextId>()
         val queue = LinkedList(root)
@@ -23,6 +24,12 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
         while (queue.isNotEmpty()) {
             when (val node = queue.poll()) {
                 is FFunction -> {
+                    if (node.isMain()) {
+                        if (envManager.entryPoint == null) {
+                            envManager.entryPoint = CallableStructure(node, semantics)
+                        } else throw Error("Found two functions named main")
+                    }
+                    envManager.addCallable(node.name.value, CallableStructure(node, semantics))
                     typeSolver.env[node.name] = node.type
                 }
 //                is Import -> {
@@ -39,10 +46,15 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
             }
         }
         val ir = tree.map(::visit)
-        if (entryPoint == null) {
+        if (envManager.entryPoint == null) {
             throw Error("Could not find a main function")
         }
         return ir
+    }
+
+    fun visitBlock(block: Block, env: Semantics) {
+
+        visit(block)
     }
 
     override fun visit(number: NumsDouble): Expr {
@@ -121,35 +133,35 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
         return path
     }
 
-    override fun visit(fn: FFunction): IR {
-        if (fn.isMain()) {
-            if (entryPoint == null) {
-                entryPoint = fn
-            } else throw Error("Found two functions named main")
-        }
+    override fun visit(fn: FFunction): IR? {
+
+        fn.block as Block
+
+        // adding function arguments to the arguments list
         for ((idx, v) in fn.args.withIndex()) {
-            typeSolver.env[v] = fn.type.typs[idx]
+//            typeSolver.env[v] = fn.type.typs[idx]
             semantics.addLocal(v.value, isAssignable = false, v)
         }
 
         val body: Bytecode = arrayListOf()
 
-        for (stmt in (fn.block as Block).stmts) {
+        for (stmt in fn.block.stmts) {
             body.add(stmt.accept(this)!!)
         }
-        fn.block.stmts.lastOrNull()?.let {
-            if (it is Return && fn.type.ret != TUnit) {
-                typeSolver.check(fn.type.ret, (it).expr)
-            }
-        }
+
+        //type checking function signature
+//        fn.block.stmts.lastOrNull()?.let {
+//            if (it is Return && fn.type.ret != TUnit) {
+//                typeSolver.check(fn.type.ret, (it).expr)
+//            }
+//        }
         //val maxStack = 256
         //val localsSize = fn.args.size + fn.block.stmts.filterIsInstance<Val>().size
         semantics.clearLocals() // should clear all locals after block has been finished
-
         return if(fn.isMain()) {
             makeIRMainFunction(fn, body)
         } else {
-            TODO()
+            makeFunction(fn, body)
         }
     }
 
@@ -209,8 +221,8 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
             }
             is TextId -> {
                 val referencedLocal = semantics.getLocal(e)
-//                println(typeSolver.env[e]) accessing local variable data
-//                println(referencedLocal)
+//              println(typeSolver.env[e]) accessing local variable data
+//              println(referencedLocal)
                 Chunk()
             }
             is ArrayLiteral -> {

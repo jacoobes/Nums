@@ -1,8 +1,10 @@
 package jvm
 
+import nodes.Expr
+
 interface Callee {
 
-    fun call(interpreter: SemanticVisitor, arguments: List<Any?> = emptyList()): Any?
+    fun call(interpreter: SemanticVisitor, arguments: List<Expr> = emptyList()): Any?
 
     fun arity(): Int
 }

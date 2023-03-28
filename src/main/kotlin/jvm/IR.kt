@@ -18,8 +18,6 @@ class Chunk(vararg val instr: IR) : IR
 
 data class LDC(val instr: Int = Opcodes.LDC, val value: Any): IR
 class IRFunction(
-    val className: String,
-    val classAccessors: Int,
     val fnAccessor: Int,
     val main: Boolean,
     val name: TextId,

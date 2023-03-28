@@ -1,23 +1,23 @@
 package jvm
 
 import Semantics
+import nodes.Expr
 import nodes.FFunction
 
-class Callable(
+class CallableStructure(
     private val declaration: FFunction,
     private val closure: Semantics,
-    private val isInitializer: Boolean
 ) : Callee {
-
     /**
      * function calling;
      * instantiation of arguments
      */
-    override fun call(interpreter: SemanticVisitor, arguments: List<Any?>): Any? {
-       // val functionEnv = Env(closure)
-//        for ((index, args) in declaration.parameters.withIndex()) {
-//            arguments[index]?.let { functionEnv.define(args.lexeme, it) }
-//        }
+    override fun call(irVisitor: SemanticVisitor, arguments: List<Expr>): IR {
+        val functionEnv = Semantics()
+        for ((index, args) in declaration.args.withIndex()) {
+            arguments[index].let { functionEnv.addLocal(args.value, isAssignable = false, it) }
+        }
+
 //        try {
 //            interpreter.executeBlock(declaration.body, functionEnv)
 //        } catch (returnStmt: Return) {
@@ -25,8 +25,7 @@ class Callable(
 //            if (isInitializer) return closure.getAt(0, "this")
 //            return returnStmt.value
 //        }
-//
-        return null
+        return Chunk()
     }
 
     override fun arity(): Int {

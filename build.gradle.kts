@@ -39,7 +39,6 @@ application {
 dependencies {
     implementation("com.github.h0tk3y.betterParse:better-parse:0.4.4")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
-    implementation("org.jgrapht:jgrapht-core:1.5.1")
     // https://mvnrepository.com/artifact/org.ow2.asm/asm
     implementation("org.ow2.asm:asm:7.0")
     testImplementation(kotlin("test"))
