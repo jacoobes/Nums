@@ -62,7 +62,7 @@ tasks.test {
 }
 
 tasks.withType<KotlinCompile> {
-    //kotlinOptions.useK2 = true
+    kotlinOptions.useK2 = true
     kotlinOptions.jvmTarget = "17"
     include("src/main/java")
 }

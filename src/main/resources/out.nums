@@ -1,8 +1,9 @@
 
 fn main (args []string) {
-    val p: []string = args;
+    val a = 200;
+    val p = a/5;
 }
 
 hide fn poo()  {
-
+    val f = 40;
 }

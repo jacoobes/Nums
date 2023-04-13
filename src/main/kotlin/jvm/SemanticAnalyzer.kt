@@ -4,16 +4,17 @@ import EnvironmentManager
 import ExpressionVisitor
 import Semantics
 import StatementVisitor
+import emission.makeFunction
+import emission.makeIRMainFunction
 import nodes.*
 import org.objectweb.asm.*
 import org.objectweb.asm.Opcodes.*
 import types.Context
 import types.TypeSolver
-import types.Types.*
 import java.util.*
 
 //Pass 1: visits and collects data about the tree and type checking that will be used for pass 2 (bytecode generation)
-class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes {
+class SemanticVisitor : ExpressionVisitor<IR>, StatementVisitor<IR?>, Opcodes {
     val typeSolver = TypeSolver(Context())
     val semantics = Semantics()
     val envManager = EnvironmentManager()
@@ -53,16 +54,15 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
     }
 
     fun visitBlock(block: Block, env: Semantics) {
-
         visit(block)
     }
 
-    override fun visit(number: NumsDouble): Expr {
-        return number
+    override fun visit(number: NumsDouble): IR {
+        return LDC(value = number.value)
     }
 
-    override fun visit(number: NumsInt): Expr {
-        return number
+    override fun visit(number: NumsInt): IR {
+        return LDC(value = number.value)
     }
 
 //    override fun visit(number: NumsShort): Expr {
@@ -73,64 +73,80 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
 //        return number
 //    }
 
-    override fun visit(number: NumsFloat): Expr {
-        return number
+    override fun visit(number: NumsFloat): IR {
+        return LDC(value = number.value)
     }
 
-    override fun visit(stringLiteral: StringLiteral): Expr {
-        return stringLiteral
+    override fun visit(stringLiteral: StringLiteral): IR {
+        TODO()
     }
 
-    override fun visit(binary: Binary): Expr {
+    override fun visit(binary: Binary): IR {
         val lhs = visit(binary.left)
         val rhs = visit(binary.right)
-
-        return binary
+        return when(binary.op) {
+            "add" -> Chunk(lhs, rhs, Instruction(IADD))
+            "sub" -> Chunk(lhs, rhs, Instruction(ISUB))
+            "mul" -> Chunk(lhs, rhs, Instruction(IDIV))
+            "div" -> Chunk(lhs, rhs, Instruction(IDIV))
+            else -> throw Error("not implemented yet")
+        }
     }
 
-    override fun visit(cmp: Comparison): Expr {
+    override fun visit(cmp: Comparison): IR {
         val lhs = visit(cmp.left)
         val rhs = visit(cmp.right)
-
-        return cmp
+        return when(cmp.op) {
+            ComparisonOps.Lt -> Chunk(lhs,rhs, Instruction(IF_ICMPGE))
+            ComparisonOps.Lte -> Chunk(lhs,rhs, Instruction(IF_ICMPGT))
+            ComparisonOps.Gt -> Chunk(lhs, rhs, Instruction(IF_ICMPLE))
+            ComparisonOps.Gte -> Chunk(lhs, rhs, Instruction(IF_ICMPLT))
+            else -> TODO()
+        }
     }
 
-    override fun visit(unary: Unary): Expr {
+    override fun visit(unary: Unary): IR {
         val e = visit(unary.expr)
-        return unary
+        TODO()
     }
 
-    override fun visit(bool: Bool): Expr {
-        return bool
+    override fun visit(bool: Bool): IR {
+        return if(bool.bool) {
+            Instruction(LCONST_1)
+        } else {
+            Instruction(LCONST_0)
+        }
     }
 
-    override fun visit(textId: TextId): Expr {
-
-        return textId
+    override fun visit(textId: TextId): IR {
+        // until i get type system working, variables with text id as expressions will be int type only
+        val referencedVariable = semantics.getLocal(textId)
+        return VarInstruction(ILOAD, referencedVariable.index)
     }
 
-    override fun visit(and: And): Expr {
+    override fun visit(and: And): IR {
         val lhs = visit(and.left)
         val rhs = visit(and.right)
-        return and
+
+        TODO()
     }
 
-    override fun visit(or: Or): Expr {
+    override fun visit(or: Or): IR {
         val lhs = visit(or.left)
         val rhs = visit(or.right)
-        return or
+        TODO()
     }
 
-    override fun visit(call: Call): Expr {
-        return call
+    override fun visit(call: Call): IR {
+        TODO()
     }
 
-    override fun visit(arrayLiteral: ArrayLiteral): Expr {
-        return arrayLiteral
+    override fun visit(arrayLiteral: ArrayLiteral): IR {
+        TODO()
     }
 
-    override fun visit(path: NumsPath): Expr {
-        return path
+    override fun visit(path: NumsPath): IR {
+        TODO()
     }
 
     override fun visit(fn: FFunction): IR? {
@@ -146,7 +162,8 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
         val body: Bytecode = arrayListOf()
 
         for (stmt in fn.block.stmts) {
-            body.add(stmt.accept(this)!!)
+            val ir = stmt.accept(this)
+            ir?.let(body::add) ?: println("found null chunk")
         }
 
         //type checking function signature
@@ -171,8 +188,9 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
     }
 
     override fun visit(loop: Loop): IR {
-        visit(loop.condition)
+        val irCondition = visit(loop.condition)
         loop.block.accept(this)
+
         TODO()
 
     }
@@ -194,39 +212,27 @@ class SemanticVisitor : ExpressionVisitor<Expr>, StatementVisitor<IR?>, Opcodes 
     }
 
     override fun visit(valStmt: Val): IR {
-        val e = visit(valStmt.expr)
-        val typ = if (valStmt.type == Infer) {
-            typeSolver.infer(e)
-        } else {
-            valStmt.type
-        }
-        typeSolver.check(typ, e)
-        typeSolver.env[valStmt.token] = typ //assigns this variable to the type env where its type information can be looked up
+        val expressionIR = visit(valStmt.expr)
+//        val typ = if (valStmt.type == Infer) {
+//            typeSolver.infer(e)
+//        } else {
+//            valStmt.type
+//        }
+//        typeSolver.check(typ, e)
+//        typeSolver.env[valStmt.token] = typ //assigns this variable to the type env where its type information can be looked up
         val loc = semantics.addLocal(valStmt.token.value, isAssignable = valStmt.isAssignable, valStmt.expr)
 
-        return when(e) {
+        return when(valStmt.expr) {
             // for now, no jvm opcode optimizations, just getting it working
-            is NumsInt -> {
-                Chunk(Instruction(BIPUSH, e.value), Instruction(ISTORE, loc.index))
-            }
-            is NumsDouble -> {
-                Chunk(LDC(value = e.value), Instruction(DSTORE, loc.index))
-            }
-            is Bool -> {
-                if(e.bool) {
-                    Chunk(Instruction(ICONST_1), Instruction(ISTORE, loc.index))
-                } else {
-                    Chunk(Instruction(ICONST_0), Instruction(ISTORE, loc.index))
-                }
-            }
-            is TextId -> {
-                val referencedLocal = semantics.getLocal(e)
-//              println(typeSolver.env[e]) accessing local variable data
-//              println(referencedLocal)
-                Chunk()
-            }
+            is NumsInt -> Chunk(expressionIR, VarInstruction(ISTORE, loc.index))
+            is NumsDouble -> Chunk(expressionIR, VarInstruction(DSTORE, loc.index))
+            is Bool -> Chunk(expressionIR, VarInstruction(ISTORE, loc.index))
+            is TextId -> Chunk(expressionIR, VarInstruction(ISTORE, loc.index))
             is ArrayLiteral -> {
                 Chunk()
+            }
+            is Binary -> {
+                Chunk(expressionIR, VarInstruction(ISTORE, loc.index))
             }
             else -> TODO()
         }

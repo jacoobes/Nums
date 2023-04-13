@@ -1,5 +1,7 @@
-package jvm
+package emission
 
+import jvm.IR
+import jvm.IRFunction
 import nodes.FFunction
 import nodes.Vis
 import org.objectweb.asm.Opcodes

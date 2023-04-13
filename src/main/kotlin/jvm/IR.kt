@@ -26,4 +26,4 @@ class IRFunction(
 ) : IR
 
 
-
+data class VarInstruction(val opcode: Int, val variableIndex: Int) : IR

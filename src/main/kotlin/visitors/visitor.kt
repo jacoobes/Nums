@@ -76,6 +76,7 @@ interface IRVisitor<T> {
     fun visit(insn: Instruction): T
     fun visit(irfn: IRFunction) : T
     fun visit(ldc: LDC) : T
+    fun visit(varInstr: VarInstruction) : T
 
     fun visit(chunk: Chunk) : T
     fun visit(ir: IR) : T = when (ir) {
@@ -83,5 +84,6 @@ interface IRVisitor<T> {
         is Instruction -> visit(ir)
         is Chunk -> visit(ir)
         is LDC -> visit(ir)
+        is VarInstruction -> visit(ir)
     }
 }

@@ -3,11 +3,10 @@ package emission
 import IRVisitor
 import NumsWriter
 import jvm.*
+import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
-import org.objectweb.asm.Type
 import java.nio.file.Path
-import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
 class NumsEmitter(
@@ -29,7 +28,7 @@ class NumsEmitter(
                 )
                 for(chunk in ir) {
                     if(chunk ==null) {
-                        println("null chunk")
+                        println("no op")
                     } else {
                         if(chunk is IRFunction) {
                             mv = it.visitMethod(chunk.fnAccessor, chunk.name.value, chunk.jvmMethodDescriptor, null, null)
@@ -45,10 +44,10 @@ class NumsEmitter(
         if(mv == null) {
             throw Error("null method visitor")
         }
+        Label()
         when(insn.opcode) {
-            BIPUSH -> mv!!.visitIntInsn(insn.opcode, insn.operands[0])
             ICONST_0, ICONST_1 -> mv!!.visitInsn(insn.opcode)
-            ISTORE -> mv!!.visitVarInsn(insn.opcode, insn.operands[0])
+            IADD, IDIV, ISUB, IMUL -> mv!!.visitInsn(insn.opcode)
         }
     }
 
@@ -65,9 +64,12 @@ class NumsEmitter(
             mv!!.visitLdcInsn(ldc.value)
         }
     }
+    override fun visit(varInstr: VarInstruction) {
+        mv?.visitVarInsn(varInstr.opcode, varInstr.variableIndex) ?: throw Error("method visitor is null")
+    }
 
     override fun visit(chunk: Chunk) {
-        println("visited chunk")
+        println(chunk.instr.contentToString())
         chunk.instr.forEach(::visit)
     }
 
